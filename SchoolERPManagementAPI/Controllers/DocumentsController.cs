@@ -1,0 +1,55 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using SchoolERPManagementBLLibrary.Interfaces;
+
+namespace SchoolERPManagementAPI.Controllers
+{
+    [Authorize]
+    [Route("api/[controller]")]
+    [ApiController]
+    public class DocumentsController : ControllerBase
+    {
+        private readonly IDocumentService _documentService;
+
+        public DocumentsController(IDocumentService documentService)
+        {
+            _documentService = documentService;
+        }
+
+        [HttpPost("student/{studentId}")]
+        [Authorize(Roles = "Admin,Parent,Student")]
+        public async Task<IActionResult> UploadStudentDocument(IFormFile file, int studentId, CancellationToken cancellationToken)
+        {
+            var result = await _documentService.UploadStudentDocumentAsync(file, studentId, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPost("teacher/{teacherId}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> UploadTeacherDocument(IFormFile file, int teacherId, CancellationToken cancellationToken)
+        {
+            var result = await _documentService.UploadTeacherDocumentAsync(file, teacherId, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpDelete]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteDocument([FromQuery] string blobUrl, CancellationToken cancellationToken)
+        {
+            await _documentService.DeleteDocumentAsync(blobUrl, cancellationToken);
+            return NoContent();
+        }
+
+        [HttpPut("verify")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> VerifyDocument([FromBody] SchoolERPManagementBLLibrary.DTOs.Document.VerifyDocumentDTO dto, CancellationToken cancellationToken)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+            
+            await _documentService.VerifyDocumentAsync(dto, userId, userRole, cancellationToken);
+            return Ok(new { Message = "Document verified successfully." });
+        }
+    }
+}

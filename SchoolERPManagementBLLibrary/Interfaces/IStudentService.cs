@@ -1,0 +1,13 @@
+using SchoolERPManagementBLLibrary.DTOs.Student;
+
+namespace SchoolERPManagementBLLibrary.Interfaces;
+
+public interface IStudentService
+{
+    Task<IEnumerable<StudentResponseDTO>> GetAllStudentsAsync(CancellationToken cancellationToken);
+    Task<StudentResponseDTO> GetStudentByIdAsync(int id, CancellationToken cancellationToken);
+    Task<StudentResponseDTO> AddStudentAsync(CreateStudentDTO dto, CancellationToken cancellationToken);
+    Task<StudentResponseDTO> UpdateStudentAsync(int id, UpdateStudentDTO dto, CancellationToken cancellationToken);
+    Task DeleteStudentAsync(int id, CancellationToken cancellationToken);
+    Task<int?> GetStudentIdByUserIdAsync(int userId, CancellationToken cancellationToken);
+}

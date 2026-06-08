@@ -1,0 +1,46 @@
+using Microsoft.AspNetCore.Http;
+using SchoolERPManagementBLLibrary.Interfaces;
+
+namespace SchoolERPManagementBLLibrary.Services;
+
+public sealed class LocalFileStorageService : IFileStorageService
+{
+    public async Task<string> UploadFileAsync(IFormFile file, string folderName, CancellationToken cancellationToken = default)
+    {
+        if (file is null || file.Length == 0)
+        {
+            throw new ArgumentException("File is empty or null.", nameof(file));
+        }
+
+        var uploadRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads", folderName);
+        if (!Directory.Exists(uploadRoot))
+        {
+            Directory.CreateDirectory(uploadRoot);
+        }
+
+        var fileName = $"{Guid.NewGuid():N}{Path.GetExtension(file.FileName)}";
+        var filePath = Path.Combine(uploadRoot, fileName);
+
+        await using (var stream = File.Create(filePath))
+        {
+            await file.CopyToAsync(stream, cancellationToken);
+        }
+
+        return $"/uploads/{folderName}/{fileName}";
+    }
+
+    public void DeleteFile(string fileUrl)
+    {
+        if (string.IsNullOrWhiteSpace(fileUrl)) return;
+
+        // Convert the URL back to a physical path
+        // e.g. /uploads/folder/file.pdf -> wwwroot/uploads/folder/file.pdf
+        var relativePath = fileUrl.TrimStart('/');
+        var fullPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", relativePath);
+
+        if (File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+    }
+}

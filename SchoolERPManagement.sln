@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolERPManagementAPI", "SchoolERPManagementAPI\SchoolERPManagementAPI.csproj", "{9F82E625-D6F3-4959-80AA-A74A7B4775EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolERPManagementModelLibrary", "SchoolERPManagementModelLibrary\SchoolERPManagementModelLibrary.csproj", "{5C5BC753-159A-40E0-B6BA-4BE8E3881C1B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolERPManagementBLLibrary", "SchoolERPManagementBLLibrary\SchoolERPManagementBLLibrary.csproj", "{8E496EA2-8F6B-45BE-9070-E05EE1B78477}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolERPManagementDALLibrary", "SchoolERPManagementDALLibrary\SchoolERPManagementDALLibrary.csproj", "{B0AB151F-3949-4D12-85F9-4948E843A01C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolERPManagement.Tests", "SchoolERPManagement.Tests\SchoolERPManagement.Tests.csproj", "{F6400658-1EBA-434C-969C-C565A28C2395}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9F82E625-D6F3-4959-80AA-A74A7B4775EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F82E625-D6F3-4959-80AA-A74A7B4775EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F82E625-D6F3-4959-80AA-A74A7B4775EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F82E625-D6F3-4959-80AA-A74A7B4775EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C5BC753-159A-40E0-B6BA-4BE8E3881C1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C5BC753-159A-40E0-B6BA-4BE8E3881C1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C5BC753-159A-40E0-B6BA-4BE8E3881C1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C5BC753-159A-40E0-B6BA-4BE8E3881C1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E496EA2-8F6B-45BE-9070-E05EE1B78477}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E496EA2-8F6B-45BE-9070-E05EE1B78477}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E496EA2-8F6B-45BE-9070-E05EE1B78477}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E496EA2-8F6B-45BE-9070-E05EE1B78477}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0AB151F-3949-4D12-85F9-4948E843A01C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0AB151F-3949-4D12-85F9-4948E843A01C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0AB151F-3949-4D12-85F9-4948E843A01C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0AB151F-3949-4D12-85F9-4948E843A01C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6400658-1EBA-434C-969C-C565A28C2395}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6400658-1EBA-434C-969C-C565A28C2395}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6400658-1EBA-434C-969C-C565A28C2395}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6400658-1EBA-434C-969C-C565A28C2395}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

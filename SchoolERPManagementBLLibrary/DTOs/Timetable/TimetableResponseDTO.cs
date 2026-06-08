@@ -1,0 +1,3 @@
+namespace SchoolERPManagementBLLibrary.DTOs.Timetable;
+
+public record TimetableResponseDTO(int Id, int ClassId, int SubjectId, int TeacherId, string DayOfWeek, TimeOnly StartTime, TimeOnly EndTime, string? RoomNo);
