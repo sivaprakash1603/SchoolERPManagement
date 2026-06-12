@@ -91,7 +91,7 @@ public sealed class ParentService : IParentService
             throw new EntityNotFoundException("Role", "Parent");
         }
 
-        string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); // Simple random password
+        string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); 
 
         var user = new User
         {
@@ -131,7 +131,7 @@ public sealed class ParentService : IParentService
         }
         catch
         {
-            // Log email sending failure here
+            
         }
 
         var response = _mapper.Map<ParentResponseDTO>(parent);

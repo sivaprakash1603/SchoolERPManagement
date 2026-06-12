@@ -19,6 +19,7 @@ public class TeacherServiceTests
     private readonly Mock<IRepository<int, Class>> _classRepoMock;
     private readonly Mock<IRepository<int, Teachersubject>> _teacherSubjectRepoMock;
     private readonly Mock<IRepository<int, Role>> _roleRepoMock;
+    private readonly Mock<IRepository<int, SchoolERPManagementModelLibrary.Models.Salary>> _salaryRepoMock;
     private readonly Mock<IEmailService> _emailServiceMock;
     private readonly TeacherService _teacherService;
 
@@ -30,6 +31,7 @@ public class TeacherServiceTests
         _classRepoMock = new Mock<IRepository<int, Class>>();
         _teacherSubjectRepoMock = new Mock<IRepository<int, Teachersubject>>();
         _roleRepoMock = new Mock<IRepository<int, Role>>();
+        _salaryRepoMock = new Mock<IRepository<int, SchoolERPManagementModelLibrary.Models.Salary>>();
         _emailServiceMock = new Mock<IEmailService>();
 
         _teacherService = new TeacherService(
@@ -39,24 +41,27 @@ public class TeacherServiceTests
             _classRepoMock.Object,
             _teacherSubjectRepoMock.Object,
             _roleRepoMock.Object,
+            _salaryRepoMock.Object,
             _emailServiceMock.Object
+        ,
+            new Moq.Mock<AutoMapper.IMapper>().Object
         );
     }
 
     [Fact]
     public async Task AddTeacherAsync_ValidData_ShouldCreateTeacherAndUser()
     {
-        // Arrange
-        var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters");
+        
+        var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters", 50000m);
 
         _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().AsQueryable().BuildMock());
         _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 2, Rolename = "Teacher" } }.AsQueryable().BuildMock());
         _teacherRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Teacher>().AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _teacherService.AddTeacherAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.Name.Should().Be("Jane Smith");
 
@@ -68,16 +73,16 @@ public class TeacherServiceTests
     [Fact]
     public async Task AddTeacherAsync_DuplicateEmail_ShouldThrowDuplicateEntityException()
     {
-        // Arrange
-        var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters");
+        
+        var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters", 50000m);
 
         var existingUser = new User { Email = "jane@example.com" };
         _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User> { existingUser }.AsQueryable().BuildMock());
 
-        // Act
+        
         Func<Task> action = async () => await _teacherService.AddTeacherAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<DuplicateEntityException>().WithMessage("User with Email 'jane@example.com' already exists.");
     }
 }

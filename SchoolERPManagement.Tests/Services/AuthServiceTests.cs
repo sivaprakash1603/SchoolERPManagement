@@ -37,13 +37,15 @@ public class AuthServiceTests
             _userRepositoryMock.Object,
             _roleRepositoryMock.Object,
             tokenGenerator,
-            _emailServiceMock.Object);
+            _emailServiceMock.Object,
+            new Moq.Mock<AutoMapper.IMapper>().Object
+        );
     }
 
     [Fact]
     public async Task LoginAsync_ValidCredentials_ShouldReturnToken()
     {
-        // Arrange
+        
         var password = "Password123";
         var user = new User
         {
@@ -59,10 +61,10 @@ public class AuthServiceTests
 
         var dto = new LoginRequestDTO("jdoe", password);
 
-        // Act
+        
         var result = await _authService.LoginAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.AccessToken.Should().NotBeNullOrEmpty();
         result.RoleName.Should().Be("Admin");
@@ -71,7 +73,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_InvalidCredentials_ShouldThrowBusinessRuleException()
     {
-        // Arrange
+        
         var user = new User
         {
             Username = "jdoe",
@@ -84,27 +86,27 @@ public class AuthServiceTests
 
         var dto = new LoginRequestDTO("jdoe", "wrongpassword");
 
-        // Act
+        
         Func<Task> action = async () => await _authService.LoginAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Invalid username/email or password.");
     }
 
     [Fact]
     public async Task ForgotPasswordAsync_UserExists_ShouldGenerateTokenAndSendEmail()
     {
-        // Arrange
+        
         var user = new User { Email = "test@example.com", Resettoken = null };
         var usersList = new List<User> { user }.AsQueryable();
         _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMock());
 
         var dto = new ForgotPasswordDTO("test@example.com");
 
-        // Act
+        
         await _authService.ForgotPasswordAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         user.Resettoken.Should().NotBeNullOrEmpty();
         _userRepositoryMock.Verify(r => r.UpdateAsync(user, true, It.IsAny<CancellationToken>()), Times.Once);
         _emailServiceMock.Verify(e => e.SendEmailAsync(user.Email, "Password Reset Request", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -113,7 +115,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ResetPasswordAsync_ValidToken_ShouldUpdatePassword()
     {
-        // Arrange
+        
         var token = "valid-token";
         var user = new User
         {
@@ -126,10 +128,10 @@ public class AuthServiceTests
 
         var dto = new ResetPasswordDTO("test@example.com", token, "newPassword123");
 
-        // Act
+        
         await _authService.ResetPasswordAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         user.Resettoken.Should().BeNull();
         user.Resettokenexpiry.Should().BeNull();
         PasswordHasher.Verify("newPassword123", user.Passwordhash).Should().BeTrue();
@@ -139,23 +141,23 @@ public class AuthServiceTests
     [Fact]
     public async Task ResetPasswordAsync_ExpiredToken_ShouldThrowBusinessRuleException()
     {
-        // Arrange
+        
         var token = "expired-token";
         var user = new User
         {
             Email = "test@example.com",
             Resettoken = token,
-            Resettokenexpiry = DateTime.UtcNow.AddMinutes(-10) // Expired
+            Resettokenexpiry = DateTime.UtcNow.AddMinutes(-10) 
         };
         var usersList = new List<User> { user }.AsQueryable();
         _userRepositoryMock.Setup(r => r.Query(false)).Returns(usersList.BuildMock());
 
         var dto = new ResetPasswordDTO("test@example.com", token, "newPassword123");
 
-        // Act
+        
         Func<Task> action = async () => await _authService.ResetPasswordAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Invalid or expired reset token.");
     }
 }

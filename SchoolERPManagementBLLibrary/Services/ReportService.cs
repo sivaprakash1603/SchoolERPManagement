@@ -156,11 +156,11 @@ public class ReportService : IReportService
             .ToListAsync(cancellationToken);
 
         int totalAssets = assets.Count;
-        // In reality, cost could be on Asset or Assettype or Assetreport. We'll leave it as 0 if not present, but wait, Asset does not have Cost?
-        // In the original database, Asset has a Cost? Let me check Asset.cs
-        // Asset.cs doesn't have Cost. Wait, the API accepted Cost but it wasn't mapped?
-        // If it doesn't have Cost, we'll set TotalValue to 0. Let's just mock TotalValue for now or remove it.
-        decimal totalValue = 0; // Cost not stored in Asset
+        
+        
+        
+        
+        decimal totalValue = 0; 
 
         var statusDistribution = assets
             .GroupBy(a => string.IsNullOrEmpty(a.Status) ? "Unknown" : a.Status)

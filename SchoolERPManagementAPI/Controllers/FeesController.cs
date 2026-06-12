@@ -98,7 +98,7 @@ namespace SchoolERPManagementAPI.Controllers
             }
             catch (Exception)
             {
-                // In production, log the exception. Stripe requires a 400 for bad requests/signatures.
+                
                 return BadRequest();
             }
         }

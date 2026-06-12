@@ -80,7 +80,7 @@ public sealed class TeacherService : ITeacherService
 
         int totalTeachers = await _teacherRepository.Query(false).CountAsync(cancellationToken);
         string generatedUsername = $"T{(totalTeachers + 1):D3}{DateTime.Now.Year}";
-        string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); // Simple random password
+        string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); 
 
         var user = new User
         {
@@ -121,7 +121,7 @@ public sealed class TeacherService : ITeacherService
         }
         catch
         {
-            // Log email sending failure here
+            
             
         }
 

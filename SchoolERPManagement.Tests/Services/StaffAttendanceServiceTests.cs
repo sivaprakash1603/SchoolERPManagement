@@ -21,13 +21,15 @@ public class StaffAttendanceServiceTests
         _staffAttendanceRepoMock = new Mock<IRepository<int, Staffattendance>>();
         _userRepoMock = new Mock<IRepository<int, User>>();
 
-        _staffAttendanceService = new StaffAttendanceService(_staffAttendanceRepoMock.Object, _userRepoMock.Object);
+        _staffAttendanceService = new StaffAttendanceService(_staffAttendanceRepoMock.Object, _userRepoMock.Object,
+            new Moq.Mock<AutoMapper.IMapper>().Object
+        );
     }
 
     [Fact]
     public async Task MarkAttendanceAsync_ValidData_ShouldCreateAttendance()
     {
-        // Arrange
+        
         var dto = new StaffAttendanceRequestDTO(1, DateOnly.Parse("2025-01-01"), "Present", "Daily", "On time");
 
         var user = new User { Id = 1, Username = "teacher_jdoe" };
@@ -35,10 +37,10 @@ public class StaffAttendanceServiceTests
         
         _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Staffattendance>().AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _staffAttendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.UserId.Should().Be(1);
         result.Username.Should().Be("teacher_jdoe");
@@ -50,21 +52,21 @@ public class StaffAttendanceServiceTests
     [Fact]
     public async Task MarkAttendanceAsync_InvalidUser_ShouldThrowEntityNotFoundException()
     {
-        // Arrange
+        
         var dto = new StaffAttendanceRequestDTO(999, DateOnly.Parse("2025-01-01"), "Present", "Daily", null);
         _userRepoMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((User?)null);
 
-        // Act
+        
         Func<Task> action = async () => await _staffAttendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<EntityNotFoundException>().WithMessage("User with identifier '999' was not found.");
     }
 
     [Fact]
     public async Task MarkAttendanceAsync_DuplicateAttendance_ShouldThrowDuplicateEntityException()
     {
-        // Arrange
+        
         var dto = new StaffAttendanceRequestDTO(1, DateOnly.Parse("2025-01-01"), "Present", "Daily", null);
 
         var user = new User { Id = 1, Username = "teacher_jdoe" };
@@ -73,17 +75,17 @@ public class StaffAttendanceServiceTests
         var existingAttendance = new Staffattendance { Userid = 1, Date = DateOnly.Parse("2025-01-01") };
         _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Staffattendance> { existingAttendance }.AsQueryable().BuildMock());
 
-        // Act
+        
         Func<Task> action = async () => await _staffAttendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<DuplicateEntityException>().WithMessage($"StaffAttendance with Date '{dto.Date}' already exists.");
     }
 
     [Fact]
     public async Task GetAttendanceByUserAsync_ShouldReturnListOfAttendance()
     {
-        // Arrange
+        
         var user = new User { Id = 1, Username = "teacher_jdoe" };
         var attendanceList = new List<Staffattendance>
         {
@@ -93,10 +95,10 @@ public class StaffAttendanceServiceTests
 
         _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(attendanceList.AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _staffAttendanceService.GetAttendanceByUserAsync(1, CancellationToken.None);
 
-        // Assert
+        
         result.Should().HaveCount(2);
         result.First().Username.Should().Be("teacher_jdoe");
     }

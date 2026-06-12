@@ -173,7 +173,7 @@ builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<SchoolERPManagementBLLibrary.Profiles.AppMappingProfile>();
 });
 
-// Register Strategies
+
 builder.Services.AddScoped<IDocumentVerificationStrategy, StudentDocumentVerificationStrategy>();
 builder.Services.AddScoped<IDocumentVerificationStrategy, TeacherDocumentVerificationStrategy>();
 builder.Services.AddScoped<IDocumentVerificationStrategy, ParentDocumentVerificationStrategy>();
@@ -188,7 +188,7 @@ builder.Services.AddScoped<IDocumentVerificationStrategy, ParentDocumentVerifica
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
@@ -218,7 +218,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed database roles and default admin user
+
 app.SeedData();
 
 app.Run();

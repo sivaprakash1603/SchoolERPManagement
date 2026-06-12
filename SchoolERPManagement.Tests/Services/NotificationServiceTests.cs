@@ -26,23 +26,25 @@ public class NotificationServiceTests
             _notificationRepoMock.Object,
             _userNotificationRepoMock.Object,
             _userRepoMock.Object
+        ,
+            new Moq.Mock<AutoMapper.IMapper>().Object
         );
     }
 
     [Fact]
     public async Task SendNotificationAsync_ValidData_ShouldCreateNotificationAndUserNotifications()
     {
-        // Arrange
+        
         var targetUserIds = new List<int> { 2, 3 };
         var dto = new SendNotificationDTO("Important Update", "School closed tomorrow.", 1, targetUserIds);
 
         _userRepoMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(new User { Id = 2 });
         _userRepoMock.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(new User { Id = 3 });
 
-        // Act
+        
         var result = await _notificationService.SendNotificationAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.Title.Should().Be("Important Update");
 
@@ -53,17 +55,17 @@ public class NotificationServiceTests
     [Fact]
     public async Task SendNotificationAsync_InvalidTargetUser_ShouldSkipUser()
     {
-        // Arrange
+        
         var targetUserIds = new List<int> { 2, 999 };
         var dto = new SendNotificationDTO("Important Update", "School closed tomorrow.", 1, targetUserIds);
 
         _userRepoMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(new User { Id = 2 });
         _userRepoMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((User?)null);
 
-        // Act
+        
         var result = await _notificationService.SendNotificationAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         _userNotificationRepoMock.Verify(r => r.AddAsync(It.IsAny<Usernotification>(), true, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -71,7 +73,7 @@ public class NotificationServiceTests
     [Fact]
     public async Task GetUserNotificationsAsync_ShouldReturnUserNotifications()
     {
-        // Arrange
+        
         var notification = new Notification { Id = 1, Title = "Update", Message = "Text", Createdat = DateTime.UtcNow };
         var userNotifications = new List<Usernotification>
         {
@@ -80,10 +82,10 @@ public class NotificationServiceTests
 
         _userNotificationRepoMock.Setup(r => r.Query(true)).Returns(userNotifications.AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _notificationService.GetUserNotificationsAsync(2, CancellationToken.None);
 
-        // Assert
+        
         result.Should().HaveCount(1);
         result.First().Title.Should().Be("Update");
     }

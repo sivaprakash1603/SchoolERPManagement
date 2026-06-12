@@ -92,7 +92,7 @@ public sealed class StudentService : IStudentService
         int rollNo = currentEnrollmentCount + 1;
 
         string generatedUsername = $"ST{rollNo:D3}{classEntity.Classname}{classEntity.Section}";
-        string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); // Simple random password
+        string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); 
 
         var user = new User
         {
@@ -142,7 +142,7 @@ public sealed class StudentService : IStudentService
         }
         catch
         {
-            // Log email sending failure here, but don't stop the student creation process
+            
         }
 
         var response = _mapper.Map<StudentResponseDTO>(student);

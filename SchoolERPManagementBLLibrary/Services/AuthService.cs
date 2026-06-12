@@ -48,8 +48,8 @@ public sealed class AuthService : IAuthService
 
         if (user is null)
         {
-            // For security reasons, don't throw exception if email is not found, just return a fake token or empty string
-            // But since this is an internal API for now, we can return empty or throw. Let's throw for ease of testing.
+            
+            
             throw new EntityNotFoundException("User", dto.Email);
         }
 
@@ -72,7 +72,7 @@ public sealed class AuthService : IAuthService
         }
         catch
         {
-            // Log email sending failure
+            
         }
 
         return user.Resettoken;

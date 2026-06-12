@@ -80,6 +80,9 @@ namespace SchoolERPManagementDALLibrary.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("assignedclassid");
 
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("numeric");
+
                     b.Property<DateOnly?>("Purchasedate")
                         .HasColumnType("date")
                         .HasColumnName("purchasedate");

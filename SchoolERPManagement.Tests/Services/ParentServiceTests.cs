@@ -37,23 +37,25 @@ public class ParentServiceTests
             _userRepoMock.Object,
             _roleRepoMock.Object,
             _emailServiceMock.Object
+        ,
+            new Moq.Mock<AutoMapper.IMapper>().Object
         );
     }
 
     [Fact]
     public async Task AddParentAsync_ValidData_ShouldCreateParentAndUser()
     {
-        // Arrange
+        
         var dto = new CreateParentDTO("robert@example.com", "Robert Doe", "Father", "9876543210");
 
         _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().AsQueryable().BuildMock());
         _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 4, Rolename = "Parent" } }.AsQueryable().BuildMock());
         _parentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Parent>().AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _parentService.AddParentAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.Name.Should().Be("Robert Doe");
 
@@ -65,29 +67,29 @@ public class ParentServiceTests
     [Fact]
     public async Task AddParentAsync_DuplicateEmail_ShouldThrowDuplicateEntityException()
     {
-        // Arrange
+        
         var dto = new CreateParentDTO("robert@example.com", "Robert Doe", "Father", "9876543210");
 
         var existingUser = new User { Email = "robert@example.com" };
         _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User> { existingUser }.AsQueryable().BuildMock());
 
-        // Act
+        
         Func<Task> action = async () => await _parentService.AddParentAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<DuplicateEntityException>().WithMessage("User with email/username 'robert@example.com' already exists.");
     }
 
     [Fact]
     public async Task GetParentByIdAsync_InvalidId_ShouldThrowEntityNotFoundException()
     {
-        // Arrange
+        
         _parentRepoMock.Setup(r => r.Query(true)).Returns(new List<Parent>().AsQueryable().BuildMock());
 
-        // Act
+        
         Func<Task> action = async () => await _parentService.GetParentByIdAsync(999, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<EntityNotFoundException>().WithMessage("Parent with identifier '999' was not found.");
     }
 }

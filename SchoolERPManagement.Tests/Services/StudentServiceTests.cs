@@ -43,13 +43,15 @@ public class StudentServiceTests
             _enrollmentRepoMock.Object,
             _academicYearRepoMock.Object,
             _emailServiceMock.Object
+        ,
+            new Moq.Mock<AutoMapper.IMapper>().Object
         );
     }
 
     [Fact]
     public async Task AddStudentAsync_ValidData_ShouldAddStudentAndEnrollment()
     {
-        // Arrange
+        
         var dto = new CreateStudentDTO("jdoe@example.com", "John Doe", 1, 1, 1);
 
         _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().AsQueryable().BuildMock());
@@ -60,10 +62,10 @@ public class StudentServiceTests
         _studentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Student>().AsQueryable().BuildMock());
         _enrollmentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Studentenrollment>().AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _studentService.AddStudentAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.Name.Should().Be("John Doe");
         
@@ -76,7 +78,7 @@ public class StudentServiceTests
     [Fact]
     public async Task AddStudentAsync_MissingParent_ShouldThrowEntityNotFoundException()
     {
-        // Arrange
+        
         var dto = new CreateStudentDTO("jdoe@example.com", "John Doe", 1, 1, 1);
 
         _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().AsQueryable().BuildMock());
@@ -87,10 +89,10 @@ public class StudentServiceTests
         _studentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Student>().AsQueryable().BuildMock());
         _enrollmentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Studentenrollment>().AsQueryable().BuildMock());
 
-        // Act
+        
         Func<Task> action = async () => await _studentService.AddStudentAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<EntityNotFoundException>().WithMessage("Parent with identifier '1' was not found.");
     }
 }

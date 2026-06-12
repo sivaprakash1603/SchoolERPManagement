@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace SchoolERPManagementDALLibrary.Migrations
 {
-    /// <inheritdoc />
+    
     public partial class AddFeeStructureIdToFeePayment : Migration
     {
-        /// <inheritdoc />
+        
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<DateTime>(
@@ -40,7 +40,7 @@ namespace SchoolERPManagementDALLibrary.Migrations
                 principalColumn: "id");
         }
 
-        /// <inheritdoc />
+        
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(

@@ -89,7 +89,7 @@ public sealed class FeeService : IFeeService
         decimal? totalFeeAmount = null;
         if (enrollment is not null)
         {
-            // Get all fee components for the student's class and academic year
+            
             var feeItemsList = await _feeStructureRepository.Query(true)
                 .Where(fee => fee.Classid == enrollment.Classid && fee.Academicyearid == enrollment.Academicyearid)
                 .OrderBy(fee => fee.Id)
@@ -146,7 +146,7 @@ public sealed class FeeService : IFeeService
                 
             if (exists)
             {
-                return; // Idempotency check: ignore duplicate webhook events
+                return; 
             }
 
             var payment = new Feepayment

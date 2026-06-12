@@ -102,7 +102,7 @@ public sealed class HomeworkService : IHomeworkService
         {
             if (uploadedFileUrl != null)
             {
-                // Optionally delete the old file using _fileStorageService.DeleteFile(submission.Uploadedfileurl);
+                
                 submission.Uploadedfileurl = uploadedFileUrl;
             }
             submission.Submittedat = DateTime.UtcNow;

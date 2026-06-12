@@ -34,13 +34,15 @@ public class DashboardServiceTests
             _feePaymentRepoMock.Object,
             _classRepoMock.Object,
             _assetRepoMock.Object
+        ,
+            new Moq.Mock<AutoMapper.IMapper>().Object
         );
     }
 
     [Fact]
     public async Task GetAdminDashboardMetricsAsync_ShouldReturnMetrics()
     {
-        // Arrange
+        
         var students = new List<Student> { new Student(), new Student() };
         var teachers = new List<Teacher> { new Teacher() };
         var parents = new List<Parent> { new Parent(), new Parent(), new Parent() };
@@ -59,10 +61,10 @@ public class DashboardServiceTests
         _classRepoMock.Setup(r => r.Query(true)).Returns(classes.AsQueryable().BuildMock());
         _assetRepoMock.Setup(r => r.Query(true)).Returns(assets.AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _dashboardService.GetAdminDashboardMetricsAsync(CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.TotalStudents.Should().Be(2);
         result.TotalTeachers.Should().Be(1);

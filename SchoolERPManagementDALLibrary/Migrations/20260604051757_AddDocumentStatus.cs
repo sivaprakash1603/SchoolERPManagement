@@ -4,10 +4,10 @@
 
 namespace SchoolERPManagementDALLibrary.Migrations
 {
-    /// <inheritdoc />
+    
     public partial class AddDocumentStatus : Migration
     {
-        /// <inheritdoc />
+        
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
@@ -35,7 +35,7 @@ namespace SchoolERPManagementDALLibrary.Migrations
                 defaultValue: "Pending");
         }
 
-        /// <inheritdoc />
+        
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(

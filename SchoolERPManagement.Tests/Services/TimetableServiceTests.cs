@@ -30,13 +30,15 @@ public class TimetableServiceTests
             _classRepoMock.Object,
             _subjectRepoMock.Object,
             _teacherRepoMock.Object
+        ,
+            new Moq.Mock<AutoMapper.IMapper>().Object
         );
     }
 
     [Fact]
     public async Task CreateTimetableAsync_ValidData_ShouldCreateTimetable()
     {
-        // Arrange
+        
         var dto = new CreateTimetableDTO(1, 1, 1, "Monday", TimeOnly.Parse("09:00"), TimeOnly.Parse("10:00"), "Room101");
 
         _classRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Class { Id = 1 });
@@ -45,10 +47,10 @@ public class TimetableServiceTests
 
         _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable>().AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _timetableService.CreateTimetableAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.ClassId.Should().Be(1);
         result.SubjectId.Should().Be(1);
@@ -60,7 +62,7 @@ public class TimetableServiceTests
     [Fact]
     public async Task CreateTimetableAsync_ClassClash_ShouldThrowBusinessRuleException()
     {
-        // Arrange
+        
         var dto = new CreateTimetableDTO(1, 1, 1, "Monday", TimeOnly.Parse("09:00"), TimeOnly.Parse("10:00"), "Room101");
 
         _classRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Class { Id = 1 });
@@ -73,17 +75,17 @@ public class TimetableServiceTests
         };
         _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable> { existingClassTimetable }.AsQueryable().BuildMock());
 
-        // Act
+        
         Func<Task> action = async () => await _timetableService.CreateTimetableAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("The class timetable overlaps with an existing slot.");
     }
 
     [Fact]
     public async Task CreateTimetableAsync_TeacherClash_ShouldThrowBusinessRuleException()
     {
-        // Arrange
+        
         var dto = new CreateTimetableDTO(1, 1, 1, "Monday", TimeOnly.Parse("09:00"), TimeOnly.Parse("10:00"), "Room101");
 
         _classRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Class { Id = 1 });
@@ -96,17 +98,17 @@ public class TimetableServiceTests
         };
         _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable> { existingTeacherTimetable }.AsQueryable().BuildMock());
 
-        // Act
+        
         Func<Task> action = async () => await _timetableService.CreateTimetableAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("The teacher already has a timetable slot at this time.");
     }
 
     [Fact]
     public async Task GetClassTimetableAsync_ShouldReturnTimetable()
     {
-        // Arrange
+        
         var timetables = new List<Timetable>
         {
             new Timetable { Id = 1, Classid = 1, Dayofweek = "Monday", Starttime = TimeOnly.Parse("09:00") },
@@ -115,10 +117,10 @@ public class TimetableServiceTests
 
         _timetableRepoMock.Setup(r => r.Query(true)).Returns(timetables.AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _timetableService.GetClassTimetableAsync(1, CancellationToken.None);
 
-        // Assert
+        
         result.Should().HaveCount(2);
         result.First().DayOfWeek.Should().Be("Monday");
     }

@@ -6,10 +6,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace SchoolERPManagementDALLibrary.Migrations
 {
-    /// <inheritdoc />
+    
     public partial class AddStaffAttendance : Migration
     {
-        /// <inheritdoc />
+        
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
@@ -53,7 +53,7 @@ namespace SchoolERPManagementDALLibrary.Migrations
                 column: "Userid");
         }
 
-        /// <inheritdoc />
+        
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

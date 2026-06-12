@@ -27,7 +27,7 @@ public class StripePaymentService : IPaymentGatewayService
                 {
                     PriceData = new SessionLineItemPriceDataOptions
                     {
-                        UnitAmount = (long)(amount * 100), // Stripe expects amounts in cents/paise
+                        UnitAmount = (long)(amount * 100), 
                         Currency = currency,
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {

@@ -41,13 +41,15 @@ public class HomeworkServiceTests
             _classRepoMock.Object,
             _studentRepoMock.Object,
             _fileStorageServiceMock.Object
+        ,
+            new Moq.Mock<AutoMapper.IMapper>().Object
         );
     }
 
     [Fact]
     public async Task CreateHomeworkAsync_ValidData_ShouldCreateHomework()
     {
-        // Arrange
+        
         var mockFile = new Mock<IFormFile>();
         var dto = new CreateHomeworkDTO(1, 1, 1, "Math Assignment", "Do exercises 1 to 10", mockFile.Object, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)));
 
@@ -58,10 +60,10 @@ public class HomeworkServiceTests
         _fileStorageServiceMock.Setup(f => f.UploadFileAsync(mockFile.Object, "homeworks", It.IsAny<CancellationToken>()))
             .ReturnsAsync("/uploads/homeworks/file.pdf");
 
-        // Act
+        
         var result = await _homeworkService.CreateHomeworkAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.Title.Should().Be("Math Assignment");
         result.AttachmentUrl.Should().Be("/uploads/homeworks/file.pdf");
@@ -73,22 +75,22 @@ public class HomeworkServiceTests
     [Fact]
     public async Task CreateHomeworkAsync_InvalidSubject_ShouldThrowEntityNotFoundException()
     {
-        // Arrange
+        
         var dto = new CreateHomeworkDTO(999, 1, 1, "Math Assignment", "Do exercises 1 to 10", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)));
 
         _subjectRepoMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Subject?)null);
 
-        // Act
+        
         Func<Task> action = async () => await _homeworkService.CreateHomeworkAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<EntityNotFoundException>().WithMessage("Subject with identifier '999' was not found.");
     }
 
     [Fact]
     public async Task SubmitHomeworkAsync_NewSubmission_ShouldAddSubmission()
     {
-        // Arrange
+        
         var mockFile = new Mock<IFormFile>();
         var dto = new HomeworkSubmissionDTO(1, 1, mockFile.Object);
 
@@ -100,10 +102,10 @@ public class HomeworkServiceTests
 
         _submissionRepoMock.Setup(r => r.Query(true)).Returns(new List<Homeworksubmission>().AsQueryable().BuildMock());
 
-        // Act
+        
         var result = await _homeworkService.SubmitHomeworkAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Should().NotBeNull();
         result.UploadedFileUrl.Should().Be("/uploads/homeworksubmissions/answer.pdf");
 
@@ -113,16 +115,16 @@ public class HomeworkServiceTests
     [Fact]
     public async Task EvaluateHomeworkAsync_ValidData_ShouldUpdateSubmission()
     {
-        // Arrange
+        
         var dto = new EvaluateHomeworkDTO(1, 90.5m, "Good job", "Reviewed");
 
         var submission = new Homeworksubmission { Id = 1, Homeworkid = 1, Studentid = 1 };
         _submissionRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(submission);
 
-        // Act
+        
         var result = await _homeworkService.EvaluateHomeworkAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         result.Marks.Should().Be(90.5m);
         result.VerificationStatus.Should().Be("Reviewed");
         result.Remarks.Should().Be("Good job");
@@ -133,14 +135,14 @@ public class HomeworkServiceTests
     [Fact]
     public async Task EvaluateHomeworkAsync_InvalidSubmission_ShouldThrowEntityNotFoundException()
     {
-        // Arrange
+        
         var dto = new EvaluateHomeworkDTO(999, 90.5m, "Good job", "Reviewed");
         _submissionRepoMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Homeworksubmission?)null);
 
-        // Act
+        
         Func<Task> action = async () => await _homeworkService.EvaluateHomeworkAsync(dto, CancellationToken.None);
 
-        // Assert
+        
         await action.Should().ThrowAsync<EntityNotFoundException>().WithMessage("Homework submission with identifier '999' was not found.");
     }
 }

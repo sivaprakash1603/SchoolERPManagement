@@ -41,8 +41,8 @@ public sealed class LocalFileStorageService : IFileStorageService
     {
         if (string.IsNullOrWhiteSpace(fileUrl)) return;
 
-        // Convert the URL back to a physical path
-        // e.g. /uploads/folder/file.pdf -> wwwroot/uploads/folder/file.pdf
+        
+        
         var relativePath = fileUrl.TrimStart('/');
         var fullPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", relativePath);
 
