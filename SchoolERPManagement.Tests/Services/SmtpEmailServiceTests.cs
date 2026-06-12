@@ -33,9 +33,7 @@ public class SmtpEmailServiceTests
         
         _smtpSettingsOptions = Options.Create(smtpSettings);
         
-        _emailService = new SmtpEmailService(_smtpSettingsOptions, _smtpClientMock.Object,
-            new Moq.Mock<AutoMapper.IMapper>().Object
-        );
+        _emailService = new SmtpEmailService(_smtpSettingsOptions, _smtpClientMock.Object);
     }
 
     [Fact]

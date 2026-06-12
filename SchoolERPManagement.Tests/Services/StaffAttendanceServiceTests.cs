@@ -22,7 +22,7 @@ public class StaffAttendanceServiceTests
         _userRepoMock = new Mock<IRepository<int, User>>();
 
         _staffAttendanceService = new StaffAttendanceService(_staffAttendanceRepoMock.Object, _userRepoMock.Object,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -35,7 +35,7 @@ public class StaffAttendanceServiceTests
         var user = new User { Id = 1, Username = "teacher_jdoe" };
         _userRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(user);
         
-        _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Staffattendance>().AsQueryable().BuildMock());
+        _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Staffattendance>().BuildMockDbSet().Object);
 
         
         var result = await _staffAttendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
@@ -73,7 +73,7 @@ public class StaffAttendanceServiceTests
         _userRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(user);
 
         var existingAttendance = new Staffattendance { Userid = 1, Date = DateOnly.Parse("2025-01-01") };
-        _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Staffattendance> { existingAttendance }.AsQueryable().BuildMock());
+        _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Staffattendance> { existingAttendance }.BuildMockDbSet().Object);
 
         
         Func<Task> action = async () => await _staffAttendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
@@ -93,7 +93,7 @@ public class StaffAttendanceServiceTests
             new Staffattendance { Id = 2, Userid = 1, User = user, Date = DateOnly.Parse("2025-01-02") }
         };
 
-        _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(attendanceList.AsQueryable().BuildMock());
+        _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(attendanceList.BuildMockDbSet().Object);
 
         
         var result = await _staffAttendanceService.GetAttendanceByUserAsync(1, CancellationToken.None);

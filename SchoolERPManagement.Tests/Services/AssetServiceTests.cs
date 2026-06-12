@@ -31,7 +31,7 @@ public class AssetServiceTests
             _assetTypeRepoMock.Object,
             _classRepoMock.Object
         ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -129,7 +129,7 @@ public class AssetServiceTests
             new Asset { Id = 2, Assetname = "Laptop" }
         };
 
-        _assetRepoMock.Setup(r => r.Query(true)).Returns(assets.AsQueryable().BuildMock());
+        _assetRepoMock.Setup(r => r.Query(true)).Returns(assets.BuildMockDbSet().Object);
 
         
         var result = await _assetService.GetAssetsAsync(CancellationToken.None);

@@ -31,7 +31,7 @@ public class AttendanceServiceTests
             _teacherRepoMock.Object,
             _studentEnrollmentRepoMock.Object
         ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -46,9 +46,9 @@ public class AttendanceServiceTests
 
         var classEntity = new Class { Id = 1, Classteacherid = 1 };
         var enrollment = new Studentenrollment { Studentid = 1, Class = classEntity };
-        _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentenrollment> { enrollment }.AsQueryable().BuildMock());
+        _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentenrollment> { enrollment }.BuildMockDbSet().Object);
 
-        _attendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Attendance>().AsQueryable().BuildMock());
+        _attendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Attendance>().BuildMockDbSet().Object);
 
         
         var result = await _attendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
@@ -70,7 +70,7 @@ public class AttendanceServiceTests
         _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
 
         var existingAttendance = new Attendance { Id = 1, Studentid = 1, Date = DateOnly.Parse("2025-01-01"), Status = "Present" };
-        _attendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Attendance> { existingAttendance }.AsQueryable().BuildMock());
+        _attendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Attendance> { existingAttendance }.BuildMockDbSet().Object);
 
         
         var result = await _attendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
@@ -120,7 +120,7 @@ public class AttendanceServiceTests
 
         var classEntity = new Class { Id = 1, Classteacherid = 1 }; 
         var enrollment = new Studentenrollment { Studentid = 1, Class = classEntity };
-        _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentenrollment> { enrollment }.AsQueryable().BuildMock());
+        _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentenrollment> { enrollment }.BuildMockDbSet().Object);
 
         
         Func<Task> action = async () => await _attendanceService.MarkAttendanceAsync(dto, CancellationToken.None);

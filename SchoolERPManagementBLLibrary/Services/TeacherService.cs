@@ -71,6 +71,10 @@ public sealed class TeacherService : ITeacherService
         {
             throw new DuplicateEntityException("User", "email", dto.Email);
         }
+        if (await _teacherRepository.Query(true).AnyAsync(x => x.Phonenumber == dto.Phonenumber, cancellationToken))
+        {
+            throw new DuplicateEntityException("Teacher", "phonenumber", dto.Phonenumber ?? string.Empty);
+        }
 
         var role = await _roleRepository.Query(true).FirstOrDefaultAsync(r => r.Rolename == "Teacher", cancellationToken);
         if (role is null)

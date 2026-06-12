@@ -14,6 +14,7 @@ public class NotificationServiceTests
     private readonly Mock<IRepository<int, Notification>> _notificationRepoMock;
     private readonly Mock<IRepository<int, Usernotification>> _userNotificationRepoMock;
     private readonly Mock<IRepository<int, User>> _userRepoMock;
+    private readonly Mock<SchoolERPManagementBLLibrary.Interfaces.INotificationPusher> _notificationPusherMock;
     private readonly NotificationService _notificationService;
 
     public NotificationServiceTests()
@@ -21,13 +22,14 @@ public class NotificationServiceTests
         _notificationRepoMock = new Mock<IRepository<int, Notification>>();
         _userNotificationRepoMock = new Mock<IRepository<int, Usernotification>>();
         _userRepoMock = new Mock<IRepository<int, User>>();
+        _notificationPusherMock = new Mock<SchoolERPManagementBLLibrary.Interfaces.INotificationPusher>();
 
         _notificationService = new NotificationService(
             _notificationRepoMock.Object,
             _userNotificationRepoMock.Object,
-            _userRepoMock.Object
-        ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            _userRepoMock.Object,
+            _notificationPusherMock.Object,
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -80,7 +82,7 @@ public class NotificationServiceTests
             new Usernotification { Id = 1, Userid = 2, Notificationid = 1, Notification = notification, Isread = false }
         };
 
-        _userNotificationRepoMock.Setup(r => r.Query(true)).Returns(userNotifications.AsQueryable().BuildMock());
+        _userNotificationRepoMock.Setup(r => r.Query(true)).Returns(userNotifications.BuildMockDbSet().Object);
 
         
         var result = await _notificationService.GetUserNotificationsAsync(2, CancellationToken.None);

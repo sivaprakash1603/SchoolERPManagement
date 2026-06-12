@@ -34,7 +34,7 @@ public class ExamServiceTests
             _subjectRepoMock.Object,
             _studentRepoMock.Object
         ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -78,7 +78,7 @@ public class ExamServiceTests
         _subjectRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Subject { Id = 1 });
         _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
 
-        _examResultRepoMock.Setup(r => r.Query(true)).Returns(new List<Examresult>().AsQueryable().BuildMock());
+        _examResultRepoMock.Setup(r => r.Query(true)).Returns(new List<Examresult>().BuildMockDbSet().Object);
 
         
         var result = await _examService.PublishResultAsync(dto, CancellationToken.None);
@@ -100,7 +100,7 @@ public class ExamServiceTests
         _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
 
         var existingResult = new Examresult { Id = 1, Examid = 1, Subjectid = 1, Studentid = 1, Marks = 95.5m };
-        _examResultRepoMock.Setup(r => r.Query(true)).Returns(new List<Examresult> { existingResult }.AsQueryable().BuildMock());
+        _examResultRepoMock.Setup(r => r.Query(true)).Returns(new List<Examresult> { existingResult }.BuildMockDbSet().Object);
 
         
         var result = await _examService.PublishResultAsync(dto, CancellationToken.None);
@@ -120,7 +120,7 @@ public class ExamServiceTests
             new Examresult { Id = 2, Studentid = 1, Marks = 90.0m }
         };
 
-        _examResultRepoMock.Setup(r => r.Query(true)).Returns(results.AsQueryable().BuildMock());
+        _examResultRepoMock.Setup(r => r.Query(true)).Returns(results.BuildMockDbSet().Object);
 
         
         var result = await _examService.GetStudentResultsAsync(1, CancellationToken.None);

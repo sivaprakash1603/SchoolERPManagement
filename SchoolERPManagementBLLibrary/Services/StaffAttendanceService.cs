@@ -36,6 +36,7 @@ public class StaffAttendanceService : IStaffAttendanceService
         var attendance = new Staffattendance
         {
             Userid = dto.UserId,
+            User = user,
             Date = dto.Date,
             Status = dto.Status,
             Attendancetype = dto.AttendanceType,

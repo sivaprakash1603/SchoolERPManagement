@@ -41,10 +41,8 @@ public class TeacherServiceTests
             _classRepoMock.Object,
             _teacherSubjectRepoMock.Object,
             _roleRepoMock.Object,
-            _salaryRepoMock.Object,
-            _emailServiceMock.Object
-        ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            _emailServiceMock.Object,
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -54,9 +52,9 @@ public class TeacherServiceTests
         
         var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters", 50000m);
 
-        _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().AsQueryable().BuildMock());
-        _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 2, Rolename = "Teacher" } }.AsQueryable().BuildMock());
-        _teacherRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Teacher>().AsQueryable().BuildMock());
+        _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().BuildMockDbSet().Object);
+        _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 2, Rolename = "Teacher" } }.BuildMockDbSet().Object);
+        _teacherRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Teacher>().BuildMockDbSet().Object);
 
         
         var result = await _teacherService.AddTeacherAsync(dto, CancellationToken.None);
@@ -77,7 +75,7 @@ public class TeacherServiceTests
         var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters", 50000m);
 
         var existingUser = new User { Email = "jane@example.com" };
-        _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User> { existingUser }.AsQueryable().BuildMock());
+        _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User> { existingUser }.BuildMockDbSet().Object);
 
         
         Func<Task> action = async () => await _teacherService.AddTeacherAsync(dto, CancellationToken.None);

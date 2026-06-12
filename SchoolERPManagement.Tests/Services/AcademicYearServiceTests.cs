@@ -19,7 +19,7 @@ public class AcademicYearServiceTests
     {
         _academicYearRepoMock = new Mock<IRepository<int, Academicyear>>();
         _academicYearService = new AcademicYearService(_academicYearRepoMock.Object,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -50,7 +50,7 @@ public class AcademicYearServiceTests
             new Academicyear { Id = 2, Yearname = "2024-2025", Startdate = DateOnly.Parse("2024-06-01"), Iscurrent = true }
         };
 
-        _academicYearRepoMock.Setup(r => r.Query(true)).Returns(years.AsQueryable().BuildMock());
+        _academicYearRepoMock.Setup(r => r.Query(true)).Returns(years.BuildMockDbSet().Object);
 
         
         var result = await _academicYearService.GetAllAcademicYearsAsync(CancellationToken.None);
@@ -70,7 +70,7 @@ public class AcademicYearServiceTests
         var yearsList = new List<Academicyear> { oldCurrent, newCurrent };
         
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(newCurrent);
-        _academicYearRepoMock.Setup(r => r.Query(false)).Returns(yearsList.AsQueryable().BuildMock());
+        _academicYearRepoMock.Setup(r => r.Query(false)).Returns(yearsList.BuildMockDbSet().Object);
 
         
         await _academicYearService.SetCurrentAcademicYearAsync(2, CancellationToken.None);

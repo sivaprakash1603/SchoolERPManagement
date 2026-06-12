@@ -44,7 +44,7 @@ public class StudentServiceTests
             _academicYearRepoMock.Object,
             _emailServiceMock.Object
         ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -54,13 +54,13 @@ public class StudentServiceTests
         
         var dto = new CreateStudentDTO("jdoe@example.com", "John Doe", 1, 1, 1);
 
-        _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().AsQueryable().BuildMock());
-        _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 3, Rolename = "Student" } }.AsQueryable().BuildMock());
+        _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().BuildMockDbSet().Object);
+        _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 3, Rolename = "Student" } }.BuildMockDbSet().Object);
         _parentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Parent { Id = 1 });
         _classRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Class { Id = 1, Classname = "10", Section = "A" });
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Academicyear { Id = 1 });
-        _studentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Student>().AsQueryable().BuildMock());
-        _enrollmentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Studentenrollment>().AsQueryable().BuildMock());
+        _studentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Student>().BuildMockDbSet().Object);
+        _enrollmentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Studentenrollment>().BuildMockDbSet().Object);
 
         
         var result = await _studentService.AddStudentAsync(dto, CancellationToken.None);
@@ -81,13 +81,13 @@ public class StudentServiceTests
         
         var dto = new CreateStudentDTO("jdoe@example.com", "John Doe", 1, 1, 1);
 
-        _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().AsQueryable().BuildMock());
-        _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 3, Rolename = "Student" } }.AsQueryable().BuildMock());
+        _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().BuildMockDbSet().Object);
+        _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 3, Rolename = "Student" } }.BuildMockDbSet().Object);
         _classRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Class { Id = 1, Classname = "10", Section = "A" });
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Academicyear { Id = 1 });
         _parentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync((Parent?)null);
-        _studentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Student>().AsQueryable().BuildMock());
-        _enrollmentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Studentenrollment>().AsQueryable().BuildMock());
+        _studentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Student>().BuildMockDbSet().Object);
+        _enrollmentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Studentenrollment>().BuildMockDbSet().Object);
 
         
         Func<Task> action = async () => await _studentService.AddStudentAsync(dto, CancellationToken.None);

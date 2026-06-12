@@ -42,7 +42,7 @@ public class HomeworkServiceTests
             _studentRepoMock.Object,
             _fileStorageServiceMock.Object
         ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -100,7 +100,7 @@ public class HomeworkServiceTests
         _fileStorageServiceMock.Setup(f => f.UploadFileAsync(mockFile.Object, "homeworksubmissions", It.IsAny<CancellationToken>()))
             .ReturnsAsync("/uploads/homeworksubmissions/answer.pdf");
 
-        _submissionRepoMock.Setup(r => r.Query(true)).Returns(new List<Homeworksubmission>().AsQueryable().BuildMock());
+        _submissionRepoMock.Setup(r => r.Query(true)).Returns(new List<Homeworksubmission>().BuildMockDbSet().Object);
 
         
         var result = await _homeworkService.SubmitHomeworkAsync(dto, CancellationToken.None);

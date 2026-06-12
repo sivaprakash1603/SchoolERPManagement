@@ -37,5 +37,17 @@ public static class DataSeeder
             context.Users.Add(adminUser);
             context.SaveChanges();
         }
+
+        // Fix mock data hashes
+        var dummyUsers = context.Users.Where(u => u.Passwordhash == "hash").ToList();
+        if (dummyUsers.Any())
+        {
+            var validHash = PasswordHasher.Hash("admin123");
+            foreach (var u in dummyUsers)
+            {
+                u.Passwordhash = validHash;
+            }
+            context.SaveChanges();
+        }
     }
 }

@@ -34,8 +34,6 @@ public class DashboardServiceTests
             _feePaymentRepoMock.Object,
             _classRepoMock.Object,
             _assetRepoMock.Object
-        ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
         );
     }
 
@@ -54,12 +52,12 @@ public class DashboardServiceTests
         var classes = new List<Class> { new Class(), new Class() };
         var assets = new List<Asset> { new Asset(), new Asset(), new Asset() };
 
-        _studentRepoMock.Setup(r => r.Query(true)).Returns(students.AsQueryable().BuildMock());
-        _teacherRepoMock.Setup(r => r.Query(true)).Returns(teachers.AsQueryable().BuildMock());
-        _parentRepoMock.Setup(r => r.Query(true)).Returns(parents.AsQueryable().BuildMock());
-        _feePaymentRepoMock.Setup(r => r.Query(true)).Returns(fees.AsQueryable().BuildMock());
-        _classRepoMock.Setup(r => r.Query(true)).Returns(classes.AsQueryable().BuildMock());
-        _assetRepoMock.Setup(r => r.Query(true)).Returns(assets.AsQueryable().BuildMock());
+        _studentRepoMock.Setup(r => r.Query(true)).Returns(students.BuildMockDbSet().Object);
+        _teacherRepoMock.Setup(r => r.Query(true)).Returns(teachers.BuildMockDbSet().Object);
+        _parentRepoMock.Setup(r => r.Query(true)).Returns(parents.BuildMockDbSet().Object);
+        _feePaymentRepoMock.Setup(r => r.Query(true)).Returns(fees.BuildMockDbSet().Object);
+        _classRepoMock.Setup(r => r.Query(true)).Returns(classes.BuildMockDbSet().Object);
+        _assetRepoMock.Setup(r => r.Query(true)).Returns(assets.BuildMockDbSet().Object);
 
         
         var result = await _dashboardService.GetAdminDashboardMetricsAsync(CancellationToken.None);

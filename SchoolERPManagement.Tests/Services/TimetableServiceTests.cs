@@ -31,7 +31,7 @@ public class TimetableServiceTests
             _subjectRepoMock.Object,
             _teacherRepoMock.Object
         ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -45,7 +45,7 @@ public class TimetableServiceTests
         _subjectRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Subject { Id = 1 });
         _teacherRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Teacher { Id = 1 });
 
-        _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable>().AsQueryable().BuildMock());
+        _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable>().BuildMockDbSet().Object);
 
         
         var result = await _timetableService.CreateTimetableAsync(dto, CancellationToken.None);
@@ -73,7 +73,7 @@ public class TimetableServiceTests
         {
             Classid = 1, Teacherid = 999, Dayofweek = "Monday", Starttime = TimeOnly.Parse("09:30"), Endtime = TimeOnly.Parse("10:30")
         };
-        _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable> { existingClassTimetable }.AsQueryable().BuildMock());
+        _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable> { existingClassTimetable }.BuildMockDbSet().Object);
 
         
         Func<Task> action = async () => await _timetableService.CreateTimetableAsync(dto, CancellationToken.None);
@@ -96,7 +96,7 @@ public class TimetableServiceTests
         {
             Classid = 999, Teacherid = 1, Dayofweek = "Monday", Starttime = TimeOnly.Parse("08:30"), Endtime = TimeOnly.Parse("09:30")
         };
-        _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable> { existingTeacherTimetable }.AsQueryable().BuildMock());
+        _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable> { existingTeacherTimetable }.BuildMockDbSet().Object);
 
         
         Func<Task> action = async () => await _timetableService.CreateTimetableAsync(dto, CancellationToken.None);
@@ -115,7 +115,7 @@ public class TimetableServiceTests
             new Timetable { Id = 2, Classid = 1, Dayofweek = "Tuesday", Starttime = TimeOnly.Parse("09:00") }
         };
 
-        _timetableRepoMock.Setup(r => r.Query(true)).Returns(timetables.AsQueryable().BuildMock());
+        _timetableRepoMock.Setup(r => r.Query(true)).Returns(timetables.BuildMockDbSet().Object);
 
         
         var result = await _timetableService.GetClassTimetableAsync(1, CancellationToken.None);

@@ -22,7 +22,7 @@ public class ClassServiceTests
         _teacherRepoMock = new Mock<IRepository<int, Teacher>>();
 
         _classService = new ClassService(_classRepoMock.Object, _teacherRepoMock.Object,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -36,7 +36,7 @@ public class ClassServiceTests
             new Class { Id = 2, Classname = "10", Section = "B" }
         };
 
-        _classRepoMock.Setup(r => r.Query(true)).Returns(classes.AsQueryable().BuildMock());
+        _classRepoMock.Setup(r => r.Query(true)).Returns(classes.BuildMockDbSet().Object);
 
         
         var result = await _classService.GetAllClassesAsync(CancellationToken.None);

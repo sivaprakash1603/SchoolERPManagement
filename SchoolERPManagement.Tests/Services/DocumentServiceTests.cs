@@ -49,7 +49,7 @@ public class DocumentServiceTests
             _teacherRepoMock.Object,
             new List<IDocumentVerificationStrategy> { _strategyMock.Object }
         ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -119,8 +119,8 @@ public class DocumentServiceTests
         var blobUrl = "/uploads/studentdocuments/doc.pdf";
         var studentDoc = new Studentdocument { Id = 1, Bloburl = blobUrl };
         
-        _studentDocRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentdocument> { studentDoc }.AsQueryable().BuildMock());
-        _teacherDocRepoMock.Setup(r => r.Query(true)).Returns(new List<Teacherdocument>().AsQueryable().BuildMock());
+        _studentDocRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentdocument> { studentDoc }.BuildMockDbSet().Object);
+        _teacherDocRepoMock.Setup(r => r.Query(true)).Returns(new List<Teacherdocument>().BuildMockDbSet().Object);
 
         
         await _documentService.DeleteDocumentAsync(blobUrl, CancellationToken.None);

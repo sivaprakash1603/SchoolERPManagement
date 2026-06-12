@@ -12,17 +12,20 @@ public sealed class NotificationService : INotificationService
     private readonly IRepository<int, Notification> _notificationRepository;
     private readonly IRepository<int, Usernotification> _userNotificationRepository;
     private readonly IRepository<int, User> _userRepository;
+    private readonly INotificationPusher _notificationPusher;
     private readonly IMapper _mapper;
 
     public NotificationService(
         IRepository<int, Notification> notificationRepository,
         IRepository<int, Usernotification> userNotificationRepository,
         IRepository<int, User> userRepository,
+        INotificationPusher notificationPusher,
         IMapper mapper)
     {
         _notificationRepository = notificationRepository;
         _userNotificationRepository = userNotificationRepository;
         _userRepository = userRepository;
+        _notificationPusher = notificationPusher;
         _mapper = mapper;
     }
 
@@ -37,6 +40,8 @@ public sealed class NotificationService : INotificationService
         };
 
         await _notificationRepository.AddAsync(notification, save: true, ct: cancellationToken);
+
+        var responseDto = _mapper.Map<NotificationResponseDTO>(notification);
 
         foreach (var userId in dto.TargetUserIds.Distinct())
         {
@@ -53,9 +58,10 @@ public sealed class NotificationService : INotificationService
             };
 
             await _userNotificationRepository.AddAsync(userNotification, save: true, ct: cancellationToken);
+            await _notificationPusher.PushNotificationAsync(userId, responseDto, cancellationToken);
         }
 
-        return _mapper.Map<NotificationResponseDTO>(notification);
+        return responseDto;
     }
 
     public async Task<IReadOnlyList<UserNotificationResponseDTO>> GetUserNotificationsAsync(int userId, CancellationToken cancellationToken)

@@ -25,7 +25,7 @@ public class AbstractRepositoryTests
     {
         
         var role = new Role { Rolename = "TestRole" };
-        var mockSet = new List<Role>().AsQueryable().BuildMockDbSet();
+        var mockSet = new List<Role>().BuildMockDbSet();
         _contextMock.Setup(c => c.Set<Role>()).Returns(mockSet.Object);
 
         
@@ -41,7 +41,7 @@ public class AbstractRepositoryTests
     {
         
         var role = new Role { Rolename = "OldRole" };
-        var mockSet = new List<Role> { role }.AsQueryable().BuildMockDbSet();
+        var mockSet = new List<Role> { role }.BuildMockDbSet();
         _contextMock.Setup(c => c.Set<Role>()).Returns(mockSet.Object);
 
         
@@ -58,7 +58,7 @@ public class AbstractRepositoryTests
     {
         
         var role = new Role { Rolename = "ToDelete" };
-        var mockSet = new List<Role> { role }.AsQueryable().BuildMockDbSet();
+        var mockSet = new List<Role> { role }.BuildMockDbSet();
         _contextMock.Setup(c => c.Set<Role>()).Returns(mockSet.Object);
 
         
@@ -78,7 +78,7 @@ public class AbstractRepositoryTests
             new Role { Rolename = "Role1" },
             new Role { Rolename = "Role2" }
         };
-        var mockSet = roles.AsQueryable().BuildMockDbSet();
+        var mockSet = roles.BuildMockDbSet();
         _contextMock.Setup(c => c.Set<Role>()).Returns(mockSet.Object);
 
         

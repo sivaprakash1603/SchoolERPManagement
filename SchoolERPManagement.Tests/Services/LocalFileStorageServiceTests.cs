@@ -13,7 +13,7 @@ public class LocalFileStorageServiceTests
 
     public LocalFileStorageServiceTests()
     {
-        _fileStorageService = new LocalFileStorageService(new Moq.Mock<AutoMapper.IMapper>().Object);
+        _fileStorageService = new LocalFileStorageService();
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class LocalFileStorageServiceTests
     {
         
         var content = "This is a dummy file";
-        var fileName = "dummy.txt";
+        var fileName = "dummy.pdf";
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
         
         var fileMock = new Mock<IFormFile>();
@@ -39,7 +39,7 @@ public class LocalFileStorageServiceTests
         
         result.Should().NotBeNullOrEmpty();
         result.Should().StartWith($"/uploads/{folderName}/");
-        result.Should().EndWith(".txt");
+        result.Should().EndWith(".pdf");
 
         
         _fileStorageService.DeleteFile(result);

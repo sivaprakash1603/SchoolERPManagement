@@ -38,7 +38,7 @@ public class AuthServiceTests
             _roleRepositoryMock.Object,
             tokenGenerator,
             _emailServiceMock.Object,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -56,8 +56,8 @@ public class AuthServiceTests
             Role = new Role { Rolename = "Admin" }
         };
 
-        var usersList = new List<User> { user }.AsQueryable();
-        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMock());
+        var usersList = new List<User> { user };
+        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMockDbSet().Object);
 
         var dto = new LoginRequestDTO("jdoe", password);
 
@@ -81,8 +81,8 @@ public class AuthServiceTests
             Isactive = true
         };
 
-        var usersList = new List<User> { user }.AsQueryable();
-        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMock());
+        var usersList = new List<User> { user };
+        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMockDbSet().Object);
 
         var dto = new LoginRequestDTO("jdoe", "wrongpassword");
 
@@ -98,8 +98,8 @@ public class AuthServiceTests
     {
         
         var user = new User { Email = "test@example.com", Resettoken = null };
-        var usersList = new List<User> { user }.AsQueryable();
-        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMock());
+        var usersList = new List<User> { user };
+        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMockDbSet().Object);
 
         var dto = new ForgotPasswordDTO("test@example.com");
 
@@ -123,8 +123,8 @@ public class AuthServiceTests
             Resettoken = token,
             Resettokenexpiry = DateTime.UtcNow.AddMinutes(30)
         };
-        var usersList = new List<User> { user }.AsQueryable();
-        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMock());
+        var usersList = new List<User> { user };
+        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMockDbSet().Object);
 
         var dto = new ResetPasswordDTO("test@example.com", token, "newPassword123");
 
@@ -149,8 +149,8 @@ public class AuthServiceTests
             Resettoken = token,
             Resettokenexpiry = DateTime.UtcNow.AddMinutes(-10) 
         };
-        var usersList = new List<User> { user }.AsQueryable();
-        _userRepositoryMock.Setup(r => r.Query(false)).Returns(usersList.BuildMock());
+        var usersList = new List<User> { user };
+        _userRepositoryMock.Setup(r => r.Query(false)).Returns(usersList.BuildMockDbSet().Object);
 
         var dto = new ResetPasswordDTO("test@example.com", token, "newPassword123");
 

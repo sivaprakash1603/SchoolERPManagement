@@ -19,7 +19,7 @@ public class SubjectServiceTests
     {
         _subjectRepoMock = new Mock<IRepository<int, Subject>>();
         _subjectService = new SubjectService(_subjectRepoMock.Object,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -28,7 +28,7 @@ public class SubjectServiceTests
     {
         
         var dto = new CreateSubjectDTO("Mathematics");
-        _subjectRepoMock.Setup(r => r.Query(true)).Returns(new List<Subject>().AsQueryable().BuildMock());
+        _subjectRepoMock.Setup(r => r.Query(true)).Returns(new List<Subject>().BuildMockDbSet().Object);
 
         
         var result = await _subjectService.CreateSubjectAsync(dto, CancellationToken.None);
@@ -46,7 +46,7 @@ public class SubjectServiceTests
         
         var dto = new CreateSubjectDTO("Mathematics");
         var existing = new Subject { Subjectname = "mathematics" };
-        _subjectRepoMock.Setup(r => r.Query(true)).Returns(new List<Subject> { existing }.AsQueryable().BuildMock());
+        _subjectRepoMock.Setup(r => r.Query(true)).Returns(new List<Subject> { existing }.BuildMockDbSet().Object);
 
         
         Func<Task> action = async () => await _subjectService.CreateSubjectAsync(dto, CancellationToken.None);
@@ -92,7 +92,7 @@ public class SubjectServiceTests
         var dto = new CreateSubjectDTO("NewName");
         
         _subjectRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(subject);
-        _subjectRepoMock.Setup(r => r.Query(true)).Returns(new List<Subject>().AsQueryable().BuildMock());
+        _subjectRepoMock.Setup(r => r.Query(true)).Returns(new List<Subject>().BuildMockDbSet().Object);
 
         
         var result = await _subjectService.UpdateSubjectAsync(1, dto, CancellationToken.None);

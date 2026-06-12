@@ -34,7 +34,8 @@ public class AppMappingProfile : Profile
 
         
         CreateMap<Attendance, AttendanceResponseDTO>();
-        CreateMap<Staffattendance, StaffAttendanceResponseDTO>();
+        CreateMap<Staffattendance, StaffAttendanceResponseDTO>()
+            .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.User != null ? src.User.Username : string.Empty));
 
         
         CreateMap<User, AuthResponseDTO>()

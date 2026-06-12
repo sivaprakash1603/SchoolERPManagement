@@ -36,7 +36,7 @@ public class FeeServiceTests
             _feeStructureRepoMock.Object,
             _paymentGatewayMock.Object
         ,
-            new Moq.Mock<AutoMapper.IMapper>().Object
+            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
 
@@ -46,6 +46,9 @@ public class FeeServiceTests
         
         var dto = new FeePaymentDTO(1, 1, 5000m, DateTime.Parse("2025-01-01T10:00:00Z"), "Credit Card", "TXN123");
         _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
+        _feePaymentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Feepayment>().BuildMockDbSet().Object);
+        _studentEnrollmentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Studentenrollment> { new Studentenrollment { Studentid = 1, Classid = 1, Academicyearid = 1 } }.BuildMockDbSet().Object);
+        _feeStructureRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Feestructure> { new Feestructure { Id = 1, Classid = 1, Academicyearid = 1, Totalamount = 5000m } }.BuildMockDbSet().Object);
 
         
         var result = await _feeService.PayFeesAsync(dto, CancellationToken.None);
@@ -82,16 +85,16 @@ public class FeeServiceTests
         {
             new Feepayment { Id = 1, Studentid = 1, Feestructureid = 1, Amountpaid = 1000m, Paymentdate = DateTime.Parse("2025-01-01T10:00:00Z") }
         };
-        _feePaymentRepoMock.Setup(r => r.Query(true)).Returns(payments.AsQueryable().BuildMock());
+        _feePaymentRepoMock.Setup(r => r.Query(true)).Returns(payments.BuildMockDbSet().Object);
 
         var enrollment = new Studentenrollment { Id = 1, Studentid = 1, Classid = 1, Academicyearid = 1 };
-        _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentenrollment> { enrollment }.AsQueryable().BuildMock());
+        _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentenrollment> { enrollment }.BuildMockDbSet().Object);
 
         var feeStructures = new List<Feestructure>
         {
             new Feestructure { Id = 1, Classid = 1, Academicyearid = 1, Feename = "Tuition", Totalamount = 5000m }
         };
-        _feeStructureRepoMock.Setup(r => r.Query(true)).Returns(feeStructures.AsQueryable().BuildMock());
+        _feeStructureRepoMock.Setup(r => r.Query(true)).Returns(feeStructures.BuildMockDbSet().Object);
 
         
         var result = await _feeService.GetFeeDetailsAsync(1, CancellationToken.None);
@@ -111,7 +114,7 @@ public class FeeServiceTests
         {
             new Feepayment { Id = 1, Studentid = 1, Feestructureid = 1, Amountpaid = 1000m, Paymentdate = DateTime.Parse("2025-01-01T10:00:00Z") }
         };
-        _feePaymentRepoMock.Setup(r => r.Query(true)).Returns(payments.AsQueryable().BuildMock());
+        _feePaymentRepoMock.Setup(r => r.Query(true)).Returns(payments.BuildMockDbSet().Object);
 
         
         var result = await _feeService.GetPaymentHistoryAsync(1, CancellationToken.None);
@@ -148,6 +151,7 @@ public class FeeServiceTests
         var paymentEvent = new PaymentSuccessEventDTO(1, 1, 5000m, "TXN123", "Stripe");
 
         _paymentGatewayMock.Setup(p => p.ParseWebhookEventAsync(json, signature)).ReturnsAsync(paymentEvent);
+        _feePaymentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Feepayment>().BuildMockDbSet().Object);
 
         
         await _feeService.HandleStripeWebhookAsync(json, signature, CancellationToken.None);

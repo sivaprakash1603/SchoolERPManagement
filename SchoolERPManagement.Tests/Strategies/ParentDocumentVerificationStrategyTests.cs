@@ -56,7 +56,7 @@ public class ParentDocumentVerificationStrategyTests
         {
             new Studentenrollment { Student = new Student { Parentid = 1 }, Class = new Class { Classteacher = new Teacher { Userid = 1 } } }
         };
-        _enrollmentRepoMock.Setup(r => r.Query(true)).Returns(enrollments.AsQueryable().BuildMock());
+        _enrollmentRepoMock.Setup(r => r.Query(true)).Returns(enrollments.BuildMockDbSet().Object);
 
         await _strategy.VerifyAsync(dto, 1, "Teacher", CancellationToken.None);
 
@@ -74,7 +74,7 @@ public class ParentDocumentVerificationStrategyTests
         {
             new Studentenrollment { Student = new Student { Parentid = 1 }, Class = new Class { Classteacher = new Teacher { Userid = 999 } } }
         };
-        _enrollmentRepoMock.Setup(r => r.Query(true)).Returns(enrollments.AsQueryable().BuildMock());
+        _enrollmentRepoMock.Setup(r => r.Query(true)).Returns(enrollments.BuildMockDbSet().Object);
 
         Func<Task> action = async () => await _strategy.VerifyAsync(dto, 1, "Teacher", CancellationToken.None);
 
