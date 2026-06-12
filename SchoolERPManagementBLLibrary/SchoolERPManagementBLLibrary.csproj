@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Stripe.net" Version="51.2.0" />
   </ItemGroup>

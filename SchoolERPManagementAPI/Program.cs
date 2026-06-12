@@ -21,6 +21,9 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Serilog;
 using Microsoft.Extensions.FileProviders;
+using FluentValidation;
+using SchoolERPManagementAPI.Filters;
+using SchoolERPManagementBLLibrary.Validators;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -123,7 +126,10 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => 
+{
+    options.Filters.Add<ValidationFilterAttribute>();
+});
 #region Repository
 builder.Services.AddScoped<IRepository<int, Academicyear>, AbstractRepository<int, Academicyear>>();
 builder.Services.AddScoped<IRepository<int, Asset>, AbstractRepository<int, Asset>>();
@@ -196,6 +202,9 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<IDocumentVerificationStrategy, StudentDocumentVerificationStrategy>();
 builder.Services.AddScoped<IDocumentVerificationStrategy, TeacherDocumentVerificationStrategy>();
 builder.Services.AddScoped<IDocumentVerificationStrategy, ParentDocumentVerificationStrategy>();
+
+// Register FluentValidation Validators from the assembly containing our validators
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 #endregion
 
 
