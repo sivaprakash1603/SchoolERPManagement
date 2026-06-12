@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Document;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -23,6 +24,7 @@ public sealed class DocumentService : IDocumentService
     private readonly IFileStorageService _fileStorageService;
     private readonly IRepository<int, Teacher> _teacherRepository;
     private readonly IEnumerable<IDocumentVerificationStrategy> _verificationStrategies;
+    private readonly IMapper _mapper;
 
     public DocumentService(
         IRepository<int, Studentdocument> studentDocumentRepository,
@@ -33,7 +35,8 @@ public sealed class DocumentService : IDocumentService
         IRepository<int, Class> classRepository,
         IFileStorageService fileStorageService,
         IRepository<int, Teacher> teacherRepository,
-        IEnumerable<IDocumentVerificationStrategy> verificationStrategies)
+        IEnumerable<IDocumentVerificationStrategy> verificationStrategies,
+        IMapper mapper)
     {
         _studentDocumentRepository = studentDocumentRepository;
         _teacherDocumentRepository = teacherDocumentRepository;
@@ -44,6 +47,7 @@ public sealed class DocumentService : IDocumentService
         _fileStorageService = fileStorageService;
         _teacherRepository = teacherRepository;
         _verificationStrategies = verificationStrategies;
+        _mapper = mapper;
     }
 
     public async Task<StudentDocumentResponseDTO> UploadStudentDocumentAsync(IFormFile file, int studentId, CancellationToken cancellationToken)
@@ -64,7 +68,7 @@ public sealed class DocumentService : IDocumentService
         };
 
         await _studentDocumentRepository.AddAsync(document, save: true, ct: cancellationToken);
-        return new StudentDocumentResponseDTO(document.Id, document.Studentid, document.Documenttype, document.Bloburl, document.Uploadedat);
+        return _mapper.Map<StudentDocumentResponseDTO>(document);
     }
 
     public async Task<TeacherDocumentResponseDTO> UploadTeacherDocumentAsync(IFormFile file, int teacherId, CancellationToken cancellationToken)
@@ -85,7 +89,7 @@ public sealed class DocumentService : IDocumentService
         };
 
         await _teacherDocumentRepository.AddAsync(document, save: true, ct: cancellationToken);
-        return new TeacherDocumentResponseDTO(document.Id, document.Teacherid, document.Documenttype, document.Bloburl, document.Uploadedat);
+        return _mapper.Map<TeacherDocumentResponseDTO>(document);
     }
 
     public async Task DeleteDocumentAsync(string blobUrl, CancellationToken cancellationToken)

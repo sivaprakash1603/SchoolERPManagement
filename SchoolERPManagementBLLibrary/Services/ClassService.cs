@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Class;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -11,18 +12,19 @@ public sealed class ClassService : IClassService
 {
     private readonly IRepository<int, Class> _classRepository;
     private readonly IRepository<int, Teacher> _teacherRepository;
+    private readonly IMapper _mapper;
 
-    public ClassService(IRepository<int, Class> classRepository, IRepository<int, Teacher> teacherRepository)
+    public ClassService(IRepository<int, Class> classRepository, IRepository<int, Teacher> teacherRepository, IMapper mapper)
     {
         _classRepository = classRepository;
         _teacherRepository = teacherRepository;
+        _mapper = mapper;
     }
 
     public async Task<IReadOnlyList<ClassResponseDTO>> GetAllClassesAsync(CancellationToken cancellationToken)
     {
-        return await _classRepository.Query(true)
-            .Select(classEntity => new ClassResponseDTO(classEntity.Id, classEntity.Classname, classEntity.Section, classEntity.Classteacherid))
-            .ToListAsync(cancellationToken);
+        var items = await _classRepository.Query(true).ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<ClassResponseDTO>>(items);
     }
 
     public async Task<ClassResponseDTO> CreateClassAsync(CreateClassDTO dto, CancellationToken cancellationToken)
@@ -40,6 +42,6 @@ public sealed class ClassService : IClassService
         };
 
         await _classRepository.AddAsync(classEntity, save: true, ct: cancellationToken);
-        return new ClassResponseDTO(classEntity.Id, classEntity.Classname, classEntity.Section, classEntity.Classteacherid);
+        return _mapper.Map<ClassResponseDTO>(classEntity);
     }
 }

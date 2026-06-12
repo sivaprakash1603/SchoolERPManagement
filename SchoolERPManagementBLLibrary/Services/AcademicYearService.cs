@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.AcademicYear;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -10,10 +11,12 @@ namespace SchoolERPManagementBLLibrary.Services;
 public sealed class AcademicYearService : IAcademicYearService
 {
     private readonly IRepository<int, Academicyear> _academicYearRepository;
+    private readonly IMapper _mapper;
 
-    public AcademicYearService(IRepository<int, Academicyear> academicYearRepository)
+    public AcademicYearService(IRepository<int, Academicyear> academicYearRepository, IMapper mapper)
     {
         _academicYearRepository = academicYearRepository;
+        _mapper = mapper;
     }
 
     public async Task<AcademicYearResponseDTO> CreateAcademicYearAsync(CreateAcademicYearDTO dto, CancellationToken cancellationToken)
@@ -27,15 +30,15 @@ public sealed class AcademicYearService : IAcademicYearService
         };
 
         await _academicYearRepository.AddAsync(academicYear, save: true, ct: cancellationToken);
-        return new AcademicYearResponseDTO(academicYear.Id, academicYear.Yearname, academicYear.Startdate, academicYear.Enddate, academicYear.Iscurrent ?? false);
+        return _mapper.Map<AcademicYearResponseDTO>(academicYear);
     }
 
     public async Task<IReadOnlyList<AcademicYearResponseDTO>> GetAllAcademicYearsAsync(CancellationToken cancellationToken)
     {
-        return await _academicYearRepository.Query(true)
+        var items = await _academicYearRepository.Query(true)
             .OrderByDescending(a => a.Startdate)
-            .Select(a => new AcademicYearResponseDTO(a.Id, a.Yearname, a.Startdate, a.Enddate, a.Iscurrent ?? false))
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<AcademicYearResponseDTO>>(items);
     }
 
     public async Task SetCurrentAcademicYearAsync(int id, CancellationToken cancellationToken)

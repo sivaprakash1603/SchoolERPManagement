@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Parent;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -16,6 +17,7 @@ public sealed class ParentService : IParentService
     private readonly IRepository<int, User> _userRepository;
     private readonly IRepository<int, Role> _roleRepository;
     private readonly IEmailService _emailService;
+    private readonly IMapper _mapper;
 
     public ParentService(
         IRepository<int, Parent> parentRepository,
@@ -23,7 +25,8 @@ public sealed class ParentService : IParentService
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
         IRepository<int, User> userRepository,
         IRepository<int, Role> roleRepository,
-        IEmailService emailService)
+        IEmailService emailService,
+        IMapper mapper)
     {
         _parentRepository = parentRepository;
         _studentRepository = studentRepository;
@@ -31,6 +34,7 @@ public sealed class ParentService : IParentService
         _userRepository = userRepository;
         _roleRepository = roleRepository;
         _emailService = emailService;
+        _mapper = mapper;
     }
 
     public async Task<ParentResponseDTO> GetParentByIdAsync(int id, CancellationToken cancellationToken)
@@ -38,7 +42,7 @@ public sealed class ParentService : IParentService
         var parent = await _parentRepository.Query(true).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         return parent is null
             ? throw new EntityNotFoundException("Parent", id.ToString())
-            : new ParentResponseDTO(parent.Id, parent.Userid, parent.Name, parent.Relation, parent.Phonenumber, null);
+            : _mapper.Map<ParentResponseDTO>(parent);
     }
 
     public async Task<IReadOnlyList<ChildResponseDTO>> GetChildrenAsync(int parentId, CancellationToken cancellationToken)
@@ -130,7 +134,8 @@ public sealed class ParentService : IParentService
             // Log email sending failure here
         }
 
-        return new ParentResponseDTO(parent.Id, parent.Userid, parent.Name, parent.Relation, parent.Phonenumber, generatedPassword);
+        var response = _mapper.Map<ParentResponseDTO>(parent);
+        return response with { GeneratedPassword = generatedPassword };
     }
 
     public async Task<int?> GetParentIdByUserIdAsync(int userId, CancellationToken cancellationToken)

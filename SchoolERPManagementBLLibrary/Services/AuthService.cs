@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Auth;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -14,13 +15,15 @@ public sealed class AuthService : IAuthService
     private readonly IRepository<int, Role> _roleRepository;
     private readonly JwtTokenGenerator _tokenGenerator;
     private readonly IEmailService _emailService;
+    private readonly IMapper _mapper;
 
-    public AuthService(IRepository<int, User> userRepository, IRepository<int, Role> roleRepository, JwtTokenGenerator tokenGenerator, IEmailService emailService)
+    public AuthService(IRepository<int, User> userRepository, IRepository<int, Role> roleRepository, JwtTokenGenerator tokenGenerator, IEmailService emailService, IMapper mapper)
     {
         _userRepository = userRepository;
         _roleRepository = roleRepository;
         _tokenGenerator = tokenGenerator;
         _emailService = emailService;
+        _mapper = mapper;
     }
 
     public async Task<AuthResponseDTO> LoginAsync(LoginRequestDTO dto, CancellationToken cancellationToken)
@@ -34,7 +37,8 @@ public sealed class AuthService : IAuthService
             throw new BusinessRuleException("Invalid username/email or password.");
         }
 
-        return new AuthResponseDTO(user.Id, user.Username, user.Email, user.Roleid, user.Role.Rolename, _tokenGenerator.GenerateToken(user, user.Role));
+        var response = _mapper.Map<AuthResponseDTO>(user);
+        return response with { AccessToken = _tokenGenerator.GenerateToken(user, user.Role) };
     }
 
     public async Task<string> ForgotPasswordAsync(ForgotPasswordDTO dto, CancellationToken cancellationToken)

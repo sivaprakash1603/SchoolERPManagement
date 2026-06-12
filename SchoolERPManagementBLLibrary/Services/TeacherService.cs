@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Teacher;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -17,6 +18,7 @@ public sealed class TeacherService : ITeacherService
     private readonly IRepository<int, Teachersubject> _teacherSubjectRepository;
     private readonly IRepository<int, Role> _roleRepository;
     private readonly IEmailService _emailService;
+    private readonly IMapper _mapper;
 
     public TeacherService(
         IRepository<int, Teacher> teacherRepository,
@@ -25,7 +27,8 @@ public sealed class TeacherService : ITeacherService
         IRepository<int, Class> classRepository,
         IRepository<int, Teachersubject> teacherSubjectRepository,
         IRepository<int, Role> roleRepository,
-        IEmailService emailService)
+        IEmailService emailService,
+        IMapper mapper)
     {
         _teacherRepository = teacherRepository;
         _userRepository = userRepository;
@@ -34,13 +37,16 @@ public sealed class TeacherService : ITeacherService
         _teacherSubjectRepository = teacherSubjectRepository;
         _roleRepository = roleRepository;
         _emailService = emailService;
+        _mapper = mapper;
     }
 
     public async Task<IReadOnlyList<TeacherResponseDTO>> GetAllTeachersAsync(CancellationToken cancellationToken)
     {
-        return await _teacherRepository.Query(true)
-            .Select(teacher => new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, null, teacher.User.Username, teacher.Classes.FirstOrDefault() != null ? teacher.Classes.FirstOrDefault().Classname : null, teacher.Classes.FirstOrDefault() != null ? teacher.Classes.FirstOrDefault().Section : null))
+        var items = await _teacherRepository.Query(true)
+            .Include(t => t.User)
+            .Include(t => t.Classes)
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<TeacherResponseDTO>>(items);
     }
 
     public async Task<TeacherResponseDTO> GetTeacherByIdAsync(int id, CancellationToken cancellationToken)
@@ -48,7 +54,7 @@ public sealed class TeacherService : ITeacherService
         var teacher = await _teacherRepository.Query(true).Include(t=>t.User).Include(t=>t.Classes).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         return teacher is null
             ? throw new EntityNotFoundException("Teacher", id.ToString())
-            : new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, null, teacher.User.Username, teacher.Classes.FirstOrDefault()?.Classname, teacher.Classes.FirstOrDefault()?.Section);
+            : _mapper.Map<TeacherResponseDTO>(teacher);
     }
 
     public async Task<TeacherResponseDTO> GetTeacherByUsernameAsync(string username, CancellationToken cancellationToken)
@@ -56,7 +62,7 @@ public sealed class TeacherService : ITeacherService
         var teacher = await _teacherRepository.Query(true).Include(t=>t.User).Include(t=>t.Classes).FirstOrDefaultAsync(x => x.User.Username == username, cancellationToken);
         return teacher is null
             ? throw new EntityNotFoundException("Teacher", username)
-            : new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications,null, teacher.User.Username, teacher.Classes.FirstOrDefault()?.Classname, teacher.Classes.FirstOrDefault()?.Section);
+            : _mapper.Map<TeacherResponseDTO>(teacher);
     }
 
     public async Task<TeacherResponseDTO> AddTeacherAsync(CreateTeacherDTO dto, CancellationToken cancellationToken)
@@ -116,9 +122,11 @@ public sealed class TeacherService : ITeacherService
         catch
         {
             // Log email sending failure here
+            
         }
 
-        return new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, generatedPassword, generatedUsername,null,null);
+        var response = _mapper.Map<TeacherResponseDTO>(teacher);
+        return response with { GeneratedPassword = generatedPassword, Username = generatedUsername };
     }
 
     public async Task<TeacherSubjectResponseDTO> AssignSubjectAsync(AssignTeacherSubjectDTO dto, CancellationToken cancellationToken)
@@ -153,7 +161,7 @@ public sealed class TeacherService : ITeacherService
             await _teacherSubjectRepository.AddAsync(existing, save: true, ct: cancellationToken);
         }
 
-        return new TeacherSubjectResponseDTO(existing.Id, existing.Teacherid, existing.Subjectid, existing.Classid);
+        return _mapper.Map<TeacherSubjectResponseDTO>(existing);
     }
     public async Task<bool> VerifyTeacherAssignmentAsync(int userId, int teacherId, int classId, int subjectId, CancellationToken cancellationToken)
     {

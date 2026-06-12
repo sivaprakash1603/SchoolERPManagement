@@ -38,8 +38,8 @@ public class StripePaymentService : IPaymentGatewayService
                 },
             },
             Mode = "payment",
-            SuccessUrl = successUrl ?? "http://localhost:4200/payment-success",
-            CancelUrl = cancelUrl ?? "http://localhost:4200/payment-cancelled",
+            SuccessUrl = successUrl ?? _configuration["Stripe:SuccessUrl"] ?? "http://localhost:4200/payment-success",
+            CancelUrl = cancelUrl ?? _configuration["Stripe:CancelUrl"] ?? "http://localhost:4200/payment-cancelled",
             Metadata = new Dictionary<string, string>
             {
                 { "StudentId", studentId.ToString() },

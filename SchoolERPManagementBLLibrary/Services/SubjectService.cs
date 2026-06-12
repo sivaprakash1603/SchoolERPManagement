@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Subject;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -10,10 +11,12 @@ namespace SchoolERPManagementBLLibrary.Services;
 public class SubjectService : ISubjectService
 {
     private readonly IRepository<int, Subject> _subjectRepository;
+    private readonly IMapper _mapper;
 
-    public SubjectService(IRepository<int, Subject> subjectRepository)
+    public SubjectService(IRepository<int, Subject> subjectRepository, IMapper mapper)
     {
         _subjectRepository = subjectRepository;
+        _mapper = mapper;
     }
 
     public async Task<SubjectResponseDTO> CreateSubjectAsync(CreateSubjectDTO dto, CancellationToken cancellationToken)
@@ -31,14 +34,13 @@ public class SubjectService : ISubjectService
 
         await _subjectRepository.AddAsync(subject, save: true, ct: cancellationToken);
 
-        return new SubjectResponseDTO(subject.Id, subject.Subjectname);
+        return _mapper.Map<SubjectResponseDTO>(subject);
     }
 
     public async Task<IReadOnlyList<SubjectResponseDTO>> GetAllSubjectsAsync(CancellationToken cancellationToken)
     {
-        return await _subjectRepository.Query(true)
-            .Select(s => new SubjectResponseDTO(s.Id, s.Subjectname))
-            .ToListAsync(cancellationToken);
+        var items = await _subjectRepository.Query(true).ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<SubjectResponseDTO>>(items);
     }
 
     public async Task<SubjectResponseDTO> GetSubjectByIdAsync(int id, CancellationToken cancellationToken)
@@ -47,7 +49,7 @@ public class SubjectService : ISubjectService
         if (subject == null)
             throw new EntityNotFoundException("Subject", id.ToString());
 
-        return new SubjectResponseDTO(subject.Id, subject.Subjectname);
+        return _mapper.Map<SubjectResponseDTO>(subject);
     }
 
     public async Task<SubjectResponseDTO> UpdateSubjectAsync(int id, CreateSubjectDTO dto, CancellationToken cancellationToken)
@@ -65,7 +67,7 @@ public class SubjectService : ISubjectService
         subject.Subjectname = dto.SubjectName;
         await _subjectRepository.UpdateAsync(subject, save: true, ct: cancellationToken);
 
-        return new SubjectResponseDTO(subject.Id, subject.Subjectname);
+        return _mapper.Map<SubjectResponseDTO>(subject);
     }
 
     public async Task DeleteSubjectAsync(int id, CancellationToken cancellationToken)

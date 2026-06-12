@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SchoolERPManagementBLLibrary.DTOs.Fee;
@@ -18,19 +19,22 @@ public sealed class FeeService : IFeeService
     private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
     private readonly IRepository<int, Feestructure> _feeStructureRepository;
     private readonly IPaymentGatewayService _paymentGatewayService;
+    private readonly IMapper _mapper;
 
     public FeeService(
         IRepository<int, Feepayment> feePaymentRepository,
         IRepository<int, Student> studentRepository,
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
         IRepository<int, Feestructure> feeStructureRepository,
-        IPaymentGatewayService paymentGatewayService)
+        IPaymentGatewayService paymentGatewayService,
+        IMapper mapper)
     {
         _feePaymentRepository = feePaymentRepository;
         _studentRepository = studentRepository;
         _studentEnrollmentRepository = studentEnrollmentRepository;
         _feeStructureRepository = feeStructureRepository;
         _paymentGatewayService = paymentGatewayService;
+        _mapper = mapper;
     }
 
     public async Task<FeePaymentResponseDTO> PayFeesAsync(FeePaymentDTO dto, CancellationToken cancellationToken)
@@ -38,6 +42,12 @@ public sealed class FeeService : IFeeService
         if (await _studentRepository.GetByIdAsync(dto.StudentId) is null)
         {
             throw new EntityNotFoundException("Student", dto.StudentId.ToString());
+        }
+
+        var feeDetails = await GetFeeDetailsAsync(dto.StudentId, cancellationToken);
+        if (dto.AmountPaid > feeDetails.PendingAmount)
+        {
+            throw new BusinessRuleException($"Payment amount ({dto.AmountPaid}) exceeds pending fee amount ({feeDetails.PendingAmount}).");
         }
 
         var payment = new Feepayment
@@ -52,15 +62,7 @@ public sealed class FeeService : IFeeService
 
         await _feePaymentRepository.AddAsync(payment, save: true, ct: cancellationToken);
 
-        return new FeePaymentResponseDTO(
-            payment.Id,
-            payment.Studentid,
-            payment.Feestructureid,
-            payment.Amountpaid,
-            payment.Paymentdate,
-            payment.Paymentmethod,
-            payment.Transactionid
-        );
+        return _mapper.Map<FeePaymentResponseDTO>(payment);
     }
 
     public async Task<FeeSummaryDTO> GetFeeDetailsAsync(int studentId, CancellationToken cancellationToken)
@@ -70,11 +72,11 @@ public sealed class FeeService : IFeeService
             throw new EntityNotFoundException("Student", studentId.ToString());
         }
 
-        var payments = await _feePaymentRepository.Query(true)
+        var paymentItems = await _feePaymentRepository.Query(true)
             .Where(payment => payment.Studentid == studentId)
             .OrderByDescending(payment => payment.Paymentdate)
-            .Select(payment => new FeePaymentResponseDTO(payment.Id, payment.Studentid, payment.Feestructureid, payment.Amountpaid, payment.Paymentdate, payment.Paymentmethod, payment.Transactionid))
             .ToListAsync(cancellationToken);
+        var payments = _mapper.Map<IReadOnlyList<FeePaymentResponseDTO>>(paymentItems);
 
         var totalPaid = payments.Sum(payment => payment.AmountPaid);
 
@@ -88,11 +90,11 @@ public sealed class FeeService : IFeeService
         if (enrollment is not null)
         {
             // Get all fee components for the student's class and academic year
-            var feeItems = await _feeStructureRepository.Query(true)
+            var feeItemsList = await _feeStructureRepository.Query(true)
                 .Where(fee => fee.Classid == enrollment.Classid && fee.Academicyearid == enrollment.Academicyearid)
                 .OrderBy(fee => fee.Id)
-                .Select(fee => new FeeComponentDTO(fee.Id, fee.Feename, fee.Totalamount))
                 .ToListAsync(cancellationToken);
+            var feeItems = _mapper.Map<IReadOnlyList<FeeComponentDTO>>(feeItemsList);
 
             components = feeItems;
             if (feeItems.Any())
@@ -107,11 +109,11 @@ public sealed class FeeService : IFeeService
 
     public async Task<IReadOnlyList<FeePaymentResponseDTO>> GetPaymentHistoryAsync(int studentId, CancellationToken cancellationToken)
     {
-        return await _feePaymentRepository.Query(true)
+        var items = await _feePaymentRepository.Query(true)
             .Where(payment => payment.Studentid == studentId)
             .OrderByDescending(payment => payment.Paymentdate)
-            .Select(payment => new FeePaymentResponseDTO(payment.Id, payment.Studentid, payment.Feestructureid, payment.Amountpaid, payment.Paymentdate, payment.Paymentmethod, payment.Transactionid))
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<FeePaymentResponseDTO>>(items);
     }
 
     public async Task<string> CreateStripeCheckoutSessionAsync(CreateCheckoutSessionDTO dto, CancellationToken cancellationToken)
@@ -139,6 +141,14 @@ public sealed class FeeService : IFeeService
 
         if (paymentEvent != null)
         {
+            bool exists = await _feePaymentRepository.Query(true)
+                .AnyAsync(p => p.Transactionid == paymentEvent.TransactionId, cancellationToken);
+                
+            if (exists)
+            {
+                return; // Idempotency check: ignore duplicate webhook events
+            }
+
             var payment = new Feepayment
             {
                 Studentid = paymentEvent.StudentId,
@@ -165,12 +175,6 @@ public sealed class FeeService : IFeeService
 
         await _feeStructureRepository.AddAsync(structure, save: true, ct: cancellationToken);
 
-        return new FeeStructureResponseDTO(
-            structure.Id,
-            structure.Classid,
-            structure.Academicyearid,
-            structure.Feename ?? string.Empty,
-            structure.Totalamount
-        );
+        return _mapper.Map<FeeStructureResponseDTO>(structure);
     }
 }

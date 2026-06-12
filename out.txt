@@ -1,0 +1,65 @@
+=== STARTING API TESTS & SEEDING ===
+
+1. AUTHENTICATION
+✅ [POST] /Auth/forgot-password SUCCESS
+Forgot Password Response: {
+  message: 'Password reset token generated.',
+  token: '081f3ce9-38a6-4cd9-807d-2ccd8ede899e'
+}
+✅ [POST] /Auth/reset-password SUCCESS
+✅ [POST] /Auth/login SUCCESS
+Login Response: {
+  userId: 1,
+  username: 'admin',
+  email: 'admin@schoolerp.com',
+  roleId: 1,
+  roleName: 'Admin',
+  accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVuaXF1ZV9uYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHNjaG9vbGVycC5jb20iLCJyb2xlX2lkIjoxLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE3ODA5OTc5NDIsImV4cCI6MTc4MTAxMjM0MiwiaXNzIjoiU2Nob29vbEVSUE1hbmFnZW1lbnRBUEkiLCJhdWQiOiJTY2hvb2xFUlBNYW5hZ2VtZW50QW5ndWxhckFwcCJ9.zWtkotEpexKutSYWw_En7m6x660dPURD-M-xxCUhpVE'
+}
+   Logged in as Admin.
+
+2. ACADEMIC SETUP
+✅ [GET] /AcademicYears SUCCESS
+✅ [GET] /Subjects SUCCESS
+✅ [GET] /Classes SUCCESS
+Classes Response: [ { id: 1, classname: 'Pre.K.G', section: 'A', classteacherId: 1 } ]
+
+3. USERS (TEACHER, PARENT, STUDENT)
+✅ [POST] /Teachers SUCCESS
+✅ [POST] /Teachers/assign-subject SUCCESS
+✅ [POST] /Parents SUCCESS
+Context before creating student: {
+  academicYearId: 1,
+  subjectId: 1,
+  classId: 1,
+  teacherId: 11,
+  teacherUserId: 24,
+  studentId: null,
+  parentId: 7,
+  studentUserId: null,
+  parentUserId: 25,
+  feeStructureId: null
+}
+✅ [POST] /Students SUCCESS
+
+4. FEES
+✅ [POST] /Fees/structure SUCCESS
+✅ [POST] /Fees/pay SUCCESS
+✅ [GET] /Fees/student/7/history SUCCESS
+
+5. ASSETS
+✅ [POST] /Assets SUCCESS
+
+6. ATTENDANCE
+✅ [POST] /Auth/login SUCCESS
+✅ [POST] /Attendance SUCCESS
+✅ [POST] /StaffAttendance SUCCESS
+
+7. HOMEWORK
+
+8. EXAMS
+✅ [POST] /Exams SUCCESS
+❌ [POST] /Exams/schedule FAILED: 404
+null
+
+❌ SEEDING FAILED: Request failed: 404

@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Exam;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -14,19 +15,22 @@ public sealed class ExamService : IExamService
     private readonly IRepository<int, Academicyear> _academicYearRepository;
     private readonly IRepository<int, Subject> _subjectRepository;
     private readonly IRepository<int, Student> _studentRepository;
+    private readonly IMapper _mapper;
 
     public ExamService(
         IRepository<int, Exam> examRepository,
         IRepository<int, Examresult> examResultRepository,
         IRepository<int, Academicyear> academicYearRepository,
         IRepository<int, Subject> subjectRepository,
-        IRepository<int, Student> studentRepository)
+        IRepository<int, Student> studentRepository,
+        IMapper mapper)
     {
         _examRepository = examRepository;
         _examResultRepository = examResultRepository;
         _academicYearRepository = academicYearRepository;
         _subjectRepository = subjectRepository;
         _studentRepository = studentRepository;
+        _mapper = mapper;
     }
 
     public async Task<ExamResponseDTO> CreateExamAsync(CreateExamDTO dto, CancellationToken cancellationToken)
@@ -43,7 +47,7 @@ public sealed class ExamService : IExamService
         };
 
         await _examRepository.AddAsync(exam, save: true, ct: cancellationToken);
-        return new ExamResponseDTO(exam.Id, exam.Examname, exam.Academicyearid);
+        return _mapper.Map<ExamResponseDTO>(exam);
     }
 
     public async Task<ExamResultResponseDTO> PublishResultAsync(PublishResultDTO dto, CancellationToken cancellationToken)
@@ -86,15 +90,15 @@ public sealed class ExamService : IExamService
             await _examResultRepository.UpdateAsync(result, save: true, ct: cancellationToken);
         }
 
-        return new ExamResultResponseDTO(result.Id, result.Examid, result.Subjectid, result.Studentid, result.Marks, result.Uploadedcorrectedanswersheeturl);
+        return _mapper.Map<ExamResultResponseDTO>(result);
     }
 
     public async Task<IReadOnlyList<ExamResultResponseDTO>> GetStudentResultsAsync(int studentId, CancellationToken cancellationToken)
     {
-        return await _examResultRepository.Query(true)
+        var items = await _examResultRepository.Query(true)
             .Where(result => result.Studentid == studentId)
             .OrderByDescending(result => result.Id)
-            .Select(result => new ExamResultResponseDTO(result.Id, result.Examid, result.Subjectid, result.Studentid, result.Marks, result.Uploadedcorrectedanswersheeturl))
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<ExamResultResponseDTO>>(items);
     }
 }

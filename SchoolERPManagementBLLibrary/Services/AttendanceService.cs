@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Attendance;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -13,17 +14,20 @@ public sealed class AttendanceService : IAttendanceService
     private readonly IRepository<int, Student> _studentRepository;
     private readonly IRepository<int, Teacher> _teacherRepository;
     private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
+    private readonly IMapper _mapper;
 
     public AttendanceService(
         IRepository<int, Attendance> attendanceRepository,
         IRepository<int, Student> studentRepository,
         IRepository<int, Teacher> teacherRepository,
-        IRepository<int, Studentenrollment> studentEnrollmentRepository)
+        IRepository<int, Studentenrollment> studentEnrollmentRepository,
+        IMapper mapper)
     {
         _attendanceRepository = attendanceRepository;
         _studentRepository = studentRepository;
         _teacherRepository = teacherRepository;
         _studentEnrollmentRepository = studentEnrollmentRepository;
+        _mapper = mapper;
     }
 
     public async Task<AttendanceResponseDTO> MarkAttendanceAsync(MarkAttendanceDTO dto, CancellationToken cancellationToken)
@@ -74,16 +78,16 @@ public sealed class AttendanceService : IAttendanceService
             await _attendanceRepository.UpdateAsync(attendance, save: true, ct: cancellationToken);
         }
 
-        return new AttendanceResponseDTO(attendance.Id, attendance.Studentid, attendance.Date, attendance.Status, attendance.Markedbyteacherid, attendance.Remarks);
+        return _mapper.Map<AttendanceResponseDTO>(attendance);
     }
 
     public async Task<IReadOnlyList<AttendanceResponseDTO>> GetAttendanceByStudentAsync(int studentId, CancellationToken cancellationToken)
     {
-        return await _attendanceRepository.Query(true)
+        var items = await _attendanceRepository.Query(true)
             .Where(x => x.Studentid == studentId)
             .OrderByDescending(x => x.Date)
-            .Select(attendance => new AttendanceResponseDTO(attendance.Id, attendance.Studentid, attendance.Date, attendance.Status, attendance.Markedbyteacherid, attendance.Remarks))
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<AttendanceResponseDTO>>(items);
     }
 
     public async Task<IReadOnlyList<AttendanceResponseDTO>> GetAttendanceByClassAsync(int classId, DateTime date, CancellationToken cancellationToken)
@@ -95,9 +99,9 @@ public sealed class AttendanceService : IAttendanceService
 
         var day = DateOnly.FromDateTime(date);
 
-        return await _attendanceRepository.Query(true)
+        var items = await _attendanceRepository.Query(true)
             .Where(attendance => studentIds.Contains(attendance.Studentid) && attendance.Date == day)
-            .Select(attendance => new AttendanceResponseDTO(attendance.Id, attendance.Studentid, attendance.Date, attendance.Status, attendance.Markedbyteacherid, attendance.Remarks))
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<AttendanceResponseDTO>>(items);
     }
 }

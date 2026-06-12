@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Timetable;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -13,17 +14,20 @@ public sealed class TimetableService : ITimetableService
     private readonly IRepository<int, Class> _classRepository;
     private readonly IRepository<int, Subject> _subjectRepository;
     private readonly IRepository<int, Teacher> _teacherRepository;
+    private readonly IMapper _mapper;
 
     public TimetableService(
         IRepository<int, Timetable> timetableRepository,
         IRepository<int, Class> classRepository,
         IRepository<int, Subject> subjectRepository,
-        IRepository<int, Teacher> teacherRepository)
+        IRepository<int, Teacher> teacherRepository,
+        IMapper mapper)
     {
         _timetableRepository = timetableRepository;
         _classRepository = classRepository;
         _subjectRepository = subjectRepository;
         _teacherRepository = teacherRepository;
+        _mapper = mapper;
     }
 
     public async Task<TimetableResponseDTO> CreateTimetableAsync(CreateTimetableDTO dto, CancellationToken cancellationToken)
@@ -71,16 +75,16 @@ public sealed class TimetableService : ITimetableService
         };
 
         await _timetableRepository.AddAsync(timetable, save: true, ct: cancellationToken);
-        return new TimetableResponseDTO(timetable.Id, timetable.Classid, timetable.Subjectid, timetable.Teacherid, timetable.Dayofweek, timetable.Starttime, timetable.Endtime, timetable.Roomno);
+        return _mapper.Map<TimetableResponseDTO>(timetable);
     }
 
     public async Task<IReadOnlyList<TimetableResponseDTO>> GetClassTimetableAsync(int classId, CancellationToken cancellationToken)
     {
-        return await _timetableRepository.Query(true)
+        var items = await _timetableRepository.Query(true)
             .Where(timetable => timetable.Classid == classId)
             .OrderBy(timetable => timetable.Dayofweek)
             .ThenBy(timetable => timetable.Starttime)
-            .Select(timetable => new TimetableResponseDTO(timetable.Id, timetable.Classid, timetable.Subjectid, timetable.Teacherid, timetable.Dayofweek, timetable.Starttime, timetable.Endtime, timetable.Roomno))
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<TimetableResponseDTO>>(items);
     }
 }

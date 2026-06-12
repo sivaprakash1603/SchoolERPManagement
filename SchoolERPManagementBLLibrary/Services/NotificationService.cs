@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Notification;
 using SchoolERPManagementBLLibrary.Interfaces;
@@ -11,15 +12,18 @@ public sealed class NotificationService : INotificationService
     private readonly IRepository<int, Notification> _notificationRepository;
     private readonly IRepository<int, Usernotification> _userNotificationRepository;
     private readonly IRepository<int, User> _userRepository;
+    private readonly IMapper _mapper;
 
     public NotificationService(
         IRepository<int, Notification> notificationRepository,
         IRepository<int, Usernotification> userNotificationRepository,
-        IRepository<int, User> userRepository)
+        IRepository<int, User> userRepository,
+        IMapper mapper)
     {
         _notificationRepository = notificationRepository;
         _userNotificationRepository = userNotificationRepository;
         _userRepository = userRepository;
+        _mapper = mapper;
     }
 
     public async Task<NotificationResponseDTO> SendNotificationAsync(SendNotificationDTO dto, CancellationToken cancellationToken)
@@ -51,22 +55,16 @@ public sealed class NotificationService : INotificationService
             await _userNotificationRepository.AddAsync(userNotification, save: true, ct: cancellationToken);
         }
 
-        return new NotificationResponseDTO(notification.Id, notification.Title, notification.Message, notification.Createdbyuserid, notification.Createdat);
+        return _mapper.Map<NotificationResponseDTO>(notification);
     }
 
     public async Task<IReadOnlyList<UserNotificationResponseDTO>> GetUserNotificationsAsync(int userId, CancellationToken cancellationToken)
     {
-        return await _userNotificationRepository.Query(true)
+        var items = await _userNotificationRepository.Query(true)
             .Where(userNotification => userNotification.Userid == userId)
             .Include(userNotification => userNotification.Notification)
             .OrderByDescending(userNotification => userNotification.Notification.Createdat)
-            .Select(userNotification => new UserNotificationResponseDTO(
-                userNotification.Id,
-                userNotification.Notificationid,
-                userNotification.Notification.Title,
-                userNotification.Notification.Message,
-                userNotification.Notification.Createdat,
-                userNotification.Isread))
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<UserNotificationResponseDTO>>(items);
     }
 }

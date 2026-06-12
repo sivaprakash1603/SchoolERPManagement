@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.StaffAttendance;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -11,11 +12,13 @@ public class StaffAttendanceService : IStaffAttendanceService
 {
     private readonly IRepository<int, Staffattendance> _staffAttendanceRepository;
     private readonly IRepository<int, User> _userRepository;
+    private readonly IMapper _mapper;
 
-    public StaffAttendanceService(IRepository<int, Staffattendance> staffAttendanceRepository, IRepository<int, User> userRepository)
+    public StaffAttendanceService(IRepository<int, Staffattendance> staffAttendanceRepository, IRepository<int, User> userRepository, IMapper mapper)
     {
         _staffAttendanceRepository = staffAttendanceRepository;
         _userRepository = userRepository;
+        _mapper = mapper;
     }
 
     public async Task<StaffAttendanceResponseDTO> MarkAttendanceAsync(StaffAttendanceRequestDTO dto, CancellationToken cancellationToken)
@@ -41,46 +44,24 @@ public class StaffAttendanceService : IStaffAttendanceService
 
         await _staffAttendanceRepository.AddAsync(attendance, true, cancellationToken);
 
-        return new StaffAttendanceResponseDTO(
-            attendance.Id,
-            attendance.Userid,
-            user.Username,
-            attendance.Date,
-            attendance.Status,
-            attendance.Attendancetype,
-            attendance.Remarks
-        );
+        return _mapper.Map<StaffAttendanceResponseDTO>(attendance);
     }
 
     public async Task<IReadOnlyList<StaffAttendanceResponseDTO>> GetAttendanceByUserAsync(int userId, CancellationToken cancellationToken)
     {
-        return await _staffAttendanceRepository.Query(true)
+        var items = await _staffAttendanceRepository.Query(true)
             .Where(a => a.Userid == userId)
-            .Select(a => new StaffAttendanceResponseDTO(
-                a.Id,
-                a.Userid,
-                a.User.Username,
-                a.Date,
-                a.Status,
-                a.Attendancetype,
-                a.Remarks
-            ))
+            .Include(a => a.User)
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<StaffAttendanceResponseDTO>>(items);
     }
 
     public async Task<IReadOnlyList<StaffAttendanceResponseDTO>> GetAllAttendanceByDateAsync(DateOnly date, CancellationToken cancellationToken)
     {
-        return await _staffAttendanceRepository.Query(true)
+        var items = await _staffAttendanceRepository.Query(true)
             .Where(a => a.Date == date)
-            .Select(a => new StaffAttendanceResponseDTO(
-                a.Id,
-                a.Userid,
-                a.User.Username,
-                a.Date,
-                a.Status,
-                a.Attendancetype,
-                a.Remarks
-            ))
+            .Include(a => a.User)
             .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<StaffAttendanceResponseDTO>>(items);
     }
 }

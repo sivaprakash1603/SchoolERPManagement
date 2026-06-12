@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Student;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -18,6 +19,7 @@ public sealed class StudentService : IStudentService
     private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
     private readonly IRepository<int, Academicyear> _academicYearRepository;
     private readonly IEmailService _emailService;
+    private readonly IMapper _mapper;
 
     public StudentService(
         IRepository<int, Student> studentRepository, 
@@ -27,7 +29,8 @@ public sealed class StudentService : IStudentService
         IRepository<int, Class> classRepository,
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
         IRepository<int, Academicyear> academicYearRepository,
-        IEmailService emailService)
+        IEmailService emailService,
+        IMapper mapper)
     {
         _studentRepository = studentRepository;
         _userRepository = userRepository;
@@ -37,13 +40,13 @@ public sealed class StudentService : IStudentService
         _studentEnrollmentRepository = studentEnrollmentRepository;
         _academicYearRepository = academicYearRepository;
         _emailService = emailService;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<StudentResponseDTO>> GetAllStudentsAsync(CancellationToken cancellationToken)
     {
-        return await _studentRepository.Query(true)
-            .Select(student => new StudentResponseDTO(student.Id, student.Userid, student.Regno, student.Name, student.Parentid, null))
-            .ToListAsync(cancellationToken);
+        var items = await _studentRepository.Query(true).ToListAsync(cancellationToken);
+        return _mapper.Map<IEnumerable<StudentResponseDTO>>(items);
     }
 
     public async Task<StudentResponseDTO> GetStudentByIdAsync(int id, CancellationToken cancellationToken)
@@ -51,7 +54,7 @@ public sealed class StudentService : IStudentService
         var student = await _studentRepository.Query(true).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         return student is null
             ? throw new EntityNotFoundException("Student", id.ToString())
-            : new StudentResponseDTO(student.Id, student.Userid, student.Regno, student.Name, student.Parentid, null);
+            : _mapper.Map<StudentResponseDTO>(student);
     }
 
     public async Task<StudentResponseDTO> AddStudentAsync(CreateStudentDTO dto, CancellationToken cancellationToken)
@@ -142,7 +145,8 @@ public sealed class StudentService : IStudentService
             // Log email sending failure here, but don't stop the student creation process
         }
 
-        return new StudentResponseDTO(student.Id, student.Userid, student.Regno, student.Name, student.Parentid, generatedPassword);
+        var response = _mapper.Map<StudentResponseDTO>(student);
+        return response with { GeneratedPassword = generatedPassword };
     }
 
     public async Task<StudentResponseDTO> UpdateStudentAsync(int id, UpdateStudentDTO dto, CancellationToken cancellationToken)
@@ -171,7 +175,7 @@ public sealed class StudentService : IStudentService
         student.Parentid = dto.ParentId;
         await _studentRepository.UpdateAsync(student, save: true, ct: cancellationToken);
 
-        return new StudentResponseDTO(student.Id, student.Userid, student.Regno, student.Name, student.Parentid, null);
+        return _mapper.Map<StudentResponseDTO>(student);
     }
 
     public async Task DeleteStudentAsync(int id, CancellationToken cancellationToken)

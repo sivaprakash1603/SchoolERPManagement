@@ -12,6 +12,14 @@ public sealed class LocalFileStorageService : IFileStorageService
             throw new ArgumentException("File is empty or null.", nameof(file));
         }
 
+        var allowedExtensions = new[] { ".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+        if (!allowedExtensions.Contains(extension))
+        {
+            throw new SchoolERPManagementBLLibrary.Exceptions.BusinessRuleException($"File extension '{extension}' is not allowed.");
+        }
+
         var uploadRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads", folderName);
         if (!Directory.Exists(uploadRoot))
         {

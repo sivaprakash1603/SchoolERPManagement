@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Homework;
 using SchoolERPManagementBLLibrary.Exceptions;
@@ -16,6 +17,7 @@ public sealed class HomeworkService : IHomeworkService
     private readonly IRepository<int, Class> _classRepository;
     private readonly IRepository<int, Student> _studentRepository;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IMapper _mapper;
 
     public HomeworkService(
         IRepository<int, Homework> homeworkRepository,
@@ -24,7 +26,8 @@ public sealed class HomeworkService : IHomeworkService
         IRepository<int, Teacher> teacherRepository,
         IRepository<int, Class> classRepository,
         IRepository<int, Student> studentRepository,
-        IFileStorageService fileStorageService)
+        IFileStorageService fileStorageService,
+        IMapper mapper)
     {
         _homeworkRepository = homeworkRepository;
         _submissionRepository = submissionRepository;
@@ -33,6 +36,7 @@ public sealed class HomeworkService : IHomeworkService
         _classRepository = classRepository;
         _studentRepository = studentRepository;
         _fileStorageService = fileStorageService;
+        _mapper = mapper;
     }
 
     public async Task<HomeworkResponseDTO> CreateHomeworkAsync(CreateHomeworkDTO dto, CancellationToken cancellationToken)
@@ -58,7 +62,7 @@ public sealed class HomeworkService : IHomeworkService
         };
 
         await _homeworkRepository.AddAsync(homework, save: true, ct: cancellationToken);
-        return new HomeworkResponseDTO(homework.Id, homework.Subjectid, homework.Teacherid, homework.Classid, homework.Title, homework.Description, homework.Attachmenturl, homework.Createdat, homework.Duedate);
+        return _mapper.Map<HomeworkResponseDTO>(homework);
     }
 
     public async Task<HomeworkSubmissionResponseDTO> SubmitHomeworkAsync(HomeworkSubmissionDTO dto, CancellationToken cancellationToken)
@@ -105,7 +109,7 @@ public sealed class HomeworkService : IHomeworkService
             await _submissionRepository.UpdateAsync(submission, save: true, ct: cancellationToken);
         }
 
-        return new HomeworkSubmissionResponseDTO(submission.Id, submission.Homeworkid, submission.Studentid, submission.Uploadedfileurl, submission.Verificationstatus, submission.Marks, submission.Remarks, submission.Submittedat);
+        return _mapper.Map<HomeworkSubmissionResponseDTO>(submission);
     }
 
     public async Task<HomeworkSubmissionResponseDTO> EvaluateHomeworkAsync(EvaluateHomeworkDTO dto, CancellationToken cancellationToken)
@@ -121,7 +125,7 @@ public sealed class HomeworkService : IHomeworkService
         submission.Verificationstatus = dto.VerificationStatus;
 
         await _submissionRepository.UpdateAsync(submission, save: true, ct: cancellationToken);
-        return new HomeworkSubmissionResponseDTO(submission.Id, submission.Homeworkid, submission.Studentid, submission.Uploadedfileurl, submission.Verificationstatus, submission.Marks, submission.Remarks, submission.Submittedat);
+        return _mapper.Map<HomeworkSubmissionResponseDTO>(submission);
     }
 
     private async Task EnsureReferencesAsync(int subjectId, int teacherId, int classId, CancellationToken cancellationToken)
