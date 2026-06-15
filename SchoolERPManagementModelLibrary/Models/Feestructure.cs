@@ -18,6 +18,4 @@ public partial class Feestructure
     public virtual Academicyear Academicyear { get; set; } = null!;
 
     public virtual Class Class { get; set; } = null!;
-
-    public virtual ICollection<Feepayment> Feepayments { get; set; } = new List<Feepayment>();
 }

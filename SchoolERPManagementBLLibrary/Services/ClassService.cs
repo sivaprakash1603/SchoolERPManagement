@@ -36,8 +36,8 @@ public sealed class ClassService : IClassService
 
         var classEntity = new Class
         {
-            Classname = dto.Classname,
-            Section = dto.Section,
+            Classname = dto.Classname ?? string.Empty,
+            Section = dto.Section ?? string.Empty,
             Classteacherid = dto.ClassteacherId
         };
 

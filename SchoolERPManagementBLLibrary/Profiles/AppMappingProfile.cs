@@ -39,7 +39,7 @@ public class AppMappingProfile : Profile
 
         
         CreateMap<User, AuthResponseDTO>()
-            .ConstructUsing(src => new AuthResponseDTO(src.Id, src.Username, src.Email, src.Roleid, src.Role != null ? src.Role.Rolename : string.Empty, null));
+            .ConstructUsing(src => new AuthResponseDTO(src.Id, src.Username, src.Email, src.Roleid, src.Role != null ? src.Role.Rolename : string.Empty, ""));
 
         
         CreateMap<Class, ClassResponseDTO>();
@@ -89,8 +89,8 @@ public class AppMappingProfile : Profile
             .ConstructUsing(src => new TeacherResponseDTO(
                 src.Id, src.Userid, src.Name, src.Phonenumber, src.Joiningdate, src.Qualifications, null, 
                 src.User != null ? src.User.Username : string.Empty, 
-                src.Classes.FirstOrDefault() != null ? src.Classes.FirstOrDefault().Classname : null, 
-                src.Classes.FirstOrDefault() != null ? src.Classes.FirstOrDefault().Section : null));
+                src.Classes.FirstOrDefault() != null ? src.Classes.FirstOrDefault()!.Classname : null, 
+                src.Classes.FirstOrDefault() != null ? src.Classes.FirstOrDefault()!.Section : null));
         
         CreateMap<Teachersubject, TeacherSubjectResponseDTO>();
 

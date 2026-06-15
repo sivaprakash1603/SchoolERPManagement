@@ -11,6 +11,8 @@ public partial class Studentdocument
 
     public string Documenttype { get; set; } = null!;
 
+    public string Documentname { get; set; } = null!;
+
     public string Bloburl { get; set; } = null!;
 
     public DateTime? Uploadedat { get; set; }

@@ -34,8 +34,8 @@ public class ParentDocumentVerificationStrategy : IDocumentVerificationStrategy
         {
             var isAuthorized = await _studentEnrollmentRepository.Query(true)
                 .Include(e => e.Class)
-                .ThenInclude(c => c.Classteacher)
-                .AnyAsync(e => e.Student.Parentid == doc.Parentid && e.Class.Classteacher.Userid == verifyingUserId, cancellationToken);
+                .ThenInclude(c => c!.Classteacher)
+                .AnyAsync(e => e.Student != null && e.Student.Parentid == doc.Parentid && e.Class != null && e.Class.Classteacher != null && e.Class.Classteacher.Userid == verifyingUserId, cancellationToken);
             
             if (!isAuthorized)
             {

@@ -11,7 +11,6 @@ using SchoolERPManagementAPI.Middlewares;
 using SchoolERPManagementAPI.Extensions;
 using SchoolERPManagementAPI.Hubs;
 using SchoolERPManagementAPI.Services;
-using SchoolERPManagementBLLibrary.Interfaces;
 using Stripe;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;

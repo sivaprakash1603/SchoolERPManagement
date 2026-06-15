@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -13,7 +13,7 @@ namespace SchoolERPManagementDALLibrary.Migrations
 {
     [DbContext(typeof(SchoolERPDbContext))]
     [Migration("20260603104940_initial")]
-    partial class initial
+    partial class Initial
     {
         
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

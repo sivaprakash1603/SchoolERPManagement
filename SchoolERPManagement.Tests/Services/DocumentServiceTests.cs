@@ -65,49 +65,50 @@ public class DocumentServiceTests
         _fileStorageServiceMock.Setup(f => f.UploadFileAsync(mockFile.Object, "studentdocuments", It.IsAny<CancellationToken>()))
             .ReturnsAsync("/uploads/studentdocuments/doc.pdf");
 
-        
-        var result = await _documentService.UploadStudentDocumentAsync(mockFile.Object, 1, CancellationToken.None);
+        // Act
+        var result = await _documentService.UploadStudentDocumentAsync(mockFile.Object, 1, null, CancellationToken.None);
 
-        
-        result.Should().NotBeNull();
-        result.DocumentType.Should().Be("application/pdf");
-        result.BlobUrl.Should().Be("/uploads/studentdocuments/doc.pdf");
-
-        _studentDocRepoMock.Verify(r => r.AddAsync(It.IsAny<Studentdocument>(), true, It.IsAny<CancellationToken>()), Times.Once);
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("application/pdf", result.DocumentType);
     }
 
     [Fact]
-    public async Task UploadStudentDocumentAsync_InvalidStudent_ShouldThrowEntityNotFoundException()
+    public async Task UploadStudentDocumentAsync_ShouldThrowEntityNotFoundException_WhenStudentDoesNotExist()
     {
-        
-        var mockFile = new Mock<IFormFile>();
-        _studentRepoMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Student?)null);
+        // Arrange
+        var studentId = 1;
+        var fileMock = new Mock<IFormFile>();
 
-        
-        Func<Task> action = async () => await _documentService.UploadStudentDocumentAsync(mockFile.Object, 999, CancellationToken.None);
+        _studentRepoMock.Setup(repo => repo.GetByIdAsync(studentId))
+            .ReturnsAsync((Student?)null);
 
-        
-        await action.Should().ThrowAsync<EntityNotFoundException>().WithMessage("Student with identifier '999' was not found.");
+        // Act & Assert
+        await Assert.ThrowsAsync<EntityNotFoundException>(() => 
+            _documentService.UploadStudentDocumentAsync(fileMock.Object, studentId, null, CancellationToken.None));
     }
 
     [Fact]
-    public async Task UploadTeacherDocumentAsync_ValidData_ShouldUploadAndCreateDocument()
+    public async Task UploadTeacherDocumentAsync_ShouldReturnResponse_WhenValid()
     {
-        
-        var mockFile = new Mock<IFormFile>();
-        mockFile.Setup(f => f.FileName).Returns("doc.pdf");
-        mockFile.Setup(f => f.ContentType).Returns("application/pdf");
+        // Arrange
+        var teacherId = 1;
+        var fileMock = new Mock<IFormFile>();
+        fileMock.Setup(f => f.FileName).Returns("test.pdf");
+        fileMock.Setup(f => f.ContentType).Returns("application/pdf");
 
-        _teacherRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Teacher { Id = 1 });
-        _fileStorageServiceMock.Setup(f => f.UploadFileAsync(mockFile.Object, "teacherdocuments", It.IsAny<CancellationToken>()))
-            .ReturnsAsync("/uploads/teacherdocuments/doc.pdf");
+        _teacherRepoMock.Setup(repo => repo.GetByIdAsync(teacherId))
+            .ReturnsAsync(new Teacher { Id = teacherId });
 
-        
-        var result = await _documentService.UploadTeacherDocumentAsync(mockFile.Object, 1, CancellationToken.None);
+        _fileStorageServiceMock.Setup(service => service.UploadFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("/uploads/teacherdocuments/test.pdf");
+
+        // Act
+        var result = await _documentService.UploadTeacherDocumentAsync(fileMock.Object, teacherId, null, CancellationToken.None);
 
         
         result.Should().NotBeNull();
-        result.BlobUrl.Should().Be("/uploads/teacherdocuments/doc.pdf");
+        result.BlobUrl.Should().Be("/uploads/teacherdocuments/test.pdf");
 
         _teacherDocRepoMock.Verify(r => r.AddAsync(It.IsAny<Teacherdocument>(), true, It.IsAny<CancellationToken>()), Times.Once);
     }

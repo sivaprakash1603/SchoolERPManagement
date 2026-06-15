@@ -50,7 +50,7 @@ public sealed class DocumentService : IDocumentService
         _mapper = mapper;
     }
 
-    public async Task<StudentDocumentResponseDTO> UploadStudentDocumentAsync(IFormFile file, int studentId, CancellationToken cancellationToken)
+    public async Task<StudentDocumentResponseDTO> UploadStudentDocumentAsync(IFormFile file, int studentId, string? documentName, CancellationToken cancellationToken)
     {
         if (await _studentRepository.GetByIdAsync(studentId) is null)
         {
@@ -62,6 +62,7 @@ public sealed class DocumentService : IDocumentService
         var document = new Studentdocument
         {
             Studentid = studentId,
+            Documentname = string.IsNullOrWhiteSpace(documentName) ? file.FileName : documentName,
             Documenttype = string.IsNullOrWhiteSpace(file.ContentType) ? Path.GetExtension(file.FileName).TrimStart('.') : file.ContentType,
             Bloburl = fileUrl,
             Uploadedat = DateTime.UtcNow
@@ -71,7 +72,7 @@ public sealed class DocumentService : IDocumentService
         return _mapper.Map<StudentDocumentResponseDTO>(document);
     }
 
-    public async Task<TeacherDocumentResponseDTO> UploadTeacherDocumentAsync(IFormFile file, int teacherId, CancellationToken cancellationToken)
+    public async Task<TeacherDocumentResponseDTO> UploadTeacherDocumentAsync(IFormFile file, int teacherId, string? documentName, CancellationToken cancellationToken)
     {
         if (await _teacherRepository.GetByIdAsync(teacherId) is null)
         {
@@ -83,6 +84,7 @@ public sealed class DocumentService : IDocumentService
         var document = new Teacherdocument
         {
             Teacherid = teacherId,
+            Documentname = string.IsNullOrWhiteSpace(documentName) ? file.FileName : documentName,
             Documenttype = string.IsNullOrWhiteSpace(file.ContentType) ? Path.GetExtension(file.FileName).TrimStart('.') : file.ContentType,
             Bloburl = fileUrl,
             Uploadedat = DateTime.UtcNow

@@ -40,9 +40,7 @@ public class TeacherServiceTests
             _subjectRepoMock.Object,
             _classRepoMock.Object,
             _teacherSubjectRepoMock.Object,
-            _roleRepoMock.Object,
-            _emailServiceMock.Object,
-            SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
+            _roleRepoMock.Object
         );
     }
 
@@ -50,7 +48,7 @@ public class TeacherServiceTests
     public async Task AddTeacherAsync_ValidData_ShouldCreateTeacherAndUser()
     {
         
-        var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters", 50000m);
+        var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters");
 
         _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().BuildMockDbSet().Object);
         _roleRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Role> { new Role { Id = 2, Rolename = "Teacher" } }.BuildMockDbSet().Object);
@@ -65,14 +63,13 @@ public class TeacherServiceTests
 
         _userRepoMock.Verify(r => r.AddAsync(It.IsAny<User>(), true, It.IsAny<CancellationToken>()), Times.Once);
         _teacherRepoMock.Verify(r => r.AddAsync(It.IsAny<Teacher>(), true, It.IsAny<CancellationToken>()), Times.Once);
-        _emailServiceMock.Verify(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task AddTeacherAsync_DuplicateEmail_ShouldThrowDuplicateEntityException()
     {
         
-        var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters", 50000m);
+        var dto = new CreateTeacherDTO("jane@example.com", "Jane Smith", "9876543210", "Masters");
 
         var existingUser = new User { Email = "jane@example.com" };
         _userRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User> { existingUser }.BuildMockDbSet().Object);

@@ -19,17 +19,17 @@ namespace SchoolERPManagementAPI.Controllers
 
         [HttpPost("student/{studentId}")]
         [Authorize(Roles = "Admin,Parent,Student")]
-        public async Task<IActionResult> UploadStudentDocument(IFormFile file, int studentId, CancellationToken cancellationToken)
+        public async Task<IActionResult> UploadStudentDocument(IFormFile file, int studentId, [FromForm] string? documentName, CancellationToken cancellationToken)
         {
-            var result = await _documentService.UploadStudentDocumentAsync(file, studentId, cancellationToken);
+            var result = await _documentService.UploadStudentDocumentAsync(file, studentId, documentName, cancellationToken);
             return Ok(result);
         }
 
         [HttpPost("teacher/{teacherId}")]
         [Authorize(Roles = "Admin,Teacher")]
-        public async Task<IActionResult> UploadTeacherDocument(IFormFile file, int teacherId, CancellationToken cancellationToken)
+        public async Task<IActionResult> UploadTeacherDocument(IFormFile file, int teacherId, [FromForm] string? documentName, CancellationToken cancellationToken)
         {
-            var result = await _documentService.UploadTeacherDocumentAsync(file, teacherId, cancellationToken);
+            var result = await _documentService.UploadTeacherDocumentAsync(file, teacherId, documentName, cancellationToken);
             return Ok(result);
         }
 

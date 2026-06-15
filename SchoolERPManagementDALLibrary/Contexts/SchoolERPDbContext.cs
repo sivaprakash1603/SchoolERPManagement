@@ -80,12 +80,7 @@ public partial class SchoolERPDbContext : DbContext
     public virtual DbSet<Usernotification> Usernotifications { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=SchoolERPSystem;Username=postgres;Password=postgres");
-        }
-    }
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=SchoolERPSystem;Username=postgres;Password=postgres");
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -323,14 +318,12 @@ public partial class SchoolERPDbContext : DbContext
                 .HasPrecision(10, 2)
                 .HasColumnName("amountpaid");
             entity.Property(e => e.Paymentdate)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
+                .HasDefaultValueSql("CURRENT_DATE")
                 .HasColumnName("paymentdate");
             entity.Property(e => e.Paymentmethod)
                 .HasMaxLength(50)
                 .HasColumnName("paymentmethod");
             entity.Property(e => e.Studentid).HasColumnName("studentid");
-            entity.Property(e => e.Feestructureid).HasColumnName("feestructureid");
             entity.Property(e => e.Transactionid)
                 .HasMaxLength(150)
                 .HasColumnName("transactionid");
@@ -339,11 +332,6 @@ public partial class SchoolERPDbContext : DbContext
                 .HasForeignKey(d => d.Studentid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("feepayments_studentid_fkey");
-
-            entity.HasOne(d => d.Feestructure).WithMany(p => p.Feepayments)
-                .HasForeignKey(d => d.Feestructureid)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("feepayments_feestructureid_fkey");
         });
 
         modelBuilder.Entity<Feestructure>(entity =>
@@ -505,6 +493,10 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Documenttype)
                 .HasMaxLength(100)
                 .HasColumnName("documenttype");
+            entity.Property(e => e.Documentname)
+                .HasMaxLength(255)
+                .HasColumnName("documentname")
+                .HasDefaultValue("");
             entity.Property(e => e.Parentid).HasColumnName("parentid");
             entity.Property(e => e.Uploadedat)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -659,6 +651,10 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Documenttype)
                 .HasMaxLength(100)
                 .HasColumnName("documenttype");
+            entity.Property(e => e.Documentname)
+                .HasMaxLength(255)
+                .HasColumnName("documentname")
+                .HasDefaultValue("");
             entity.Property(e => e.Studentid).HasColumnName("studentid");
             entity.Property(e => e.Uploadedat)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -757,6 +753,10 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Documenttype)
                 .HasMaxLength(100)
                 .HasColumnName("documenttype");
+            entity.Property(e => e.Documentname)
+                .HasMaxLength(255)
+                .HasColumnName("documentname")
+                .HasDefaultValue("");
             entity.Property(e => e.Teacherid).HasColumnName("teacherid");
             entity.Property(e => e.Uploadedat)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")

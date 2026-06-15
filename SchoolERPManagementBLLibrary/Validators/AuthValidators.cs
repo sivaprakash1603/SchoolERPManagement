@@ -17,8 +17,8 @@ public class RegisterUserValidator : AbstractValidator<RegisterUserDTO>
     public RegisterUserValidator()
     {
         RuleFor(x => x.Username).NotEmpty().MinimumLength(3).WithMessage("Username must be at least 3 characters.");
-        RuleFor(x => x.Email).NotEmpty().EmailAddress().WithMessage("A valid email is required.");
-        RuleFor(x => x.Password).NotEmpty().MinimumLength(6).WithMessage("Password must be at least 6 characters.");
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().Matches(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").WithMessage("A valid email is required.");
+        RuleFor(x => x.Password).NotEmpty().Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$").WithMessage("Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
     }
 }
 
@@ -28,6 +28,24 @@ public class ChangePasswordValidator : AbstractValidator<ChangePasswordDTO>
     {
         RuleFor(x => x.UserId).GreaterThan(0);
         RuleFor(x => x.CurrentPassword).NotEmpty();
-        RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(6).NotEqual(x => x.CurrentPassword).WithMessage("New password must be different.");
+        RuleFor(x => x.NewPassword).NotEmpty().Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$").WithMessage("Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special character.").NotEqual(x => x.CurrentPassword).WithMessage("New password must be different.");
+    }
+}
+
+public class ForgotPasswordValidator : AbstractValidator<ForgotPasswordDTO>
+{
+    public ForgotPasswordValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().Matches(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").WithMessage("A valid email is required.");
+    }
+}
+
+public class ResetPasswordValidator : AbstractValidator<ResetPasswordDTO>
+{
+    public ResetPasswordValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().Matches(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").WithMessage("A valid email is required.");
+        RuleFor(x => x.Token).NotEmpty().WithMessage("Token is required.");
+        RuleFor(x => x.NewPassword).NotEmpty().Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$").WithMessage("Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
     }
 }
