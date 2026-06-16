@@ -1,1 +1,71 @@
-<p>login works!</p>
+<div class="login-wrapper min-vh-100 d-flex flex-row">
+    <!-- Left Side: Visual -->
+    <div class="visual-pane col-lg-7 d-none d-lg-flex flex-column justify-content-center align-items-start p-5">
+      <div class="brand-showcase ms-5">
+        <h1 class="display-3 fw-bold serif-text text-white mb-4">Elevate<br>Education.</h1>
+        <p class="lead text-white-50 sans-text w-75">
+          The complete ERP solution unifying students, teachers, and administration into one seamless experience.
+        </p>
+      </div>
+    </div>
+  
+    <!-- Right Side: Form -->
+    <div class="form-pane col-lg-5 col-12 d-flex align-items-center justify-content-center">
+      <div class="glass-card w-100 mx-4 mx-md-5 p-5">
+        <div class="mb-5">
+          <h2 class="serif-text text-white fw-semibold mb-2">Welcome Back</h2>
+          <p class="text-white-50 sans-text small">Please enter your credentials to access your portal.</p>
+        </div>
+  
+        <form [formGroup]="loginForm" (ngSubmit)="handleLoginClick()" class="sans-text">
+          <!-- Error Alert -->
+          <div *ngIf="errorMessage()" class="alert alert-danger custom-alert py-2 small mb-4" role="alert">
+            {{ errorMessage() }}
+          </div>
+  
+          <!-- Username Input -->
+          <div class="form-floating custom-floating mb-4">
+            <input type="text" class="form-control glass-input" id="username" placeholder="Username" formControlName="username"
+                   [class.is-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+            <label for="username">Username</label>
+            <div class="invalid-feedback text-warning small mt-1" *ngIf="loginForm.get('username')?.hasError('required')">
+              Username is required.
+            </div>
+            <div class="invalid-feedback text-warning small mt-1" *ngIf="loginForm.get('username')?.hasError('minlength')">
+              Minimum 4 characters required.
+            </div>
+          </div>
+  
+          <!-- Password Input -->
+        <div class="form-floating custom-floating mb-5 position-relative">
+          <input [type]="showPassword() ? 'text' : 'password'" class="form-control glass-input pe-5" id="password" placeholder="Password" formControlName="password"
+                 [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          <label for="password">Password</label>
+          <button type="button" class="btn btn-link password-toggle-btn text-white-50" (click)="togglePasswordVisibility()">
+            <svg *ngIf="!showPassword()" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
+              <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
+              <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
+            </svg>
+            <svg *ngIf="showPassword()" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
+              <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7 7 0 0 0 2.79-.588M5.21 3.088A7 7 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474z"/>
+              <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/>
+            </svg>
+          </button>
+          <div class="invalid-feedback text-warning small mt-1" *ngIf="loginForm.get('password')?.hasError('required')">
+            Password is required.
+          </div>
+        </div>
+  
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary custom-btn w-100 py-3 fw-semibold" [disabled]="progress()">
+            <span *ngIf="!progress()">Sign In</span>
+            <span *ngIf="progress()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          </button>
+        </form>
+        
+        <div class="mt-4 text-center">
+          <a href="#" class="text-white-50 sans-text small text-decoration-none hover-white">Forgot password?</a>
+        </div>
+      </div>
+    </div>
+  </div>
