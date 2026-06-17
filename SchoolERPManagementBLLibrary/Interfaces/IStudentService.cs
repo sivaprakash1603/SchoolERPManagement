@@ -10,4 +10,5 @@ public interface IStudentService
     Task<StudentResponseDTO> UpdateStudentAsync(int id, UpdateStudentDTO dto, CancellationToken cancellationToken);
     Task DeleteStudentAsync(int id, CancellationToken cancellationToken);
     Task<int?> GetStudentIdByUserIdAsync(int userId, CancellationToken cancellationToken);
+    Task<IEnumerable<StudentResponseDTO>> GetStudentsByClassIdAsync(int classId, CancellationToken cancellationToken);
 }

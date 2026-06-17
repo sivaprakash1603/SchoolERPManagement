@@ -58,7 +58,7 @@ public sealed class FeeService : IFeeService
             Studentid = dto.StudentId,
             Feestructureid = dto.FeeStructureId,
             Amountpaid = dto.AmountPaid,
-            Paymentdate = dto.PaymentDate ?? DateTime.Now,
+            Paymentdate = dto.PaymentDate ?? DateTime.UtcNow,
             Paymentmethod = dto.PaymentMethod,
             Transactionid = dto.TransactionId
         };
@@ -173,14 +173,25 @@ public sealed class FeeService : IFeeService
 
                 if (session != null && session.Metadata.TryGetValue("StudentId", out var studentIdString) && int.TryParse(studentIdString, out int studentId))
                 {
+                    var transactionId = session.PaymentIntentId ?? session.Id;
+
+                    // Prevent duplicate entries if the webhook is delivered multiple times
+                    bool paymentExists = await _feePaymentRepository.Query(false)
+                        .AnyAsync(p => p.Transactionid == transactionId, cancellationToken);
+
+                    if (paymentExists)
+                    {
+                        return;
+                    }
+
                     var payment = new Feepayment
                     {
                         Studentid = studentId,
                         Feestructureid = 0, // Fallback since Stripe Webhook might not know
                         Amountpaid = (decimal)(session.AmountTotal ?? 0) / 100m,
-                        Paymentdate = DateTime.Now,
+                        Paymentdate = DateTime.UtcNow,
                         Paymentmethod = "Stripe",
-                        Transactionid = session.PaymentIntentId ?? session.Id
+                        Transactionid = transactionId
                     };
 
                     await _feePaymentRepository.AddAsync(payment, save: true, ct: cancellationToken);

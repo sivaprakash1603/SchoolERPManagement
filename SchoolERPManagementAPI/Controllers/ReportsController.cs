@@ -13,10 +13,12 @@ namespace SchoolERPManagementAPI.Controllers
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _reportService;
+        private readonly IPdfReportService _pdfReportService;
 
-        public ReportsController(IReportService reportService)
+        public ReportsController(IReportService reportService, IPdfReportService pdfReportService)
         {
             _reportService = reportService;
+            _pdfReportService = pdfReportService;
         }
 
         [HttpGet("fees")]
@@ -108,6 +110,68 @@ namespace SchoolERPManagementAPI.Controllers
         {
             var result = await _reportService.QueryAssetsAsync(request, cancellationToken);
             return Ok(result);
+        }
+
+        // --- PDF EXPORT ENDPOINTS --- //
+
+        [HttpGet("fees/export/pdf")]
+        public async Task<IActionResult> ExportFeeCollectionPdf(
+            [FromQuery] SchoolERPManagementBLLibrary.DTOs.Report.Query.FeePaymentQueryRequest request,
+            CancellationToken cancellationToken)
+        {
+            request.PageNumber = 1;
+            request.PageSize = int.MaxValue;
+            var result = await _reportService.QueryFeePaymentsAsync(request, cancellationToken);
+            var pdfBytes = _pdfReportService.GenerateFeeCollectionPdf(result.Items.ToList());
+            return File(pdfBytes, "application/pdf", "fee-collection-report.pdf");
+        }
+
+        [HttpGet("attendance/students/export/pdf")]
+        public async Task<IActionResult> ExportStudentAttendancePdf(
+            [FromQuery] SchoolERPManagementBLLibrary.DTOs.Report.Query.StudentAttendanceQueryRequest request,
+            CancellationToken cancellationToken)
+        {
+            request.PageNumber = 1;
+            request.PageSize = int.MaxValue;
+            var result = await _reportService.QueryStudentAttendanceAsync(request, cancellationToken);
+            var pdfBytes = _pdfReportService.GenerateStudentAttendancePdf(result.Items.ToList());
+            return File(pdfBytes, "application/pdf", "student-attendance-report.pdf");
+        }
+
+        [HttpGet("attendance/staff/export/pdf")]
+        public async Task<IActionResult> ExportStaffAttendancePdf(
+            [FromQuery] SchoolERPManagementBLLibrary.DTOs.Report.Query.StaffAttendanceQueryRequest request,
+            CancellationToken cancellationToken)
+        {
+            request.PageNumber = 1;
+            request.PageSize = int.MaxValue;
+            var result = await _reportService.QueryStaffAttendanceAsync(request, cancellationToken);
+            var pdfBytes = _pdfReportService.GenerateStaffAttendancePdf(result.Items.ToList());
+            return File(pdfBytes, "application/pdf", "staff-attendance-report.pdf");
+        }
+
+        [HttpGet("exams/results/export/pdf")]
+        public async Task<IActionResult> ExportExamResultsPdf(
+            [FromQuery] SchoolERPManagementBLLibrary.DTOs.Report.Query.ExamResultQueryRequest request,
+            CancellationToken cancellationToken)
+        {
+            request.PageNumber = 1;
+            request.PageSize = int.MaxValue;
+            var result = await _reportService.QueryExamResultsAsync(request, cancellationToken);
+            var pdfBytes = _pdfReportService.GenerateExamResultsPdf(result.Items.ToList());
+            return File(pdfBytes, "application/pdf", "exam-results-report.pdf");
+        }
+
+        [HttpGet("assets/export/pdf")]
+        public async Task<IActionResult> ExportAssetsPdf(
+            [FromQuery] SchoolERPManagementBLLibrary.DTOs.Report.Query.AssetQueryRequest request,
+            CancellationToken cancellationToken)
+        {
+            request.PageNumber = 1;
+            request.PageSize = int.MaxValue;
+            var result = await _reportService.QueryAssetsAsync(request, cancellationToken);
+            var pdfBytes = _pdfReportService.GenerateAssetsPdf(result.Items.ToList());
+            return File(pdfBytes, "application/pdf", "assets-report.pdf");
         }
     }
 }

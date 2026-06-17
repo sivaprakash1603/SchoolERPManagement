@@ -60,5 +60,38 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _homeworkService.EvaluateHomeworkAsync(dto, cancellationToken);
             return Ok(result);
         }
+
+        [HttpGet("class/{classId}")]
+        [Authorize(Roles = "Admin,Teacher,Student,Parent")]
+        public async Task<IActionResult> GetHomeworks(int classId, [FromQuery] int? subjectId, CancellationToken cancellationToken)
+        {
+            var result = await _homeworkService.GetHomeworksAsync(classId, subjectId, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("user/{userId}")]
+        [Authorize(Roles = "Admin,Teacher,Student,Parent")]
+        public async Task<IActionResult> GetHomeworksByUser(int userId, CancellationToken cancellationToken)
+        {
+            // Security check to ensure a user only fetches their own homework unless they are an admin
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+            
+            if (role != "Admin" && currentUserIdStr != userId.ToString())
+            {
+                return Forbid();
+            }
+
+            var result = await _homeworkService.GetHomeworksByUserIdAsync(userId, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("student/{studentId}")]
+        [Authorize(Roles = "Admin,Teacher,Student,Parent")]
+        public async Task<IActionResult> GetHomeworksByStudentId(int studentId, CancellationToken cancellationToken)
+        {
+            var result = await _homeworkService.GetHomeworksByStudentIdAsync(studentId, cancellationToken);
+            return Ok(result);
+        }
     }
 }

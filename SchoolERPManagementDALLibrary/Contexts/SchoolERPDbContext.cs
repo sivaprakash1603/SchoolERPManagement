@@ -86,7 +86,7 @@ public partial class SchoolERPDbContext : DbContext
     {
         configurationBuilder
             .Properties<DateTime>()
-            .HaveConversion<DateTimeToUnspecifiedConverter>();
+            .HaveConversion<DateTimeToUtcConverter>();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -900,12 +900,12 @@ public partial class SchoolERPDbContext : DbContext
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
 
-public class DateTimeToUnspecifiedConverter : ValueConverter<DateTime, DateTime>
+public class DateTimeToUtcConverter : ValueConverter<DateTime, DateTime>
 {
-    public DateTimeToUnspecifiedConverter()
+    public DateTimeToUtcConverter()
         : base(
-            v => DateTime.SpecifyKind(v, DateTimeKind.Unspecified),
-            v => DateTime.SpecifyKind(v, DateTimeKind.Unspecified))
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc))
     {
     }
 }

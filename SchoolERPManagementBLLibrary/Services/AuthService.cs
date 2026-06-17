@@ -37,6 +37,11 @@ public sealed class AuthService : IAuthService
             throw new BusinessRuleException("Invalid username/email or password.");
         }
 
+        if (user.Isactive == false)
+        {
+            throw new BusinessRuleException("Your account has been deactivated.");
+        }
+
         var response = _mapper.Map<AuthResponseDTO>(user);
         return response with { AccessToken = _tokenGenerator.GenerateToken(user, user.Role) };
     }

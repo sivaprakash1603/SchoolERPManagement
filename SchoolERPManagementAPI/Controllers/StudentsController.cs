@@ -27,6 +27,14 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("class/{classId}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetStudentsByClassId(int classId, CancellationToken cancellationToken)
+        {
+            var result = await _studentService.GetStudentsByClassIdAsync(classId, cancellationToken);
+            return Ok(result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStudentById(int id, CancellationToken cancellationToken)
         {

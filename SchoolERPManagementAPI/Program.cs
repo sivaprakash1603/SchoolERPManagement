@@ -23,10 +23,14 @@ using Microsoft.Extensions.FileProviders;
 using FluentValidation;
 using SchoolERPManagementAPI.Filters;
 using SchoolERPManagementBLLibrary.Validators;
+using QuestPDF.Infrastructure;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure QuestPDF Community License
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Host.UseSerilog((context, configuration) => 
     configuration.ReadFrom.Configuration(context.Configuration));
@@ -125,9 +129,17 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+builder.Services.AddScoped<ActiveUserFilterAttribute>();
+
 builder.Services.AddControllers(options => 
 {
     options.Filters.Add<ValidationFilterAttribute>();
+    options.Filters.AddService<ActiveUserFilterAttribute>();
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new SchoolERPManagementAPI.Converters.IstDateTimeConverter());
+    options.JsonSerializerOptions.Converters.Add(new SchoolERPManagementAPI.Converters.IstNullableDateTimeConverter());
 });
 #region Repository
 builder.Services.AddScoped<IRepository<int, Academicyear>, AbstractRepository<int, Academicyear>>();
@@ -178,6 +190,9 @@ builder.Services.AddScoped<IHomeworkService, HomeworkService>();
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<ITimetableService, TimetableService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IPdfReportService, PdfReportService>();
 builder.Services.AddScoped<INotificationPusher, SignalRNotificationPusher>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();

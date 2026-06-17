@@ -1,0 +1,17 @@
+<div class="d-flex w-100 layout-wrapper">
+  <!-- Sidebar Container -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="d-flex flex-column flex-grow-1 overflow-hidden position-relative">
+    <app-header></app-header>
+    
+    <main class="flex-grow-1 overflow-auto p-4" style="background-color: var(--bg-canvas);">
+      <div class="container-fluid py-2">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+
+    <app-footer></app-footer>
+  </div>
+</div>

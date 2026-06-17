@@ -128,6 +128,75 @@ public sealed class HomeworkService : IHomeworkService
         return _mapper.Map<HomeworkSubmissionResponseDTO>(submission);
     }
 
+    public async Task<IReadOnlyList<HomeworkResponseDTO>> GetHomeworksAsync(int classId, int? subjectId, CancellationToken cancellationToken)
+    {
+        var query = _homeworkRepository.Query(true).Where(h => h.Classid == classId);
+        
+        if (subjectId.HasValue)
+        {
+            query = query.Where(h => h.Subjectid == subjectId.Value);
+        }
+
+        var homeworks = await query.OrderByDescending(h => h.Createdat).ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<HomeworkResponseDTO>>(homeworks);
+    }
+
+    public async Task<IReadOnlyList<HomeworkResponseDTO>> GetHomeworksByUserIdAsync(int userId, CancellationToken cancellationToken)
+    {
+        var student = await _studentRepository.Query(true)
+            .Include(s => s.Studentenrollments)
+            .FirstOrDefaultAsync(s => s.Userid == userId, cancellationToken);
+
+        if (student != null)
+        {
+            var enrollment = student.Studentenrollments.OrderByDescending(e => e.Id).FirstOrDefault();
+            if (enrollment != null)
+            {
+                var studentHomeworks = await _homeworkRepository.Query(true)
+                    .Where(h => h.Classid == enrollment.Classid)
+                    .OrderByDescending(h => h.Createdat)
+                    .ToListAsync(cancellationToken);
+                return _mapper.Map<IReadOnlyList<HomeworkResponseDTO>>(studentHomeworks);
+            }
+            return Array.Empty<HomeworkResponseDTO>();
+        }
+
+        var teacher = await _teacherRepository.Query(true)
+            .FirstOrDefaultAsync(t => t.Userid == userId, cancellationToken);
+        
+        if (teacher != null)
+        {
+            var teacherHomeworks = await _homeworkRepository.Query(true)
+                .Where(h => h.Teacherid == teacher.Id)
+                .OrderByDescending(h => h.Createdat)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<IReadOnlyList<HomeworkResponseDTO>>(teacherHomeworks);
+        }
+
+        return Array.Empty<HomeworkResponseDTO>();
+    }
+
+    public async Task<IReadOnlyList<HomeworkResponseDTO>> GetHomeworksByStudentIdAsync(int studentId, CancellationToken cancellationToken)
+    {
+        var student = await _studentRepository.Query(true)
+            .Include(s => s.Studentenrollments)
+            .FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
+
+        if (student != null)
+        {
+            var enrollment = student.Studentenrollments.OrderByDescending(e => e.Id).FirstOrDefault();
+            if (enrollment != null)
+            {
+                var studentHomeworks = await _homeworkRepository.Query(true)
+                    .Where(h => h.Classid == enrollment.Classid)
+                    .OrderByDescending(h => h.Createdat)
+                    .ToListAsync(cancellationToken);
+                return _mapper.Map<IReadOnlyList<HomeworkResponseDTO>>(studentHomeworks);
+            }
+        }
+        return Array.Empty<HomeworkResponseDTO>();
+    }
+
     private async Task EnsureReferencesAsync(int subjectId, int teacherId, int classId, CancellationToken cancellationToken)
     {
         if (await _subjectRepository.GetByIdAsync(subjectId) is null)

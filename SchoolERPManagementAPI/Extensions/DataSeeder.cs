@@ -32,7 +32,7 @@ public static class DataSeeder
                 Passwordhash = PasswordHasher.Hash("admin123"),
                 Roleid = adminRole.Id,
                 Isactive = true,
-                Createdat = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)
+                Createdat = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
             };
             context.Users.Add(adminUser);
             context.SaveChanges();

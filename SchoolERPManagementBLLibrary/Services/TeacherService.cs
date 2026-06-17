@@ -70,7 +70,7 @@ public sealed class TeacherService : ITeacherService
         }
 
         int totalTeachers = await _teacherRepository.Query(false).CountAsync(cancellationToken);
-        string generatedUsername = $"T{(totalTeachers + 1):D3}{DateTime.Now.Year}";
+        string generatedUsername = $"T{(totalTeachers + 1):D3}{DateTime.UtcNow.Year}";
         string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); // Simple random password
 
         var user = new User
@@ -80,7 +80,7 @@ public sealed class TeacherService : ITeacherService
             Passwordhash = PasswordHasher.Hash(generatedPassword),
             Roleid = role.Id,
             Isactive = true,
-            Createdat = DateTime.Now
+            Createdat = DateTime.UtcNow
         };
 
         await _userRepository.AddAsync(user, save: true, ct: cancellationToken);
@@ -90,7 +90,7 @@ public sealed class TeacherService : ITeacherService
             Userid = user.Id,
             Name = dto.Name,
             Phonenumber = dto.Phonenumber,
-            Joiningdate = DateOnly.FromDateTime(DateTime.Now),
+            Joiningdate = DateOnly.FromDateTime(DateTime.UtcNow),
             Qualifications = dto.Qualifications
         };
 

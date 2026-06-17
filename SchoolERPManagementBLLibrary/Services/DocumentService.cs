@@ -121,4 +121,24 @@ public sealed class DocumentService : IDocumentService
 
         await strategy.VerifyAsync(dto, verifyingUserId, userRole, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<StudentDocumentResponseDTO>> GetStudentDocumentsAsync(int studentId, CancellationToken cancellationToken)
+    {
+        var documents = await _studentDocumentRepository.Query(true)
+            .Where(d => d.Studentid == studentId)
+            .OrderByDescending(d => d.Uploadedat)
+            .ToListAsync(cancellationToken);
+
+        return _mapper.Map<IReadOnlyList<StudentDocumentResponseDTO>>(documents);
+    }
+
+    public async Task<IReadOnlyList<TeacherDocumentResponseDTO>> GetTeacherDocumentsAsync(int teacherId, CancellationToken cancellationToken)
+    {
+        var documents = await _teacherDocumentRepository.Query(true)
+            .Where(d => d.Teacherid == teacherId)
+            .OrderByDescending(d => d.Uploadedat)
+            .ToListAsync(cancellationToken);
+
+        return _mapper.Map<IReadOnlyList<TeacherDocumentResponseDTO>>(documents);
+    }
 }

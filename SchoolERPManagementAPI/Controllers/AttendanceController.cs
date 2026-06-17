@@ -34,7 +34,7 @@ namespace SchoolERPManagementAPI.Controllers
 
         [HttpGet("class/{classId}")]
         [Authorize(Roles = "Admin,Teacher")]
-        public async Task<IActionResult> GetAttendanceByClass(int classId, [FromQuery] DateTime date, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAttendanceByClass(int classId, [FromQuery] DateOnly date, CancellationToken cancellationToken)
         {
             var result = await _attendanceService.GetAttendanceByClassAsync(classId, date, cancellationToken);
             return Ok(result);

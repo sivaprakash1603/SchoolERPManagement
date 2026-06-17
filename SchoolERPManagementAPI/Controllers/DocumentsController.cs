@@ -51,5 +51,21 @@ namespace SchoolERPManagementAPI.Controllers
             await _documentService.VerifyDocumentAsync(dto, userId, userRole, cancellationToken);
             return Ok(new { Message = "Document verified successfully." });
         }
+
+        [HttpGet("student/{studentId}")]
+        [Authorize(Roles = "Admin,Parent,Student,Teacher")]
+        public async Task<IActionResult> GetStudentDocuments(int studentId, CancellationToken cancellationToken)
+        {
+            var result = await _documentService.GetStudentDocumentsAsync(studentId, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("teacher/{teacherId}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetTeacherDocuments(int teacherId, CancellationToken cancellationToken)
+        {
+            var result = await _documentService.GetTeacherDocumentsAsync(teacherId, cancellationToken);
+            return Ok(result);
+        }
     }
 }

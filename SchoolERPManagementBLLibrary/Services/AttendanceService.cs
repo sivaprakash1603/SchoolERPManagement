@@ -90,17 +90,15 @@ public sealed class AttendanceService : IAttendanceService
         return _mapper.Map<IReadOnlyList<AttendanceResponseDTO>>(items);
     }
 
-    public async Task<IReadOnlyList<AttendanceResponseDTO>> GetAttendanceByClassAsync(int classId, DateTime date, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<AttendanceResponseDTO>> GetAttendanceByClassAsync(int classId, DateOnly date, CancellationToken cancellationToken)
     {
         var studentIds = await _studentEnrollmentRepository.Query(true)
             .Where(enrollment => enrollment.Classid == classId)
             .Select(enrollment => enrollment.Studentid)
             .ToListAsync(cancellationToken);
 
-        var day = DateOnly.FromDateTime(date);
-
         var items = await _attendanceRepository.Query(true)
-            .Where(attendance => studentIds.Contains(attendance.Studentid) && attendance.Date == day)
+            .Where(attendance => studentIds.Contains(attendance.Studentid) && attendance.Date == date)
             .ToListAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<AttendanceResponseDTO>>(items);
     }

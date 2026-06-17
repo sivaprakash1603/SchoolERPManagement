@@ -186,12 +186,28 @@ public sealed class StudentService : IStudentService
             throw new EntityNotFoundException("Student", id.ToString());
         }
 
-        await _studentRepository.DeleteAsync(student, save: true, ct: cancellationToken);
+        var user = await _userRepository.GetByIdAsync(student.Userid);
+        if (user != null)
+        {
+            user.Isactive = false;
+            await _userRepository.UpdateAsync(user, save: true, ct: cancellationToken);
+        }
     }
 
     public async Task<int?> GetStudentIdByUserIdAsync(int userId, CancellationToken cancellationToken)
     {
         var student = await _studentRepository.Query(true).FirstOrDefaultAsync(x => x.Userid == userId, cancellationToken);
         return student?.Id;
+    }
+
+    public async Task<IEnumerable<StudentResponseDTO>> GetStudentsByClassIdAsync(int classId, CancellationToken cancellationToken)
+    {
+        var enrollments = await _studentEnrollmentRepository.Query(true)
+            .Include(e => e.Student)
+            .Where(e => e.Classid == classId)
+            .ToListAsync(cancellationToken);
+            
+        var students = enrollments.Select(e => e.Student).Where(s => s != null).ToList();
+        return _mapper.Map<IEnumerable<StudentResponseDTO>>(students);
     }
 }

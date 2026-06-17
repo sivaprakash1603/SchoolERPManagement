@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace SchoolERPManagementBLLibrary.DTOs.Dashboard;
 
 public record AdminDashboardDTO(
@@ -6,5 +8,9 @@ public record AdminDashboardDTO(
     int TotalParents,
     decimal TotalRevenue,
     int TotalClasses,
-    int TotalAssets
+    int TotalAssets,
+    double StudentAttendanceRate,
+    double StaffAttendanceRate,
+    IEnumerable<MonthlyRevenueDTO> RevenueTrends,
+    IEnumerable<RecentTransactionDTO> RecentTransactions
 );

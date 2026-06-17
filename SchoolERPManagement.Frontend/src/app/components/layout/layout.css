@@ -1,0 +1,5 @@
+.layout-wrapper {
+  height: 100vh !important;
+  overflow: hidden;
+  background-color: var(--bg-main);
+}

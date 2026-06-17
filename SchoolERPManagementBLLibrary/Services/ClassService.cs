@@ -29,9 +29,20 @@ public sealed class ClassService : IClassService
 
     public async Task<ClassResponseDTO> CreateClassAsync(CreateClassDTO dto, CancellationToken cancellationToken)
     {
-        if (dto.ClassteacherId.HasValue && await _teacherRepository.GetByIdAsync(dto.ClassteacherId.Value) is null)
+        if (dto.ClassteacherId.HasValue)
         {
-            throw new EntityNotFoundException("Teacher", dto.ClassteacherId.Value.ToString());
+            if (await _teacherRepository.GetByIdAsync(dto.ClassteacherId.Value) is null)
+            {
+                throw new EntityNotFoundException("Teacher", dto.ClassteacherId.Value.ToString());
+            }
+
+            bool isAlreadyClassTeacher = await _classRepository.Query(false)
+                .AnyAsync(c => c.Classteacherid == dto.ClassteacherId.Value, cancellationToken);
+            
+            if (isAlreadyClassTeacher)
+            {
+                throw new BusinessRuleException("A teacher cannot be the class teacher for more than one class.");
+            }
         }
 
         var classEntity = new Class

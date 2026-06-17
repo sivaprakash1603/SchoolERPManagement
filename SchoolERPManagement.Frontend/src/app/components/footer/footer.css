@@ -1,0 +1,11 @@
+.footer-wrapper {
+  z-index: 5;
+}
+
+.transition-colors {
+  transition: color 0.2s ease;
+}
+
+.hover-primary:hover {
+  color: var(--bs-primary) !important;
+}

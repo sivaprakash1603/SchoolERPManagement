@@ -1,1 +1,41 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-sans: 'Inter', sans-serif;
+  --bg-canvas: #fafafa;
+  --bg-sidebar: #f5f6fa;
+  --bg-main: #ffffff;
+  --border-color: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --primary-accent: #3730a3; /* Deep Purple/Blue */
+}
+
+[data-bs-theme="dark"] {
+  --bg-canvas: #0f172a;
+  --bg-sidebar: #1e293b;
+  --bg-main: #0b0f19;
+  --border-color: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --primary-accent: #6366f1; /* Brighter purple for dark contrast */
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+.sans-text { font-family: var(--font-sans); }
+
+.minimal-card {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.text-muted-custom {
+  color: var(--text-secondary);
+}
