@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { LayoutService } from '../../services/layout.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -9,6 +10,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styleUrl: './sidebar.css',
 })
 export class Sidebar {
+  layoutService = inject(LayoutService);
+
   menuItems = [
     { label: 'Dashboard', route: '/dashboard', icon: 'bi-grid-fill' },
     { label: 'Students', route: '/students', icon: 'bi-people-fill' },
@@ -22,6 +25,14 @@ export class Sidebar {
     { label: 'Exams', route: '/exams', icon: 'bi-file-earmark-text-fill' },
     { label: 'Fees', route: '/fees', icon: 'bi-cash-coin' },
     { label: 'Assets', route: '/assets', icon: 'bi-pc-display' },
-    { label: 'Documents', route: '/documents', icon: 'bi-folder-fill' }
+    { label: 'Documents', route: '/documents', icon: 'bi-folder-fill' },
+    { label: 'Academic Sessions', route: '/academic-sessions', icon: 'bi-calendar-range' }
   ];
+
+  onMenuClick() {
+    // Automatically close sidebar on mobile when navigating
+    if (window.innerWidth < 768) {
+      this.layoutService.closeSidebar();
+    }
+  }
 }

@@ -16,6 +16,8 @@ public sealed class HomeworkService : IHomeworkService
     private readonly IRepository<int, Teacher> _teacherRepository;
     private readonly IRepository<int, Class> _classRepository;
     private readonly IRepository<int, Student> _studentRepository;
+    private readonly IRepository<int, Teachersubject> _teacherSubjectRepository;
+    private readonly IRepository<int, Timetable> _timetableRepository;
     private readonly IFileStorageService _fileStorageService;
     private readonly IMapper _mapper;
 
@@ -26,6 +28,8 @@ public sealed class HomeworkService : IHomeworkService
         IRepository<int, Teacher> teacherRepository,
         IRepository<int, Class> classRepository,
         IRepository<int, Student> studentRepository,
+        IRepository<int, Teachersubject> teacherSubjectRepository,
+        IRepository<int, Timetable> timetableRepository,
         IFileStorageService fileStorageService,
         IMapper mapper)
     {
@@ -35,6 +39,8 @@ public sealed class HomeworkService : IHomeworkService
         _teacherRepository = teacherRepository;
         _classRepository = classRepository;
         _studentRepository = studentRepository;
+        _teacherSubjectRepository = teacherSubjectRepository;
+        _timetableRepository = timetableRepository;
         _fileStorageService = fileStorageService;
         _mapper = mapper;
     }
@@ -65,16 +71,36 @@ public sealed class HomeworkService : IHomeworkService
         return _mapper.Map<HomeworkResponseDTO>(homework);
     }
 
-    public async Task<HomeworkSubmissionResponseDTO> SubmitHomeworkAsync(HomeworkSubmissionDTO dto, CancellationToken cancellationToken)
+    public async Task<HomeworkSubmissionResponseDTO> SubmitHomeworkAsync(HomeworkSubmissionDTO dto, int? userId, string userRole, CancellationToken cancellationToken)
     {
-        if (await _homeworkRepository.GetByIdAsync(dto.HomeworkId) is null)
+        if (userRole == "Student" && userId.HasValue)
+        {
+            var studentEntity = await _studentRepository.Query(true).FirstOrDefaultAsync(s => s.Userid == userId.Value, cancellationToken);
+            if (studentEntity == null || studentEntity.Id != dto.StudentId)
+            {
+                throw new BusinessRuleException("You can only submit homework for your own account.");
+            }
+        }
+
+        var homework = await _homeworkRepository.GetByIdAsync(dto.HomeworkId);
+        if (homework is null)
         {
             throw new EntityNotFoundException("Homework", dto.HomeworkId.ToString());
         }
 
-        if (await _studentRepository.GetByIdAsync(dto.StudentId) is null)
+        var student = await _studentRepository.Query(true)
+            .Include(s => s.Studentenrollments)
+            .FirstOrDefaultAsync(s => s.Id == dto.StudentId, cancellationToken);
+
+        if (student is null)
         {
             throw new EntityNotFoundException("Student", dto.StudentId.ToString());
+        }
+
+        var activeEnrollment = student.Studentenrollments.OrderByDescending(e => e.Id).FirstOrDefault();
+        if (activeEnrollment == null || activeEnrollment.Classid != homework.Classid)
+        {
+            throw new BusinessRuleException("The student is not enrolled in the class for this homework.");
         }
 
         string? uploadedFileUrl = null;
@@ -112,7 +138,7 @@ public sealed class HomeworkService : IHomeworkService
         return _mapper.Map<HomeworkSubmissionResponseDTO>(submission);
     }
 
-    public async Task<HomeworkSubmissionResponseDTO> EvaluateHomeworkAsync(EvaluateHomeworkDTO dto, CancellationToken cancellationToken)
+    public async Task<HomeworkSubmissionResponseDTO> EvaluateHomeworkAsync(EvaluateHomeworkDTO dto, int? userId, string userRole, CancellationToken cancellationToken)
     {
         var submission = await _submissionRepository.GetByIdAsync(dto.HomeworkSubmissionId);
         if (submission is null)
@@ -120,9 +146,19 @@ public sealed class HomeworkService : IHomeworkService
             throw new EntityNotFoundException("Homework submission", dto.HomeworkSubmissionId.ToString());
         }
 
+        if (userRole == "Teacher" && userId.HasValue)
+        {
+            var homework = await _homeworkRepository.GetByIdAsync(submission.Homeworkid);
+            var teacher = await _teacherRepository.Query(true).FirstOrDefaultAsync(t => t.Userid == userId.Value, cancellationToken);
+            if (teacher == null || homework == null || homework.Teacherid != teacher.Id)
+            {
+                throw new BusinessRuleException("You are not authorized to evaluate this homework.");
+            }
+        }
+
         submission.Marks = dto.Marks;
         submission.Remarks = dto.Remarks;
-        submission.Verificationstatus = dto.VerificationStatus;
+        submission.Verificationstatus = dto.VerificationStatus?.ToLower();
 
         await _submissionRepository.UpdateAsync(submission, save: true, ct: cancellationToken);
         return _mapper.Map<HomeworkSubmissionResponseDTO>(submission);
@@ -153,6 +189,7 @@ public sealed class HomeworkService : IHomeworkService
             if (enrollment != null)
             {
                 var studentHomeworks = await _homeworkRepository.Query(true)
+                    .Include(h => h.Homeworksubmissions.Where(sub => sub.Studentid == student.Id))
                     .Where(h => h.Classid == enrollment.Classid)
                     .OrderByDescending(h => h.Createdat)
                     .ToListAsync(cancellationToken);
@@ -188,6 +225,7 @@ public sealed class HomeworkService : IHomeworkService
             if (enrollment != null)
             {
                 var studentHomeworks = await _homeworkRepository.Query(true)
+                    .Include(h => h.Homeworksubmissions.Where(sub => sub.Studentid == studentId))
                     .Where(h => h.Classid == enrollment.Classid)
                     .OrderByDescending(h => h.Createdat)
                     .ToListAsync(cancellationToken);
@@ -212,6 +250,17 @@ public sealed class HomeworkService : IHomeworkService
         if (await _classRepository.GetByIdAsync(classId) is null)
         {
             throw new EntityNotFoundException("Class", classId.ToString());
+        }
+
+        bool isAssigned = await _teacherSubjectRepository.Query(true)
+            .AnyAsync(ts => ts.Teacherid == teacherId && ts.Classid == classId && ts.Subjectid == subjectId, cancellationToken);
+
+        bool isAssignedInTimetable = await _timetableRepository.Query(true)
+            .AnyAsync(t => t.Teacherid == teacherId && t.Classid == classId && t.Subjectid == subjectId, cancellationToken);
+
+        if (!isAssigned && !isAssignedInTimetable)
+        {
+            throw new BusinessRuleException("The teacher is not assigned to teach this subject for this class.");
         }
     }
 }

@@ -1,13 +1,18 @@
-<aside class="sidebar-wrapper d-flex flex-column flex-shrink-0 p-4">
-  <div class="mb-5 mt-2">
-    <h3 class="fw-bold mb-0" style="color: var(--primary-accent);">EduControl</h3>
-    <small class="text-muted-custom" style="font-size: 0.75rem;">Institutional ERP</small>
+<aside class="sidebar-wrapper d-flex flex-column flex-shrink-0 p-4 position-relative h-100">
+  <div class="mb-5 mt-2 d-flex justify-content-between align-items-center">
+    <div>
+      <h3 class="fw-bold mb-0" style="color: var(--primary-accent);">EduControl</h3>
+      <small class="text-muted-custom" style="font-size: 0.75rem;">Institutional ERP</small>
+    </div>
+    <button class="btn btn-link text-muted-custom p-0 border-0 d-md-none" (click)="layoutService.closeSidebar()" aria-label="Close Sidebar">
+      <i class="bi bi-x-lg fs-4"></i>
+    </button>
   </div>
   
-  <ul class="nav flex-column mb-auto sidebar-nav pe-2">
+  <ul class="nav flex-column flex-nowrap mb-auto sidebar-nav pe-2 overflow-y-auto overflow-x-hidden">
     @for (item of menuItems; track item.route) {
       <li class="nav-item">
-        <a [routerLink]="item.route" routerLinkActive="active" class="nav-link d-flex align-items-center gap-3 py-2 px-3 sans-text text-decoration-none">
+        <a [routerLink]="item.route" routerLinkActive="active" class="nav-link d-flex align-items-center gap-3 py-2 px-3 sans-text text-decoration-none" (click)="onMenuClick()">
           <i class="bi {{ item.icon }} fs-5"></i>
           <span>{{ item.label }}</span>
         </a>

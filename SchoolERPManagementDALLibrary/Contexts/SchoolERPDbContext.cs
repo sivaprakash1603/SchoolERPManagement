@@ -65,6 +65,8 @@ public partial class SchoolERPDbContext : DbContext
 
     public virtual DbSet<Studentenrollment> Studentenrollments { get; set; }
 
+    public virtual DbSet<Studentparent> Studentparents { get; set; }
+
     public virtual DbSet<Subject> Subjects { get; set; }
 
     public virtual DbSet<Teacher> Teachers { get; set; }
@@ -212,6 +214,7 @@ public partial class SchoolERPDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("classname");
             entity.Property(e => e.Classteacherid).HasColumnName("classteacherid");
+            entity.Property(e => e.Academicyearid).HasColumnName("academicyearid");
             entity.Property(e => e.Section)
                 .HasMaxLength(10)
                 .HasColumnName("section");
@@ -219,6 +222,10 @@ public partial class SchoolERPDbContext : DbContext
             entity.HasOne(d => d.Classteacher).WithMany(p => p.Classes)
                 .HasForeignKey(d => d.Classteacherid)
                 .HasConstraintName("classes_classteacherid_fkey");
+
+            entity.HasOne(d => d.Academicyear).WithMany()
+                .HasForeignKey(d => d.Academicyearid)
+                .HasConstraintName("classes_academicyearid_fkey");
         });
 
         modelBuilder.Entity<Exam>(entity =>
@@ -351,6 +358,9 @@ public partial class SchoolERPDbContext : DbContext
                 .HasMaxLength(150)
                 .HasColumnName("feename");
 
+            entity.Property(e => e.Duedate)
+                .HasColumnName("duedate");
+
             entity.HasOne(d => d.Academicyear).WithMany(p => p.Feestructures)
                 .HasForeignKey(d => d.Academicyearid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -471,9 +481,6 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Phonenumber)
                 .HasMaxLength(20)
                 .HasColumnName("phonenumber");
-            entity.Property(e => e.Relation)
-                .HasMaxLength(50)
-                .HasColumnName("relation");
             entity.Property(e => e.Userid).HasColumnName("userid");
 
             entity.HasOne(d => d.User).WithOne(p => p.Parent)
@@ -624,15 +631,10 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(150)
                 .HasColumnName("name");
-            entity.Property(e => e.Parentid).HasColumnName("parentid");
             entity.Property(e => e.Regno)
                 .HasMaxLength(50)
                 .HasColumnName("regno");
             entity.Property(e => e.Userid).HasColumnName("userid");
-
-            entity.HasOne(d => d.Parent).WithMany(p => p.Students)
-                .HasForeignKey(d => d.Parentid)
-                .HasConstraintName("students_parentid_fkey");
 
             entity.HasOne(d => d.User).WithOne(p => p.Student)
                 .HasForeignKey<Student>(d => d.Userid)
@@ -892,6 +894,31 @@ public partial class SchoolERPDbContext : DbContext
                 .HasForeignKey(d => d.Userid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("usernotifications_userid_fkey");
+        });
+
+        modelBuilder.Entity<Studentparent>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("studentparents_pkey");
+
+            entity.ToTable("studentparents");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Studentid).HasColumnName("studentid");
+            entity.Property(e => e.Parentid).HasColumnName("parentid");
+            entity.Property(e => e.Relation)
+                .HasMaxLength(50)
+                .HasColumnName("relation");
+            entity.Property(e => e.Isprimarycontact).HasColumnName("isprimarycontact");
+
+            entity.HasOne(d => d.Parent).WithMany(p => p.Studentparents)
+                .HasForeignKey(d => d.Parentid)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("studentparents_parentid_fkey");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.Studentparents)
+                .HasForeignKey(d => d.Studentid)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("studentparents_studentid_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

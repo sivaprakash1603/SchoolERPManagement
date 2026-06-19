@@ -21,7 +21,8 @@ namespace SchoolERPManagementAPI.Controllers
         [Authorize(Roles = "Admin,Parent,Student")]
         public async Task<IActionResult> UploadStudentDocument(IFormFile file, int studentId, [FromForm] string? documentName, CancellationToken cancellationToken)
         {
-            var result = await _documentService.UploadStudentDocumentAsync(file, studentId, documentName, cancellationToken);
+            var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+            var result = await _documentService.UploadStudentDocumentAsync(file, studentId, documentName, userRole, cancellationToken);
             return Ok(result);
         }
 
@@ -56,7 +57,10 @@ namespace SchoolERPManagementAPI.Controllers
         [Authorize(Roles = "Admin,Parent,Student,Teacher")]
         public async Task<IActionResult> GetStudentDocuments(int studentId, CancellationToken cancellationToken)
         {
-            var result = await _documentService.GetStudentDocumentsAsync(studentId, cancellationToken);
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+            var result = await _documentService.GetStudentDocumentsAsync(studentId, userId, userRole, cancellationToken);
             return Ok(result);
         }
 

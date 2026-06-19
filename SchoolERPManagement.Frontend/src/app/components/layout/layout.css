@@ -3,3 +3,24 @@
   overflow: hidden;
   background-color: var(--bg-main);
 }
+
+/* Toast Container & Animations */
+.toast-container {
+  max-width: 350px;
+}
+
+.toast {
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  backdrop-filter: blur(8px);
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

@@ -14,4 +14,7 @@ public interface IPdfReportService
     byte[] GenerateStaffAttendancePdf(IReadOnlyList<StaffAttendanceResponseDTO> records);
     byte[] GenerateExamResultsPdf(IReadOnlyList<ExamResultResponseDTO> records);
     byte[] GenerateAssetsPdf(IReadOnlyList<AssetResponseDTO> records);
+    byte[] GenerateStudentsPdf(IReadOnlyList<SchoolERPManagementBLLibrary.DTOs.Student.StudentQueryResponseDTO> records);
+    byte[] GenerateTeachersPdf(IReadOnlyList<SchoolERPManagementBLLibrary.DTOs.Teacher.TeacherResponseDTO> records);
+    byte[] GenerateParentsPdf(IReadOnlyList<SchoolERPManagementBLLibrary.DTOs.Parent.ParentResponseDTO> records);
 }

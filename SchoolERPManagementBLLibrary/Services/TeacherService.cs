@@ -15,6 +15,7 @@ public sealed class TeacherService : ITeacherService
     private readonly IRepository<int, Subject> _subjectRepository;
     private readonly IRepository<int, Class> _classRepository;
     private readonly IRepository<int, Teachersubject> _teacherSubjectRepository;
+    private readonly IRepository<int, Timetable> _timetableRepository;
     private readonly IRepository<int, Role> _roleRepository;
 
     public TeacherService(
@@ -23,6 +24,7 @@ public sealed class TeacherService : ITeacherService
         IRepository<int, Subject> subjectRepository,
         IRepository<int, Class> classRepository,
         IRepository<int, Teachersubject> teacherSubjectRepository,
+        IRepository<int, Timetable> timetableRepository,
         IRepository<int, Role> roleRepository)
     {
         _teacherRepository = teacherRepository;
@@ -30,14 +32,74 @@ public sealed class TeacherService : ITeacherService
         _subjectRepository = subjectRepository;
         _classRepository = classRepository;
         _teacherSubjectRepository = teacherSubjectRepository;
+        _timetableRepository = timetableRepository;
         _roleRepository = roleRepository;
     }
 
-    public async Task<IReadOnlyList<TeacherResponseDTO>> GetAllTeachersAsync(CancellationToken cancellationToken)
+    public async Task<SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<TeacherResponseDTO>> GetAllTeachersAsync(TeacherQueryRequest request, CancellationToken cancellationToken)
     {
-        return await _teacherRepository.Query(true)
-            .Select(teacher => new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, null, teacher.User!.Username, teacher.Classes.FirstOrDefault()!.Classname, teacher.Classes.FirstOrDefault()!.Section))
+        var query = _teacherRepository.Query(true)
+            .Include(t => t.User)
+            .Include(t => t.Classes)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.SearchQuery))
+        {
+            var search = request.SearchQuery.ToLower();
+            query = query.Where(t => (t.Name != null && t.Name.ToLower().Contains(search)) || (t.Phonenumber != null && t.Phonenumber.Contains(search)) || (t.User != null && t.User.Email != null && t.User.Email.ToLower().Contains(search)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Status) && request.Status != "All")
+        {
+            if (request.Status == "Active")
+                query = query.Where(t => t.User.Isactive == true);
+            else if (request.Status == "Inactive")
+                query = query.Where(t => t.User.Isactive != true);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(request.SortBy))
+        {
+            bool isDesc = request.SortDirection?.ToLower() == "desc";
+            query = request.SortBy.ToLower() switch
+            {
+                "name" => isDesc ? query.OrderByDescending(t => t.Name) : query.OrderBy(t => t.Name),
+                "joiningdate" => isDesc ? query.OrderByDescending(t => t.Joiningdate) : query.OrderBy(t => t.Joiningdate),
+                _ => query.OrderByDescending(t => t.Id)
+            };
+        }
+        else
+        {
+            query = query.OrderByDescending(t => t.Id);
+        }
+
+        var items = await query
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
             .ToListAsync(cancellationToken);
+
+        var dtos = items.Select(teacher => new TeacherResponseDTO(
+            teacher.Id, 
+            teacher.Userid, 
+            teacher.Name, 
+            teacher.Phonenumber, 
+            teacher.Joiningdate, 
+            teacher.Qualifications, 
+            null, 
+            teacher.User!.Username, 
+            teacher.Classes.FirstOrDefault()?.Classname, 
+            teacher.Classes.FirstOrDefault()?.Section
+        )).ToList();
+
+        return new SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<TeacherResponseDTO>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+        };
     }
 
     public async Task<TeacherResponseDTO> GetTeacherByIdAsync(int id, CancellationToken cancellationToken)
@@ -140,7 +202,12 @@ public sealed class TeacherService : ITeacherService
             return false;
         }
 
-        return await _teacherSubjectRepository.Query(true)
+        bool isAssigned = await _teacherSubjectRepository.Query(true)
             .AnyAsync(x => x.Teacherid == teacherId && x.Classid == classId && x.Subjectid == subjectId, cancellationToken);
+
+        bool isAssignedInTimetable = await _timetableRepository.Query(true)
+            .AnyAsync(t => t.Teacherid == teacherId && t.Classid == classId && t.Subjectid == subjectId, cancellationToken);
+
+        return isAssigned || isAssignedInTimetable;
     }
 }

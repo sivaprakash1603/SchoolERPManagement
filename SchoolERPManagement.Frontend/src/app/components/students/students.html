@@ -1,1 +1,489 @@
-<p>students works!</p>
+<!-- Page Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
+  <div>
+    <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent);">Student Directory</h2>
+    <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-calendar3"></i>
+      Academic Session {{ currentSessionName() }} &bull; {{ totalCount() }} Registered Students
+    </p>
+  </div>
+  <button routerLink="/students/onboarding" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
+    <i class="bi bi-person-plus-fill"></i>
+    New Admission
+  </button>
+</div>
+
+<!-- Filter Bar -->
+<div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
+  <div class="flex-grow-1" style="min-width: 200px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Search Student</label>
+    <div class="position-relative">
+      <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted-custom"></i>
+      <input type="text" class="form-control ps-5" placeholder="Name or Roll No..." [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()">
+    </div>
+  </div>
+  <div style="width: 150px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Academic Session</label>
+    <select class="form-select" (change)="onYearChange($event)" [value]="selectedAcademicYearId()">
+      @for (year of academicYears(); track year.id) {
+        <option [value]="year.id">{{ year.yearName }}</option>
+      }
+    </select>
+  </div>
+  <div style="width: 150px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Standard / Class</label>
+    <select class="form-select" [(ngModel)]="classId" (ngModelChange)="onFilterChange()">
+      <option [ngValue]="null">All Classes</option>
+      @for (c of classes(); track c.id) {
+        <option [ngValue]="c.id">{{ c.classname }} {{ c.section ? '- ' + c.section : '' }}</option>
+      }
+    </select>
+  </div>
+  <div style="width: 150px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Gender</label>
+    <select class="form-select" [(ngModel)]="gender" (ngModelChange)="onFilterChange()">
+      <option value="Any Gender">Any Gender</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
+  </div>
+  <div style="width: 150px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Status</label>
+    <select class="form-select" [(ngModel)]="status" (ngModelChange)="onFilterChange()">
+      <option value="All">All</option>
+      <option value="Active">Active</option>
+      <option value="Inactive">Inactive</option>
+    </select>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2" title="Refresh" (click)="fetchStudents()">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+    <button class="btn btn-danger d-flex align-items-center justify-content-center p-2 gap-2 fw-bold" (click)="exportPdf()" title="Export PDF">
+      <i class="bi bi-file-earmark-pdf-fill"></i> Export
+    </button>
+  </div>
+</div>
+
+<!-- Data Table -->
+@if (loading()) {
+  <div class="d-flex justify-content-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+}
+
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+
+@if (!loading() && !error()) {
+  <div class="minimal-card mb-4 overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead style="background-color: var(--bg-sidebar);">
+        <tr>
+          <th class="ps-4 py-3 border-bottom" style="width: 40px;">
+            <input type="checkbox" class="form-check-input" (change)="toggleSelectAll($event)" [checked]="selectedStudentIds().length === students().length && students().length > 0">
+          </th>
+          <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Student Name</th>
+          <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Roll No / GR</th>
+          <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Class / Sec</th>
+          <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Parent / Guardian</th>
+          <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Admission Date</th>
+          <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Status</th>
+          <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom text-end" style="font-size: 0.75rem; letter-spacing: 0.05em;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (student of students(); track student.id) {
+          <tr style="cursor: pointer;" (click)="openViewModal(student)">
+            <td class="ps-4 py-3" (click)="$event.stopPropagation()">
+              <input type="checkbox" class="form-check-input" (change)="toggleSelectStudent(student.id)" [checked]="isStudentSelected(student.id)">
+            </td>
+            <td class="px-4 py-3">
+              <div class="d-flex align-items-center gap-3">
+                <img [src]="student.avatarUrl" alt="{{ student.name }}" class="rounded-circle object-fit-cover" style="width: 40px; height: 40px;">
+                <div>
+                  <p class="mb-0 fw-bold" style="color: var(--primary-accent);">{{ student.name }}</p>
+                  <p class="mb-0 text-muted-custom" style="font-size: 0.8rem;">{{ student.email }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3 font-monospace" style="font-size: 0.875rem;">{{ student.regNo }}</td>
+            <td class="px-4 py-3">
+              {{ student.className || '-' }} <span class="text-muted-custom">/ {{ student.section || '-' }}</span>
+            </td>
+            <td class="px-4 py-3">{{ student.parentName || '-' }}</td>
+            <td class="px-4 py-3" style="font-size: 0.875rem;">{{ (student.admissionDate | date:'mediumDate') || '-' }}</td>
+            <td class="px-4 py-3">
+              <span class="badge rounded-pill px-2 py-1 {{ getStatusClass(student.status) }}">
+                {{ student.status || 'Active' }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-end">
+              <div class="d-flex justify-content-end gap-1">
+                <button class="btn btn-sm btn-light text-primary" title="View Profile" (click)="openViewModal(student); $event.stopPropagation();"><i class="bi bi-eye"></i></button>
+                <button class="btn btn-sm btn-light text-muted-custom" title="Edit" (click)="openEditModal(student); $event.stopPropagation();"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-light text-danger" title="Delete" (click)="openDeleteModal(student); $event.stopPropagation();"><i class="bi bi-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        }
+        @if (students().length === 0) {
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted-custom">
+              <i class="bi bi-person-x fs-1 mb-2 d-block"></i>
+              No students found matching the criteria
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Pagination -->
+  <div class="px-4 py-3 border-top d-flex flex-column flex-md-row align-items-center justify-content-between gap-3" style="background-color: var(--bg-sidebar);">
+    <p class="mb-0 text-muted-custom text-center text-md-start" style="font-size: 0.875rem;">
+      Showing <span class="fw-bold" style="color: var(--text-primary);">{{ (pageNumber() - 1) * pageSize() + 1 }} - {{ (pageNumber() * pageSize()) > totalCount() ? totalCount() : (pageNumber() * pageSize()) }}</span> of <span class="fw-bold" style="color: var(--text-primary);">{{ totalCount() }}</span> students
+    </p>
+    <div class="d-flex flex-column flex-sm-row align-items-center gap-3 w-100 w-md-auto justify-content-center justify-content-md-end">
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted-custom fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Students per page:</span>
+        <select class="form-select form-select-sm border-0 bg-transparent fw-bold" style="width: auto; min-width: 65px;" [(ngModel)]="pageSize" (ngModelChange)="onFilterChange()">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+        </select>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-secondary" [class.disabled]="pageNumber() === 1" (click)="previousPage()"><i class="bi bi-chevron-left"></i></button>
+        <button class="btn btn-primary fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">{{ pageNumber() }}</button>
+        <button class="btn btn-outline-secondary disabled border-start-0 border-end-0">of {{ totalPages() || 1 }}</button>
+        <button class="btn btn-outline-secondary" [class.disabled]="pageNumber() >= totalPages()" (click)="nextPage()"><i class="bi bi-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Mini Metrics -->
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-4">
+    <div class="minimal-card p-4" style="background-color: #f0f4ff;">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <i class="bi bi-people-fill fs-4" style="color: var(--primary-accent);"></i>
+        <span class="badge bg-success-subtle text-success px-2 py-1">+2% strength</span>
+      </div>
+      <p class="fw-bold text-uppercase mb-1" style="color: #4f46e5; font-size: 0.7rem; letter-spacing: 0.05em;">Total Enrolled</p>
+      <h3 class="fs-2 fw-bold mb-0" style="color: #312e81;">1,184</h3>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="minimal-card p-4">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <i class="bi bi-person-check-fill fs-4 text-muted-custom"></i>
+        <span class="fw-bold text-muted-custom" style="font-size: 0.75rem;">Active Term</span>
+      </div>
+      <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Term 1 Admissions</p>
+      <h3 class="fs-2 fw-bold mb-0" style="color: var(--text-primary);">12</h3>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="minimal-card p-4">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <i class="bi bi-exclamation-triangle-fill fs-4 text-danger"></i>
+        <span class="fw-bold text-muted-custom" style="font-size: 0.75rem;">Urgent</span>
+      </div>
+      <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Aadhaar/KYC Pending</p>
+      <h3 class="fs-2 fw-bold mb-0" style="color: var(--text-primary);">4</h3>
+    </div>
+  </div>
+</div>
+
+<!-- View Student Modal -->
+<div class="modal-overlay" *ngIf="showViewModal()" (click)="closeViewModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h5 class="fw-bold mb-0" style="color: var(--primary-accent);">Student Profile Details</h5>
+      <button class="btn-close" (click)="closeViewModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="text-center mb-4">
+        <img [src]="selectedStudent()?.avatarUrl" class="rounded-circle object-fit-cover shadow-sm border border-3 border-white mb-2" style="width: 100px; height: 100px;">
+        <h4 class="fw-bold mb-1" style="color: var(--text-primary);">{{ selectedStudent()?.name }}</h4>
+        <span class="badge rounded-pill px-3 py-1" [ngClass]="getStatusClass(selectedStudent()?.status)">
+          {{ selectedStudent()?.status || 'Active' }}
+        </span>
+      </div>
+      
+      <div class="row g-3">
+        <div class="col-md-6 detail-item">
+          <span class="detail-label">Roll Number / GR No</span>
+          <span class="detail-val font-monospace">{{ selectedStudent()?.regNo }}</span>
+        </div>
+        <div class="col-md-6 detail-item">
+          <span class="detail-label">Class & Section</span>
+          <span class="detail-val">{{ selectedStudent()?.className || '-' }} / {{ selectedStudent()?.section || '-' }}</span>
+        </div>
+        <div class="col-md-6 detail-item">
+          <span class="detail-label">Gender</span>
+          <span class="detail-val">{{ selectedStudent()?.gender || 'N/A' }}</span>
+        </div>
+        <div class="col-md-6 detail-item">
+          <span class="detail-label">Blood Group</span>
+          <span class="detail-val">{{ selectedStudent()?.bloodgroup || 'N/A' }}</span>
+        </div>
+        <div class="col-md-6 detail-item">
+          <span class="detail-label">Date of Birth</span>
+          <span class="detail-val">{{ (selectedStudent()?.dateofbirth | date:'longDate') || 'N/A' }}</span>
+        </div>
+        <div class="col-md-6 detail-item">
+          <span class="detail-label">Admission Date</span>
+          <span class="detail-val">{{ (selectedStudent()?.admissionDate | date:'longDate') || 'N/A' }}</span>
+        </div>
+        <div class="col-12 detail-item">
+          <span class="detail-label">Email Address</span>
+          <span class="detail-val text-primary">{{ selectedStudent()?.email }}</span>
+        </div>
+        <div class="col-12 detail-item">
+          <span class="detail-label">Parent / Guardian Contacts</span>
+          <span class="detail-val">{{ selectedStudent()?.parentName || '-' }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-outline-secondary px-4 rounded-3" (click)="closeViewModal()">Close</button>
+      <button class="btn btn-success px-4 rounded-3" (click)="closeViewModal(); openEnrollModal(selectedStudent()!)">
+        <i class="bi bi-mortarboard me-1"></i> Promote / Enroll
+      </button>
+      <button class="btn btn-primary px-4 rounded-3" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="closeViewModal(); openEditModal(selectedStudent()!)">
+        <i class="bi bi-pencil me-1"></i> Edit Profile
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal-overlay" *ngIf="showEditModal()" (click)="closeEditModal()">
+  <div class="modal-card" style="max-width: 750px;" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h5 class="fw-bold mb-0" style="color: var(--primary-accent);">Edit Student Profile</h5>
+      <button class="btn-close" (click)="closeEditModal()"></button>
+    </div>
+    <div class="modal-body-custom" style="max-height: 75vh; overflow-y: auto;">
+      <!-- Section 1: Details -->
+      <div class="mb-4">
+        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px;">1. Student Details</h6>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="modal-form-label">Full Name</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm().name" placeholder="Enter full name">
+          </div>
+          <div class="col-md-6">
+            <label class="modal-form-label">Gender</label>
+            <select class="form-select" [(ngModel)]="editForm().gender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="modal-form-label">Blood Group</label>
+            <select class="form-select" [(ngModel)]="editForm().bloodgroup">
+              <option value="">Select...</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="modal-form-label">Date of Birth</label>
+            <input type="date" class="form-control" [(ngModel)]="editForm().dateofbirth">
+          </div>
+          <div class="col-md-6">
+            <label class="modal-form-label">Admission Date</label>
+            <input type="date" class="form-control" [(ngModel)]="editForm().admissiondate">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Parents -->
+      <div class="mb-4">
+        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px;">2. Parent / Guardian Selection</h6>
+        
+        <!-- Currently Linked Parents -->
+        <div class="mb-3" *ngIf="selectedParents().length > 0">
+          <label class="modal-form-label d-block mb-2">Linked Parents</label>
+          <div class="list-group">
+            <div class="list-group-item d-flex align-items-center justify-content-between p-2" *ngFor="let p of selectedParents()">
+              <div>
+                <span class="fw-bold me-2">{{ p.name }}</span>
+                <span class="badge bg-secondary">{{ p.relation }}</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <select class="form-select form-select-sm" style="width: 120px;" [ngModel]="p.relation" (ngModelChange)="updateParentRelation(p.parentId, $event)">
+                  <option *ngFor="let opt of relationOptions" [value]="opt">{{ opt }}</option>
+                </select>
+                <button class="btn btn-sm btn-outline-danger" (click)="toggleParentSelection(p.parentId, p.name)" title="Remove Link">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add/Link Parents list -->
+        <label class="modal-form-label d-block mb-2">Link Other Parents</label>
+        <div class="position-relative mb-2">
+          <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+          <input type="text" class="form-control form-control-sm ps-5" placeholder="Search by name, phone or email..." [ngModel]="parentSearchQuery()" (ngModelChange)="parentSearchQuery.set($event)">
+        </div>
+        <div class="card border-0 rounded-3 p-3" style="background-color: var(--bg-sidebar); border: 1px solid var(--border-color) !important;">
+          <div class="list-group" style="max-height: 160px; overflow-y: auto;">
+            <div class="list-group-item d-flex align-items-center gap-2 p-2" *ngFor="let parent of filteredParents()">
+              <input type="checkbox" class="form-check-input" [checked]="isParentSelected(parent.id)" (change)="toggleParentSelection(parent.id, parent.name)">
+              <div class="flex-grow-1 ms-2">
+                <span class="fw-bold">{{ parent.name }}</span>
+                <small class="text-muted-custom d-block" style="font-size: 0.75rem;">Phone: {{ parent.phonenumber }} | Email: {{ parent.email }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Documents -->
+      <div>
+        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px;">3. KYC Document Management</h6>
+        <div class="row g-3">
+          <!-- Aadhaar -->
+          <div class="col-md-6">
+            <div class="card border-1 shadow-sm rounded-3 p-3">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">Student Aadhaar Card</h6>
+                <a *ngIf="getDocumentUrl('Aadhaar')" [href]="getDocumentUrl('Aadhaar')" target="_blank" class="btn btn-sm btn-light text-primary py-0" title="View Current Document"><i class="bi bi-eye"></i></a>
+              </div>
+              <p class="text-success small mb-2" *ngIf="getFileName('Aadhaar')"><i class="bi bi-file-earmark-check-fill me-1"></i>Ready: {{ getFileName('Aadhaar') }}</p>
+              <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Aadhaar')">
+            </div>
+          </div>
+          
+          <!-- Birth Certificate -->
+          <div class="col-md-6">
+            <div class="card border-1 shadow-sm rounded-3 p-3">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">Birth Certificate</h6>
+                <a *ngIf="getDocumentUrl('Birth Certificate')" [href]="getDocumentUrl('Birth Certificate')" target="_blank" class="btn btn-sm btn-light text-primary py-0" title="View Current Document"><i class="bi bi-eye"></i></a>
+              </div>
+              <p class="text-success small mb-2" *ngIf="getFileName('Birth Certificate')"><i class="bi bi-file-earmark-check-fill me-1"></i>Ready: {{ getFileName('Birth Certificate') }}</p>
+              <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Birth Certificate')">
+            </div>
+          </div>
+
+          <!-- Photo -->
+          <div class="col-md-6">
+            <div class="card border-1 shadow-sm rounded-3 p-3">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">Passport Photo</h6>
+                <a *ngIf="getDocumentUrl('Photo')" [href]="getDocumentUrl('Photo')" target="_blank" class="btn btn-sm btn-light text-primary py-0" title="View Current Photo"><i class="bi bi-eye"></i></a>
+              </div>
+              <p class="text-success small mb-2" *ngIf="getFileName('Photo')"><i class="bi bi-file-earmark-check-fill me-1"></i>Ready: {{ getFileName('Photo') }}</p>
+              <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Photo')" accept="image/*">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeEditModal()" [disabled]="isSaving()">Cancel</button>
+      <button class="btn btn-success px-4 rounded-3" (click)="saveStudent()" [disabled]="isSaving() || !editForm().name">
+        <span *ngIf="isSaving()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
+  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom bg-danger-subtle text-danger">
+      <h5 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Deactivate Student Account</h5>
+      <button class="btn-close" (click)="closeDeleteModal()"></button>
+    </div>
+    <div class="modal-body-custom py-4">
+      <p class="mb-2">Are you sure you want to deactivate the account for <strong>{{ selectedStudent()?.name }}</strong>?</p>
+      <p class="text-muted-custom small mb-0">Deactivating the student account will set their status to Inactive and block their portal login. This action is reversible.</p>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeDeleteModal()" [disabled]="isDeleting()">Cancel</button>
+      <button class="btn btn-danger px-4 rounded-3" (click)="confirmDelete()" [disabled]="isDeleting()">
+        <span *ngIf="isDeleting()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ isDeleting() ? 'Deactivating...' : 'Confirm Deactivation' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Promote / Enroll Modal -->
+<div class="modal-overlay" *ngIf="showEnrollModal()" (click)="closeEnrollModal()">
+  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h5 class="fw-bold mb-0" style="color: var(--primary-accent);">Promote / Enroll Student</h5>
+      <button class="btn-close" (click)="closeEnrollModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <p class="text-muted-custom mb-3">Enroll <strong>{{ enrollForm().studentName }}</strong> in a class for a new academic year.</p>
+      
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="modal-form-label">Academic Session</label>
+          <select class="form-select form-control" (change)="onEnrollYearChange($event)" [value]="enrollForm().academicYearId">
+            <option [value]="null">Select Academic Session...</option>
+            @for (year of academicYears(); track year.id) {
+              <option [value]="year.id">{{ year.yearName }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="modal-form-label">Class</label>
+          <select class="form-select form-control" [(ngModel)]="enrollForm().classId">
+            <option [ngValue]="null">Select Class...</option>
+            @for (cls of enrollClasses(); track cls.id) {
+              <option [ngValue]="cls.id">{{ cls.classname }} - {{ cls.section }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeEnrollModal()">Cancel</button>
+      <button class="btn btn-success px-4 rounded-3" (click)="saveEnrollment()" [disabled]="!enrollForm().academicYearId || !enrollForm().classId">
+        Confirm Enrollment
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Bulk Action Bar -->
+<div class="bulk-action-bar-container" *ngIf="selectedStudentIds().length > 0">
+  <div class="bulk-action-bar d-flex align-items-center justify-content-between p-3 rounded-4 shadow-lg border">
+    <div class="d-flex align-items-center gap-3">
+      <span class="badge bg-primary fs-6 rounded-pill px-3 py-2">{{ selectedStudentIds().length }}</span>
+      <span class="fw-bold text-white mb-0">Students Selected</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-light rounded-3 fw-bold px-3 py-2 text-dark" (click)="clearSelection()">Cancel</button>
+      <button class="btn btn-primary rounded-3 fw-bold px-4 py-2" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="openBulkEnrollModal()">
+        <i class="bi bi-mortarboard-fill me-1"></i> Promote / Enroll Selected
+      </button>
+    </div>
+  </div>
+</div>
+
+

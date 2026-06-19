@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace SchoolERPManagementModelLibrary.Models;
@@ -17,8 +17,6 @@ public partial class Student
 
     public string? Bloodgroup { get; set; }
 
-    public int? Parentid { get; set; }
-
     public DateOnly? Dateofbirth { get; set; }
 
     public DateOnly? Admissiondate { get; set; }
@@ -31,7 +29,7 @@ public partial class Student
 
     public virtual ICollection<Homeworksubmission> Homeworksubmissions { get; set; } = new List<Homeworksubmission>();
 
-    public virtual Parent? Parent { get; set; }
+    public virtual ICollection<Studentparent> Studentparents { get; set; } = new List<Studentparent>();
 
     public virtual ICollection<Studentdocument> Studentdocuments { get; set; } = new List<Studentdocument>();
 

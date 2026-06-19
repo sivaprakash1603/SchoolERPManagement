@@ -35,7 +35,7 @@ public class ParentDocumentVerificationStrategy : IDocumentVerificationStrategy
             var isAuthorized = await _studentEnrollmentRepository.Query(true)
                 .Include(e => e.Class)
                 .ThenInclude(c => c!.Classteacher)
-                .AnyAsync(e => e.Student != null && e.Student.Parentid == doc.Parentid && e.Class != null && e.Class.Classteacher != null && e.Class.Classteacher.Userid == verifyingUserId, cancellationToken);
+                .AnyAsync(e => e.Student != null && e.Student.Studentparents.Any(sp => sp.Parentid == doc.Parentid) && e.Class != null && e.Class.Classteacher != null && e.Class.Classteacher.Userid == verifyingUserId, cancellationToken);
             
             if (!isAuthorized)
             {
@@ -43,7 +43,7 @@ public class ParentDocumentVerificationStrategy : IDocumentVerificationStrategy
             }
         }
         
-        doc.Status = dto.Status;
+        doc.Status = dto.Status!.ToLower();
         await _parentDocumentRepository.UpdateAsync(doc, save: true, ct: cancellationToken);
     }
 }

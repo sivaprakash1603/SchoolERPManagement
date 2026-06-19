@@ -43,7 +43,7 @@ public class StudentDocumentVerificationStrategy : IDocumentVerificationStrategy
             }
         }
 
-        doc.Status = dto.Status;
+        doc.Status = dto.Status!.ToLower();
         await _studentDocumentRepository.UpdateAsync(doc, save: true, ct: cancellationToken);
     }
 }

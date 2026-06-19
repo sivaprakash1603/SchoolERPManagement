@@ -54,12 +54,27 @@ public class AppMappingProfile : Profile
 
         
         CreateMap<Feepayment, FeePaymentResponseDTO>();
-        CreateMap<Feestructure, FeeStructureResponseDTO>();
+        CreateMap<Feestructure, FeeStructureResponseDTO>()
+            .ConstructUsing(src => new FeeStructureResponseDTO(src.Id, src.Classid, src.Academicyearid, src.Feename ?? string.Empty, src.Totalamount, src.Duedate));
         CreateMap<Feestructure, FeeComponentDTO>()
             .ConstructUsing(src => new FeeComponentDTO(src.Id, src.Feename, src.Totalamount));
 
         
-        CreateMap<Homework, HomeworkResponseDTO>();
+        CreateMap<Homework, HomeworkResponseDTO>()
+            .ConstructUsing(src => new HomeworkResponseDTO(
+                src.Id, src.Subjectid, src.Teacherid, src.Classid, src.Title, src.Description, src.Attachmenturl, src.Createdat, src.Duedate, 
+                src.Homeworksubmissions != null && src.Homeworksubmissions.Any() ? 
+                    new HomeworkSubmissionResponseDTO(
+                        src.Homeworksubmissions.First().Id, 
+                        src.Homeworksubmissions.First().Homeworkid, 
+                        src.Homeworksubmissions.First().Studentid, 
+                        src.Homeworksubmissions.First().Uploadedfileurl, 
+                        src.Homeworksubmissions.First().Verificationstatus, 
+                        src.Homeworksubmissions.First().Marks, 
+                        src.Homeworksubmissions.First().Remarks, 
+                        src.Homeworksubmissions.First().Submittedat) 
+                    : null
+            ));
         CreateMap<Homeworksubmission, HomeworkSubmissionResponseDTO>();
 
         
@@ -75,11 +90,11 @@ public class AppMappingProfile : Profile
 
         
         CreateMap<Parent, ParentResponseDTO>()
-            .ConstructUsing(src => new ParentResponseDTO(src.Id, src.Userid, src.Name, src.Relation, src.Phonenumber, null));
+            .ConstructUsing(src => new ParentResponseDTO(src.Id, src.Userid, src.Name, null, src.Phonenumber, null, null, null));
 
         
         CreateMap<Student, StudentResponseDTO>()
-            .ConstructUsing(src => new StudentResponseDTO(src.Id, src.Userid, src.Regno, src.Name, src.Parentid, null));
+            .ConstructUsing(src => new StudentResponseDTO(src.Id, src.Userid, src.Regno, src.Name, null, null));
 
         
         CreateMap<Subject, SubjectResponseDTO>();

@@ -15,6 +15,8 @@ public sealed class ExamService : IExamService
     private readonly IRepository<int, Academicyear> _academicYearRepository;
     private readonly IRepository<int, Subject> _subjectRepository;
     private readonly IRepository<int, Student> _studentRepository;
+    private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
+    private readonly IRepository<int, Examschedule> _examScheduleRepository;
     private readonly IMapper _mapper;
 
     public ExamService(
@@ -23,6 +25,8 @@ public sealed class ExamService : IExamService
         IRepository<int, Academicyear> academicYearRepository,
         IRepository<int, Subject> subjectRepository,
         IRepository<int, Student> studentRepository,
+        IRepository<int, Studentenrollment> studentEnrollmentRepository,
+        IRepository<int, Examschedule> examScheduleRepository,
         IMapper mapper)
     {
         _examRepository = examRepository;
@@ -30,6 +34,8 @@ public sealed class ExamService : IExamService
         _academicYearRepository = academicYearRepository;
         _subjectRepository = subjectRepository;
         _studentRepository = studentRepository;
+        _studentEnrollmentRepository = studentEnrollmentRepository;
+        _examScheduleRepository = examScheduleRepository;
         _mapper = mapper;
     }
 
@@ -67,6 +73,24 @@ public sealed class ExamService : IExamService
             throw new EntityNotFoundException("Student", dto.StudentId.ToString());
         }
 
+        var latestEnrollment = await _studentEnrollmentRepository.Query(true)
+            .Where(e => e.Studentid == dto.StudentId)
+            .OrderByDescending(e => e.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (latestEnrollment == null)
+        {
+            throw new BusinessRuleException("The student is not currently enrolled in any class.");
+        }
+
+        bool isScheduled = await _examScheduleRepository.Query(true)
+            .AnyAsync(s => s.Examid == dto.ExamId && s.Classid == latestEnrollment.Classid && s.Subjectid == dto.SubjectId, cancellationToken);
+
+        if (!isScheduled)
+        {
+            throw new BusinessRuleException("This exam/subject is not scheduled for the student's class.");
+        }
+
         var result = await _examResultRepository.Query(true)
             .FirstOrDefaultAsync(x => x.Examid == dto.ExamId && x.Subjectid == dto.SubjectId && x.Studentid == dto.StudentId, cancellationToken);
 
@@ -93,8 +117,32 @@ public sealed class ExamService : IExamService
         return _mapper.Map<ExamResultResponseDTO>(result);
     }
 
-    public async Task<IReadOnlyList<ExamResultResponseDTO>> GetStudentResultsAsync(int studentId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ExamResultResponseDTO>> GetStudentResultsAsync(int studentId, int userId, string userRole, CancellationToken cancellationToken)
     {
+        if (userRole == "Student")
+        {
+            var student = await _studentRepository.Query(true).FirstOrDefaultAsync(s => s.Userid == userId, cancellationToken);
+            if (student == null || student.Id != studentId)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view these results.");
+            }
+        }
+        else if (userRole == "Parent")
+        {
+            var student = await _studentRepository.GetByIdAsync(studentId);
+            if (student == null) throw new EntityNotFoundException("Student", studentId.ToString());
+            
+            var parent = await _studentRepository.Query(true)
+                .Include(s => s.Studentparents)
+                .ThenInclude(sp => sp.Parent)
+                .FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
+            
+            if (parent == null || !parent.Studentparents.Any(sp => sp.Parent != null && sp.Parent.Userid == userId))
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view these results.");
+            }
+        }
+
         var items = await _examResultRepository.Query(true)
             .Where(result => result.Studentid == studentId)
             .OrderByDescending(result => result.Id)

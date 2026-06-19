@@ -288,4 +288,166 @@ public class PdfReportService : IPdfReportService
             });
         }).GeneratePdf();
     }
+    public byte[] GenerateStudentsPdf(IReadOnlyList<SchoolERPManagementBLLibrary.DTOs.Student.StudentQueryResponseDTO> records)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4.Landscape());
+                page.Margin(1, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header().Element(c => ComposeHeader(c, "Students Directory Report"));
+
+                page.Content().PaddingVertical(1, Unit.Centimetre).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(2); // Reg No
+                        columns.RelativeColumn(3); // Name
+                        columns.RelativeColumn(2); // Class
+                        columns.RelativeColumn(3); // Parent
+                        columns.RelativeColumn(2); // Gender
+                        columns.RelativeColumn(2); // Status
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Roll No / GR").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Student Name").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Class / Sec").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Parent Name").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Gender").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Status").SemiBold();
+                    });
+
+                    foreach (var item in records)
+                    {
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.RegNo ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Name ?? "-");
+                        var classSec = !string.IsNullOrEmpty(item.ClassName) ? $"{item.ClassName} / {item.Section}" : "-";
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(classSec);
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.ParentName ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Gender ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Status ?? "-");
+                    }
+                });
+
+                page.Footer().AlignCenter().Text(x =>
+                {
+                    x.Span("Page ");
+                    x.CurrentPageNumber();
+                    x.Span(" of ");
+                    x.TotalPages();
+                });
+            });
+        }).GeneratePdf();
+    }
+
+    public byte[] GenerateTeachersPdf(IReadOnlyList<SchoolERPManagementBLLibrary.DTOs.Teacher.TeacherResponseDTO> records)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4.Landscape());
+                page.Margin(1, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header().Element(c => ComposeHeader(c, "Teachers Directory Report"));
+
+                page.Content().PaddingVertical(1, Unit.Centimetre).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(2); // Username
+                        columns.RelativeColumn(3); // Name
+                        columns.RelativeColumn(2); // Phone
+                        columns.RelativeColumn(3); // Qualifications
+                        columns.RelativeColumn(2); // Joining Date
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Teacher ID").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Teacher Name").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Phone No").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Qualifications").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Joining Date").SemiBold();
+                    });
+
+                    foreach (var item in records)
+                    {
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Username ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Name ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Phonenumber ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Qualifications ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Joiningdate?.ToString("MMM dd, yyyy") ?? "-");
+                    }
+                });
+
+                page.Footer().AlignCenter().Text(x =>
+                {
+                    x.Span("Page ");
+                    x.CurrentPageNumber();
+                    x.Span(" of ");
+                    x.TotalPages();
+                });
+            });
+        }).GeneratePdf();
+    }
+
+    public byte[] GenerateParentsPdf(IReadOnlyList<SchoolERPManagementBLLibrary.DTOs.Parent.ParentResponseDTO> records)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4.Landscape());
+                page.Margin(1, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header().Element(c => ComposeHeader(c, "Parents Directory Report"));
+
+                page.Content().PaddingVertical(1, Unit.Centimetre).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(2); // Username
+                        columns.RelativeColumn(3); // Name
+                        columns.RelativeColumn(2); // Relation
+                        columns.RelativeColumn(3); // Phone
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Parent ID").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Parent Name").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Relation").SemiBold();
+                        header.Cell().BorderBottom(1).PaddingBottom(5).Text("Phone No").SemiBold();
+                    });
+
+                    foreach (var item in records)
+                    {
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Username ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Name ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Relation ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Phonenumber ?? "-");
+                    }
+                });
+
+                page.Footer().AlignCenter().Text(x =>
+                {
+                    x.Span("Page ");
+                    x.CurrentPageNumber();
+                    x.Span(" of ");
+                    x.TotalPages();
+                });
+            });
+        }).GeneratePdf();
+    }
 }

@@ -182,7 +182,7 @@ public class ReportService : IReportService
         if (request.FromDate.HasValue) q = q.Where(t => t.Paymentdate >= request.FromDate.Value);
         if (request.ToDate.HasValue) q = q.Where(t => t.Paymentdate <= request.ToDate.Value);
         if (request.StudentId.HasValue) q = q.Where(t => t.Studentid == request.StudentId.Value);
-        if (!string.IsNullOrWhiteSpace(request.PaymentMethod)) q = q.Where(t => t.Paymentmethod.ToLower() == request.PaymentMethod.ToLower());
+        if (!string.IsNullOrWhiteSpace(request.PaymentMethod)) q = q.Where(t => t.Paymentmethod != null && t.Paymentmethod.ToLower() == request.PaymentMethod.ToLower());
 
         var sortBy = (request.SortBy ?? "paymentdate").Trim().ToLowerInvariant();
         var asc = string.Equals(request.SortDirection, "asc", StringComparison.OrdinalIgnoreCase);
@@ -326,7 +326,7 @@ public class ReportService : IReportService
     {
         var q = _assetRepository.Query(true);
 
-        if (!string.IsNullOrWhiteSpace(request.Status)) q = q.Where(a => a.Status.ToLower() == request.Status.ToLower());
+        if (!string.IsNullOrWhiteSpace(request.Status)) q = q.Where(a => a.Status != null && a.Status.ToLower() == request.Status.ToLower());
         if (request.AssetTypeId.HasValue) q = q.Where(a => a.Assettypeid == request.AssetTypeId.Value);
 
         var sortBy = (request.SortBy ?? "assetname").Trim().ToLowerInvariant();

@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar';
 import { Header } from '../header/header';
 import { Footer } from '../footer/footer';
+import { LayoutService } from '../../services/layout.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-layout',
@@ -11,4 +13,7 @@ import { Footer } from '../footer/footer';
   templateUrl: './layout.html',
   styleUrl: './layout.css',
 })
-export class Layout {}
+export class Layout {
+  layoutService = inject(LayoutService);
+  toastService = inject(ToastService);
+}

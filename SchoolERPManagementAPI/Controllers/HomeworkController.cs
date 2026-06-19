@@ -49,7 +49,11 @@ namespace SchoolERPManagementAPI.Controllers
         [Authorize(Roles = "Admin,Student")]
         public async Task<IActionResult> SubmitHomework([FromForm] HomeworkSubmissionDTO dto, CancellationToken cancellationToken)
         {
-            var result = await _homeworkService.SubmitHomeworkAsync(dto, cancellationToken);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            int? userId = int.TryParse(userIdStr, out var id) ? id : null;
+            var userRole = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+            var result = await _homeworkService.SubmitHomeworkAsync(dto, userId, userRole, cancellationToken);
             return Ok(result);
         }
 
@@ -57,7 +61,11 @@ namespace SchoolERPManagementAPI.Controllers
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> EvaluateHomework([FromBody] EvaluateHomeworkDTO dto, CancellationToken cancellationToken)
         {
-            var result = await _homeworkService.EvaluateHomeworkAsync(dto, cancellationToken);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            int? userId = int.TryParse(userIdStr, out var id) ? id : null;
+            var userRole = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+            var result = await _homeworkService.EvaluateHomeworkAsync(dto, userId, userRole, cancellationToken);
             return Ok(result);
         }
 

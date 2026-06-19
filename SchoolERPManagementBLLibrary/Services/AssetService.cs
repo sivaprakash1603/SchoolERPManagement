@@ -48,7 +48,7 @@ public sealed class AssetService : IAssetService
             Assettypeid = dto.AssettypeId,
             Purchasedate = dto.Purchasedate,
             Warrantyexpiry = dto.Warrantyexpiry,
-            Status = dto.Status,
+            Status = dto.Status?.ToLower(),
             Assignedclassid = dto.AssignedClassId
         };
 
@@ -64,13 +64,13 @@ public sealed class AssetService : IAssetService
             throw new EntityNotFoundException("Asset", dto.AssetId.ToString());
         }
 
-        asset.Status = dto.Status;
+        asset.Status = dto.Status?.ToLower();
         await _assetRepository.UpdateAsync(asset, save: true, ct: cancellationToken);
 
         var report = new Assetreport
         {
             Assetid = dto.AssetId,
-            Status = dto.Status,
+            Status = dto.Status?.ToLower(),
             Report = dto.Report,
             Createdat = DateTime.UtcNow
         };

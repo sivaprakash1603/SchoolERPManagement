@@ -6,5 +6,5 @@ public interface IExamService
 {
     Task<ExamResponseDTO> CreateExamAsync(CreateExamDTO dto, CancellationToken cancellationToken);
     Task<ExamResultResponseDTO> PublishResultAsync(PublishResultDTO dto, CancellationToken cancellationToken);
-    Task<IReadOnlyList<ExamResultResponseDTO>> GetStudentResultsAsync(int studentId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<ExamResultResponseDTO>> GetStudentResultsAsync(int studentId, int userId, string userRole, CancellationToken cancellationToken);
 }

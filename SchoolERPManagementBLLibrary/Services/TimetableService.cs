@@ -68,7 +68,7 @@ public sealed class TimetableService : ITimetableService
             Classid = dto.ClassId,
             Subjectid = dto.SubjectId,
             Teacherid = dto.TeacherId,
-            Dayofweek = dto.DayOfWeek,
+            Dayofweek = dto.DayOfWeek!.ToLower(),
             Starttime = dto.StartTime,
             Endtime = dto.EndTime,
             Roomno = dto.RoomNo

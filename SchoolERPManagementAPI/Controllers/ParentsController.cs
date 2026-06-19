@@ -11,10 +11,31 @@ namespace SchoolERPManagementAPI.Controllers
     public class ParentsController : ControllerBase
     {
         private readonly IParentService _parentService;
+        private readonly IPdfReportService _pdfReportService;
 
-        public ParentsController(IParentService parentService)
+        public ParentsController(IParentService parentService, IPdfReportService pdfReportService)
         {
             _parentService = parentService;
+            _pdfReportService = pdfReportService;
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetAllParents([FromQuery] ParentQueryRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _parentService.GetAllParentsAsync(request, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("export/pdf")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> ExportParentsPdf([FromQuery] ParentQueryRequest request, CancellationToken cancellationToken)
+        {
+            request.PageNumber = 1;
+            request.PageSize = int.MaxValue;
+            var result = await _parentService.GetAllParentsAsync(request, cancellationToken);
+            var pdfBytes = _pdfReportService.GenerateParentsPdf(result.Items.ToList());
+            return File(pdfBytes, "application/pdf", "parents-directory.pdf");
         }
 
         [HttpGet("{id}")]

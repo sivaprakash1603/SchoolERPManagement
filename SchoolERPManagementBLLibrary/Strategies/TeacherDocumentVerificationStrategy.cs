@@ -31,7 +31,7 @@ public class TeacherDocumentVerificationStrategy : IDocumentVerificationStrategy
         var doc = await _teacherDocumentRepository.GetByIdAsync(dto.DocumentId);
         if (doc is null) throw new EntityNotFoundException("TeacherDocument", dto.DocumentId.ToString());
         
-        doc.Status = dto.Status;
+        doc.Status = dto.Status!.ToLower();
         await _teacherDocumentRepository.UpdateAsync(doc, save: true, ct: cancellationToken);
     }
 }

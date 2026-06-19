@@ -1,0 +1,275 @@
+<div class="container-fluid py-4 h-100 d-flex flex-column" style="max-width: 900px;">
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fs-3 fw-bold mb-1" style="color: var(--primary-accent);">Student Onboarding</h2>
+      <p class="text-muted-custom mb-0" style="font-size: 0.85rem;">
+        Complete the step-by-step admission process
+      </p>
+    </div>
+    <button class="btn btn-outline-secondary d-flex align-items-center gap-2 rounded-3" routerLink="/students">
+      <i class="bi bi-x-lg"></i> Cancel
+    </button>
+  </div>
+
+  <!-- Progress Tracker -->
+  <div class="minimal-card p-4 mb-4">
+    <div class="position-relative m-4">
+      <div class="progress" style="height: 4px;">
+        <div class="progress-bar bg-primary" role="progressbar" [style.width]="((currentStep() - 1) / 3 * 100) + '%'"></div>
+      </div>
+      <div class="position-absolute top-0 start-0 translate-middle btn btn-sm rounded-pill" [ngClass]="currentStep() >= 1 ? 'btn-primary' : 'btn-light'">1</div>
+      <div class="position-absolute top-0 start-33 translate-middle btn btn-sm rounded-pill" style="left: 33%" [ngClass]="currentStep() >= 2 ? 'btn-primary' : 'btn-light'">2</div>
+      <div class="position-absolute top-0 start-66 translate-middle btn btn-sm rounded-pill" style="left: 66%" [ngClass]="currentStep() >= 3 ? 'btn-primary' : 'btn-light'">3</div>
+      <div class="position-absolute top-0 start-100 translate-middle btn btn-sm rounded-pill" [ngClass]="currentStep() >= 4 ? 'btn-primary' : 'btn-light'">4</div>
+    </div>
+    <div class="d-flex justify-content-between text-muted-custom mt-2" style="font-size: 0.75rem; padding: 0 10px;">
+      <span class="fw-bold text-center" style="width: 60px; margin-left: -30px;">Student</span>
+      <span class="fw-bold text-center" style="width: 60px; margin-left: -30px;">Parents</span>
+      <span class="fw-bold text-center" style="width: 60px; margin-left: -30px;">Docs</span>
+      <span class="fw-bold text-center" style="width: 60px; margin-left: -30px;">Complete</span>
+    </div>
+  </div>
+
+  <!-- Wizard Content -->
+  <div class="minimal-card p-4 flex-grow-1 d-flex flex-column">
+    
+    <!-- Step 1: Student Details -->
+    <div *ngIf="currentStep() === 1" class="flex-grow-1">
+      <h4 class="fw-bold mb-4" style="color: var(--text-primary);">Student Details</h4>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Full Name</label>
+          <input type="text" class="form-control" [(ngModel)]="studentForm().name" placeholder="Enter student name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Email Address</label>
+          <input type="email" class="form-control" [(ngModel)]="studentForm().email" placeholder="student@example.com">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Academic Session</label>
+          <select class="form-select" [(ngModel)]="studentForm().academicYearId" (change)="onYearChange()">
+            <option *ngFor="let year of academicYears()" [value]="year.id">{{ year.yearName }}</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class</label>
+          <select class="form-select" [(ngModel)]="studentForm().classId">
+            <option [ngValue]="null">Select a class...</option>
+            <option *ngFor="let cls of classes()" [ngValue]="cls.id">{{ cls.classname }} - {{ cls.section }}</option>
+          </select>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Gender</label>
+          <select class="form-select" [(ngModel)]="studentForm().gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Date of Birth</label>
+          <input type="date" class="form-control" [(ngModel)]="studentForm().dateofbirth">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Blood Group</label>
+          <select class="form-select" [(ngModel)]="studentForm().bloodgroup">
+            <option value="">Select...</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Admission Date</label>
+          <input type="date" class="form-control" [(ngModel)]="studentForm().admissiondate">
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Parent/Guardian -->
+    <div *ngIf="currentStep() === 2" class="flex-grow-1">
+      <h4 class="fw-bold mb-4" style="color: var(--text-primary);">Parent & Guardian</h4>
+      <p class="text-muted-custom mb-3">Select existing parents or add new ones. The first parent will be marked as the primary contact.</p>
+
+      <!-- Existing Parents -->
+      <div class="card border-0 bg-light rounded-3 p-3 mb-4">
+        <label class="form-label text-muted-custom fw-bold text-uppercase mb-2" style="font-size: 0.7rem; letter-spacing: 0.05em;">Select Existing Parents</label>
+        <div class="position-relative mb-3">
+          <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+          <input type="text" class="form-control form-control-sm ps-5" placeholder="Search by name, phone or email..." [ngModel]="parentSearchQuery()" (ngModelChange)="parentSearchQuery.set($event)">
+        </div>
+        <div class="list-group" style="max-height: 250px; overflow-y: auto;">
+          <div class="list-group-item d-flex gap-3 align-items-center p-3" *ngFor="let p of filteredParents()">
+            <input class="form-check-input flex-shrink-0" type="checkbox" 
+                   [checked]="isParentSelected(p.id)"
+                   (change)="toggleParentSelection(p.id, p.name)" style="font-size: 1.2rem; cursor: pointer;">
+            <div class="flex-grow-1">
+              <h6 class="mb-0 fw-bold">{{ p.name }}</h6>
+              <small class="text-muted">{{ p.phonenumber }}</small>
+            </div>
+            <select class="form-select form-select-sm" style="width: 130px;" 
+                    *ngIf="isParentSelected(p.id)"
+                    [ngModel]="getSelectedParentRelation(p.id)"
+                    (ngModelChange)="updateExistingParentRelation(p.id, $event)">
+              <option *ngFor="let r of relationOptions" [value]="r">{{ r }}</option>
+            </select>
+            <span class="badge bg-primary" *ngIf="selectedParents().length > 0 && selectedParents()[0].parentId === p.id">Primary</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Parents -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <label class="form-label text-muted-custom fw-bold text-uppercase mb-0" style="font-size: 0.7rem; letter-spacing: 0.05em;">New Parents</label>
+        <button class="btn btn-sm btn-outline-primary fw-bold" (click)="addNewParentForm()">
+          <i class="bi bi-plus-lg"></i> Add New Parent
+        </button>
+      </div>
+
+      <div *ngFor="let np of newParents(); let i = index; trackBy: trackByIndex" class="card border-1 border-primary bg-light rounded-3 p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0" style="color: var(--primary-accent);">New Parent {{ i + 1 }}</h6>
+          <button class="btn btn-sm btn-outline-danger" (click)="removeNewParentForm(i)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Full Name</label>
+            <input type="text" class="form-control form-control-sm" [ngModel]="np.name" (ngModelChange)="updateNewParent(i, 'name', $event)" placeholder="Parent's Name">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Email</label>
+            <input type="email" class="form-control form-control-sm" [ngModel]="np.email" (ngModelChange)="updateNewParent(i, 'email', $event)" placeholder="Email Address">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Phone Number</label>
+            <input type="text" class="form-control form-control-sm" [ngModel]="np.phonenumber" (ngModelChange)="updateNewParent(i, 'phonenumber', $event)" placeholder="Phone Number">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Relation</label>
+            <select class="form-select form-select-sm" [ngModel]="np.relation" (ngModelChange)="updateNewParent(i, 'relation', $event)">
+              <option *ngFor="let r of relationOptions" [value]="r">{{ r }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Documents -->
+    <div *ngIf="currentStep() === 3" class="flex-grow-1">
+      <h4 class="fw-bold mb-4" style="color: var(--text-primary);">Document Uploads</h4>
+      <p class="text-muted-custom mb-4">Upload necessary KYC documents. You can also skip this and upload them later.</p>
+
+      <div class="row g-4">
+        <!-- Aadhaar -->
+        <div class="col-md-6">
+          <div class="card border-1 shadow-sm rounded-3 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h6 class="mb-0 fw-bold">Student Aadhaar Card</h6>
+              <i class="bi bi-check-circle-fill text-success" *ngIf="getFileName('Aadhaar')"></i>
+            </div>
+            <p class="text-muted-custom small mb-3" *ngIf="getFileName('Aadhaar')">{{ getFileName('Aadhaar') }}</p>
+            <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Aadhaar')">
+          </div>
+        </div>
+        <!-- Birth Certificate -->
+        <div class="col-md-6">
+          <div class="card border-1 shadow-sm rounded-3 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h6 class="mb-0 fw-bold">Birth Certificate</h6>
+              <i class="bi bi-check-circle-fill text-success" *ngIf="getFileName('Birth Certificate')"></i>
+            </div>
+            <p class="text-muted-custom small mb-3" *ngIf="getFileName('Birth Certificate')">{{ getFileName('Birth Certificate') }}</p>
+            <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Birth Certificate')">
+          </div>
+        </div>
+        <!-- Photo -->
+        <div class="col-md-6">
+          <div class="card border-1 shadow-sm rounded-3 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h6 class="mb-0 fw-bold">Passport Photo</h6>
+              <i class="bi bi-check-circle-fill text-success" *ngIf="getFileName('Photo')"></i>
+            </div>
+            <p class="text-muted-custom small mb-3" *ngIf="getFileName('Photo')">{{ getFileName('Photo') }}</p>
+            <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Photo')" accept="image/*">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Summary -->
+    <div *ngIf="currentStep() === 4" class="flex-grow-1">
+      <h4 class="fw-bold mb-4" style="color: var(--text-primary);">Review & Complete</h4>
+      <div class="card border-0 bg-light rounded-3 p-4 mb-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Student Name</small>
+            <span class="fw-bold">{{ studentForm().name || 'N/A' }}</span>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Email</small>
+            <span class="fw-bold">{{ studentForm().email || 'N/A' }}</span>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Gender / Blood Group</small>
+            <span class="fw-bold">{{ studentForm().gender }} / {{ studentForm().bloodgroup || 'N/A' }}</span>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Parents / Guardians</small>
+            <div *ngIf="selectedParents().length === 0 && newParents().length === 0">
+              <span class="fw-bold text-muted">None selected</span>
+            </div>
+            <div *ngFor="let sp of selectedParents()" class="mb-1">
+              <span class="fw-bold">{{ sp.name }}</span> <span class="badge bg-secondary ms-1">{{ sp.relation }}</span>
+            </div>
+            <div *ngFor="let np of newParents()" class="mb-1">
+              <span class="fw-bold">{{ np.name || 'Unnamed' }}</span> <span class="badge bg-primary ms-1">New · {{ np.relation }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Documents Ready</small>
+            <span class="fw-bold">{{ selectedDocuments().length }} files</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3">
+        <i class="bi bi-info-circle-fill fs-4"></i>
+        <div>
+          <h6 class="mb-1 fw-bold">Ready to Register</h6>
+          <p class="mb-0 small">Click Complete Onboarding to register the student. Login credentials will be automatically generated and emailed to the student.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Controls -->
+    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+      <button class="btn btn-light px-4 py-2 fw-bold" [disabled]="currentStep() === 1 || isSubmitting()" (click)="prevStep()">
+        Back
+      </button>
+      
+      <button class="btn btn-primary px-4 py-2 fw-bold d-flex align-items-center gap-2" 
+              style="background-color: var(--primary-accent); border-color: var(--primary-accent);"
+              *ngIf="currentStep() < 4" 
+              (click)="nextStep()"
+              [disabled]="(currentStep() === 1 && (!studentForm().name || !studentForm().email || !studentForm().classId))">
+        Next Step <i class="bi bi-arrow-right"></i>
+      </button>
+
+      <button class="btn btn-success px-4 py-2 fw-bold d-flex align-items-center gap-2" 
+              *ngIf="currentStep() === 4" 
+              (click)="completeOnboarding()"
+              [disabled]="isSubmitting()">
+        <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        {{ isSubmitting() ? 'Processing...' : 'Complete Onboarding' }}
+      </button>
+    </div>
+  </div>
+</div>

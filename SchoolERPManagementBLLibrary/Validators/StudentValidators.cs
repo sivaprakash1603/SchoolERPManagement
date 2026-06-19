@@ -3,23 +3,24 @@ using SchoolERPManagementBLLibrary.DTOs.Student;
 
 namespace SchoolERPManagementBLLibrary.Validators;
 
-public class CreateStudentValidator : AbstractValidator<CreateStudentDTO>
+public class CreateStudentDTOValidator : AbstractValidator<CreateStudentDTO>
 {
-    public CreateStudentValidator()
+    public CreateStudentDTOValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.Email).NotEmpty().EmailAddress().Matches(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").WithMessage("A valid email is required.");
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(150);
         RuleFor(x => x.ClassId).GreaterThan(0);
         RuleFor(x => x.AcademicYearId).GreaterThan(0);
-        RuleFor(x => x.ParentId).GreaterThan(0).When(x => x.ParentId.HasValue).WithMessage("Parent ID must be positive.");
+        RuleFor(x => x.Parents).Must(p => p == null || p.All(s => s.ParentId > 0 && !string.IsNullOrEmpty(s.Relation))).WithMessage("All parents must have a valid ID and relation.");
     }
 }
 
-public class UpdateStudentValidator : AbstractValidator<UpdateStudentDTO>
+public class UpdateStudentDTOValidator : AbstractValidator<UpdateStudentDTO>
 {
-    public UpdateStudentValidator()
+    public UpdateStudentDTOValidator()
     {
-        RuleFor(x => x.Name).MaximumLength(100).When(x => !string.IsNullOrEmpty(x.Name));
-        RuleFor(x => x.ParentId).GreaterThan(0).When(x => x.ParentId.HasValue);
+        RuleFor(x => x.Name).MaximumLength(150).When(x => !string.IsNullOrEmpty(x.Name));
+        RuleFor(x => x.Gender).MaximumLength(20).When(x => !string.IsNullOrEmpty(x.Gender));
+        RuleFor(x => x.Parents).Must(p => p == null || p.All(s => s.ParentId > 0 && !string.IsNullOrEmpty(s.Relation))).WithMessage("All parents must have a valid ID and relation.");
     }
 }

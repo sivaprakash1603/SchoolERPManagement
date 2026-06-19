@@ -50,7 +50,7 @@ public sealed class DocumentService : IDocumentService
         _mapper = mapper;
     }
 
-    public async Task<StudentDocumentResponseDTO> UploadStudentDocumentAsync(IFormFile file, int studentId, string? documentName, CancellationToken cancellationToken)
+    public async Task<StudentDocumentResponseDTO> UploadStudentDocumentAsync(IFormFile file, int studentId, string? documentName, string? userRole, CancellationToken cancellationToken)
     {
         if (await _studentRepository.GetByIdAsync(studentId) is null)
         {
@@ -65,7 +65,8 @@ public sealed class DocumentService : IDocumentService
             Documentname = string.IsNullOrWhiteSpace(documentName) ? file.FileName : documentName,
             Documenttype = string.IsNullOrWhiteSpace(file.ContentType) ? Path.GetExtension(file.FileName).TrimStart('.') : file.ContentType,
             Bloburl = fileUrl,
-            Uploadedat = DateTime.UtcNow
+            Uploadedat = DateTime.UtcNow,
+            Status = userRole == "Admin" ? "Verified" : "Pending"
         };
 
         await _studentDocumentRepository.AddAsync(document, save: true, ct: cancellationToken);
@@ -122,8 +123,29 @@ public sealed class DocumentService : IDocumentService
         await strategy.VerifyAsync(dto, verifyingUserId, userRole, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<StudentDocumentResponseDTO>> GetStudentDocumentsAsync(int studentId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<StudentDocumentResponseDTO>> GetStudentDocumentsAsync(int studentId, int userId, string userRole, CancellationToken cancellationToken)
     {
+        if (userRole == "Student")
+        {
+            var student = await _studentRepository.Query(true).FirstOrDefaultAsync(s => s.Userid == userId, cancellationToken);
+            if (student == null || student.Id != studentId)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view these documents.");
+            }
+        }
+        else if (userRole == "Parent")
+        {
+            var student = await _studentRepository.Query(true)
+                .Include(s => s.Studentparents)
+                .ThenInclude(sp => sp.Parent)
+                .FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
+            
+            if (student == null || !student.Studentparents.Any(sp => sp.Parent != null && sp.Parent.Userid == userId))
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view these documents.");
+            }
+        }
+
         var documents = await _studentDocumentRepository.Query(true)
             .Where(d => d.Studentid == studentId)
             .OrderByDescending(d => d.Uploadedat)

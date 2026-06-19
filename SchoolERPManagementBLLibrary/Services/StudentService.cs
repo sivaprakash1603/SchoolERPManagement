@@ -43,10 +43,114 @@ public sealed class StudentService : IStudentService
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<StudentResponseDTO>> GetAllStudentsAsync(CancellationToken cancellationToken)
+    public async Task<SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<StudentQueryResponseDTO>> GetAllStudentsAsync(StudentQueryRequest request, CancellationToken cancellationToken)
     {
-        var items = await _studentRepository.Query(true).ToListAsync(cancellationToken);
-        return _mapper.Map<IEnumerable<StudentResponseDTO>>(items);
+        var query = _studentRepository.Query(true)
+            .Include(s => s.User)
+            .Include(s => s.Studentparents).ThenInclude(sp => sp.Parent)
+            .Include(s => s.Studentenrollments).ThenInclude(e => e.Class)
+            .Include(s => s.Studentdocuments)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.SearchQuery))
+        {
+            var search = request.SearchQuery.ToLower();
+            query = query.Where(s => s.Name.ToLower().Contains(search) || s.Regno.ToLower().Contains(search));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Gender) && request.Gender != "Any Gender")
+        {
+            query = query.Where(s => s.Gender == request.Gender);
+        }
+
+        int? academicYearId = request.AcademicYearId;
+        if (!academicYearId.HasValue)
+        {
+            var currentYear = await _academicYearRepository.Query(false)
+                .FirstOrDefaultAsync(y => y.Iscurrent == true, cancellationToken);
+            if (currentYear != null)
+            {
+                academicYearId = currentYear.Id;
+            }
+        }
+
+        if (academicYearId.HasValue)
+        {
+            query = query.Where(s => s.Studentenrollments.Any(e => e.Academicyearid == academicYearId.Value));
+        }
+
+        if (request.ClassId.HasValue)
+        {
+            query = query.Where(s => s.Studentenrollments.Any(e => e.Classid == request.ClassId.Value));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Status) && request.Status != "All")
+        {
+            if (request.Status == "Active")
+                query = query.Where(s => s.User.Isactive == true);
+            else if (request.Status == "Inactive")
+                query = query.Where(s => s.User.Isactive != true);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(request.SortBy))
+        {
+            bool isDesc = request.SortDirection?.ToLower() == "desc";
+            query = request.SortBy.ToLower() switch
+            {
+                "name" => isDesc ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name),
+                "regno" => isDesc ? query.OrderByDescending(s => s.Regno) : query.OrderBy(s => s.Regno),
+                "admissiondate" => isDesc ? query.OrderByDescending(s => s.Admissiondate) : query.OrderBy(s => s.Admissiondate),
+                _ => query.OrderByDescending(s => s.Id)
+            };
+        }
+        else
+        {
+            query = query.OrderByDescending(s => s.Id);
+        }
+
+        var items = await query
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var dtos = items.Select(s => 
+        {
+            var enrollment = s.Studentenrollments.FirstOrDefault(e => e.Academicyearid == academicYearId);
+            if (enrollment == null)
+            {
+                enrollment = s.Studentenrollments.OrderByDescending(e => e.Academicyearid).FirstOrDefault();
+            }
+            var parentNames = s.Studentparents.Select(sp => sp.Parent?.Name).Where(n => !string.IsNullOrEmpty(n));
+            var photoDoc = s.Studentdocuments?.FirstOrDefault(d => d.Documentname == "Photo");
+            var parentsInfo = s.Studentparents.Select(sp => new ParentSelectionDTO(sp.Parentid, sp.Relation)).ToList();
+            return new StudentQueryResponseDTO(
+                s.Id,
+                s.Userid,
+                s.Regno,
+                s.Name,
+                parentNames.Any() ? string.Join(", ", parentNames) : null,
+                enrollment?.Class?.Classname,
+                enrollment?.Class?.Section,
+                s.Gender ?? "Unknown",
+                s.Admissiondate,
+                s.User.Isactive == true ? "Active" : "Inactive",
+                photoDoc?.Bloburl,
+                s.Bloodgroup,
+                s.Dateofbirth,
+                parentsInfo
+            );
+        }).ToList();
+
+        return new SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<StudentQueryResponseDTO>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+        };
     }
 
     public async Task<StudentResponseDTO> GetStudentByIdAsync(int id, CancellationToken cancellationToken)
@@ -82,9 +186,15 @@ public sealed class StudentService : IStudentService
             throw new EntityNotFoundException("AcademicYear", dto.AcademicYearId.ToString());
         }
 
-        if (dto.ParentId.HasValue && await _parentRepository.GetByIdAsync(dto.ParentId.Value) is null)
+        if (dto.Parents != null && dto.Parents.Any())
         {
-            throw new EntityNotFoundException("Parent", dto.ParentId.Value.ToString());
+            foreach (var p in dto.Parents)
+            {
+                if (await _parentRepository.GetByIdAsync(p.ParentId) is null)
+                {
+                    throw new EntityNotFoundException("Parent", p.ParentId.ToString());
+                }
+            }
         }
 
         int currentEnrollmentCount = await _studentEnrollmentRepository.Query(false)
@@ -111,7 +221,18 @@ public sealed class StudentService : IStudentService
             Userid = user.Id,
             Regno = generatedUsername,
             Name = dto.Name,
-            Parentid = dto.ParentId
+            Gender = dto.Gender,
+            Bloodgroup = dto.Bloodgroup,
+            Dateofbirth = dto.Dateofbirth,
+            Admissiondate = dto.Admissiondate ?? DateOnly.FromDateTime(DateTime.UtcNow),
+            Studentparents = dto.Parents != null && dto.Parents.Any()
+                ? dto.Parents.Select((p, index) => new Studentparent 
+                  { 
+                      Parentid = p.ParentId, 
+                      Relation = p.Relation, 
+                      Isprimarycontact = index == 0 
+                  }).ToList()
+                : new List<Studentparent>()
         };
 
         await _studentRepository.AddAsync(student, save: true, ct: cancellationToken);
@@ -151,7 +272,7 @@ public sealed class StudentService : IStudentService
 
     public async Task<StudentResponseDTO> UpdateStudentAsync(int id, UpdateStudentDTO dto, CancellationToken cancellationToken)
     {
-        var student = await _studentRepository.GetByIdAsync(id);
+        var student = await _studentRepository.Query(false).Include(s => s.Studentparents).FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
         if (student is null)
         {
             throw new EntityNotFoundException("Student", id.ToString());
@@ -167,12 +288,47 @@ public sealed class StudentService : IStudentService
             student.Gender = dto.Gender;
         }
 
-        if (dto.ParentId.HasValue && await _parentRepository.GetByIdAsync(dto.ParentId.Value) is null)
+        if (!string.IsNullOrWhiteSpace(dto.Bloodgroup))
         {
-            throw new EntityNotFoundException("Parent", dto.ParentId.Value.ToString());
+            student.Bloodgroup = dto.Bloodgroup;
         }
 
-        student.Parentid = dto.ParentId;
+        if (dto.Dateofbirth.HasValue)
+        {
+            student.Dateofbirth = dto.Dateofbirth.Value;
+        }
+
+        if (dto.Admissiondate.HasValue)
+        {
+            student.Admissiondate = dto.Admissiondate.Value;
+        }
+
+        if (dto.Parents != null && dto.Parents.Any())
+        {
+            foreach (var p in dto.Parents)
+            {
+                if (await _parentRepository.GetByIdAsync(p.ParentId) is null)
+                {
+                    throw new EntityNotFoundException("Parent", p.ParentId.ToString());
+                }
+            }
+        }
+
+        if (dto.Parents != null)
+        {
+            student.Studentparents.Clear(); 
+            var newParents = dto.Parents.Select((p, index) => new Studentparent 
+            { 
+                Parentid = p.ParentId, 
+                Relation = p.Relation, 
+                Isprimarycontact = index == 0 
+            }).ToList();
+            
+            foreach (var sp in newParents)
+            {
+                student.Studentparents.Add(sp);
+            }
+        }
         await _studentRepository.UpdateAsync(student, save: true, ct: cancellationToken);
 
         return _mapper.Map<StudentResponseDTO>(student);
@@ -209,5 +365,91 @@ public sealed class StudentService : IStudentService
             
         var students = enrollments.Select(e => e.Student).Where(s => s != null).ToList();
         return _mapper.Map<IEnumerable<StudentResponseDTO>>(students);
+    }
+
+    public async Task EnrollStudentAsync(int studentId, EnrollStudentDTO dto, CancellationToken cancellationToken)
+    {
+        var student = await _studentRepository.GetByIdAsync(studentId);
+        if (student is null)
+        {
+            throw new EntityNotFoundException("Student", studentId.ToString());
+        }
+
+        var classEntity = await _classRepository.GetByIdAsync(dto.ClassId);
+        if (classEntity is null)
+        {
+            throw new EntityNotFoundException("Class", dto.ClassId.ToString());
+        }
+
+        var academicYear = await _academicYearRepository.GetByIdAsync(dto.AcademicYearId);
+        if (academicYear is null)
+        {
+            throw new EntityNotFoundException("AcademicYear", dto.AcademicYearId.ToString());
+        }
+
+        bool isAlreadyEnrolled = await _studentEnrollmentRepository.Query(false)
+            .AnyAsync(e => e.Studentid == studentId && e.Academicyearid == dto.AcademicYearId, cancellationToken);
+        if (isAlreadyEnrolled)
+        {
+            throw new BusinessRuleException("The student is already enrolled in a class for this academic year.");
+        }
+
+        int currentEnrollmentCount = await _studentEnrollmentRepository.Query(false)
+            .CountAsync(e => e.Classid == dto.ClassId && e.Academicyearid == dto.AcademicYearId, cancellationToken);
+        int rollNo = currentEnrollmentCount + 1;
+
+        var enrollment = new Studentenrollment
+        {
+            Studentid = studentId,
+            Classid = dto.ClassId,
+            Academicyearid = dto.AcademicYearId,
+            Rollnumber = rollNo
+        };
+
+        await _studentEnrollmentRepository.AddAsync(enrollment, save: true, ct: cancellationToken);
+    }
+
+    public async Task BulkEnrollStudentsAsync(BulkEnrollStudentsDTO dto, CancellationToken cancellationToken)
+    {
+        var classEntity = await _classRepository.GetByIdAsync(dto.ClassId);
+        if (classEntity is null)
+        {
+            throw new EntityNotFoundException("Class", dto.ClassId.ToString());
+        }
+
+        var academicYear = await _academicYearRepository.GetByIdAsync(dto.AcademicYearId);
+        if (academicYear is null)
+        {
+            throw new EntityNotFoundException("AcademicYear", dto.AcademicYearId.ToString());
+        }
+
+        int currentEnrollmentCount = await _studentEnrollmentRepository.Query(false)
+            .CountAsync(e => e.Classid == dto.ClassId && e.Academicyearid == dto.AcademicYearId, cancellationToken);
+
+        var enrollmentsToAdd = new List<Studentenrollment>();
+        foreach (var studentId in dto.StudentIds)
+        {
+            bool isAlreadyEnrolled = await _studentEnrollmentRepository.Query(false)
+                .AnyAsync(e => e.Studentid == studentId && e.Academicyearid == dto.AcademicYearId, cancellationToken);
+            if (isAlreadyEnrolled)
+            {
+                continue;
+            }
+
+            currentEnrollmentCount++;
+            enrollmentsToAdd.Add(new Studentenrollment
+            {
+                Studentid = studentId,
+                Classid = dto.ClassId,
+                Academicyearid = dto.AcademicYearId,
+                Rollnumber = currentEnrollmentCount
+            });
+        }
+
+        for (int i = 0; i < enrollmentsToAdd.Count; i++)
+        {
+            bool save = (i == enrollmentsToAdd.Count - 1);
+            await _studentEnrollmentRepository.AddAsync(enrollmentsToAdd[i], save: save, ct: cancellationToken);
+        }
     }
 }

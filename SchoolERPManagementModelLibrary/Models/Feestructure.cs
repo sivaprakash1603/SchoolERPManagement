@@ -15,6 +15,8 @@ public partial class Feestructure
 
     public string? Feename { get; set; }
 
+    public DateTime? Duedate { get; set; }
+
     public virtual Academicyear Academicyear { get; set; } = null!;
 
     public virtual Class Class { get; set; } = null!;

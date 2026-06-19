@@ -10,7 +10,7 @@ public class CreateTimetableValidator : AbstractValidator<CreateTimetableDTO>
         RuleFor(x => x.ClassId).GreaterThan(0);
         RuleFor(x => x.SubjectId).GreaterThan(0);
         RuleFor(x => x.TeacherId).GreaterThan(0);
-        RuleFor(x => x.DayOfWeek).NotEmpty().Must(d => d == "Monday" || d == "Tuesday" || d == "Wednesday" || d == "Thursday" || d == "Friday" || d == "Saturday" || d == "Sunday").WithMessage("Invalid day of week.");
+        RuleFor(x => x.DayOfWeek).NotEmpty().Must(d => d.ToLower() == "monday" || d.ToLower() == "tuesday" || d.ToLower() == "wednesday" || d.ToLower() == "thursday" || d.ToLower() == "friday" || d.ToLower() == "saturday" || d.ToLower() == "sunday").WithMessage("Invalid day of week.");
         RuleFor(x => x.StartTime).LessThan(x => x.EndTime).WithMessage("Start time must be before end time.");
     }
 }

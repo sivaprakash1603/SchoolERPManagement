@@ -19,6 +19,6 @@ public class PublishResultValidator : AbstractValidator<PublishResultDTO>
         RuleFor(x => x.StudentId).GreaterThan(0);
         RuleFor(x => x.ExamId).GreaterThan(0);
         RuleFor(x => x.SubjectId).GreaterThan(0);
-        RuleFor(x => x.Marks).GreaterThanOrEqualTo(0).When(x => x.Marks.HasValue);
+        RuleFor(x => x.Marks).GreaterThanOrEqualTo(0).LessThanOrEqualTo(100).When(x => x.Marks.HasValue).WithMessage("Marks must be between 0 and 100.");
     }
 }

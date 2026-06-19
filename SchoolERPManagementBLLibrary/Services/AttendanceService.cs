@@ -37,6 +37,11 @@ public sealed class AttendanceService : IAttendanceService
             throw new EntityNotFoundException("Student", dto.StudentId.ToString());
         }
 
+        if (dto.Date > DateOnly.FromDateTime(DateTime.UtcNow))
+        {
+            throw new BusinessRuleException("Attendance date cannot be in the future.");
+        }
+
         if (dto.MarkedByTeacherId.HasValue)
         {
             if (await _teacherRepository.GetByIdAsync(dto.MarkedByTeacherId.Value) is null)
@@ -63,7 +68,7 @@ public sealed class AttendanceService : IAttendanceService
             {
                 Studentid = dto.StudentId,
                 Date = dto.Date,
-                Status = dto.Status,
+                Status = dto.Status!.ToLower(),
                 Markedbyteacherid = dto.MarkedByTeacherId,
                 Remarks = dto.Remarks
             };
@@ -72,7 +77,7 @@ public sealed class AttendanceService : IAttendanceService
         }
         else
         {
-            attendance.Status = dto.Status;
+            attendance.Status = dto.Status!.ToLower();
             attendance.Markedbyteacherid = dto.MarkedByTeacherId;
             attendance.Remarks = dto.Remarks;
             await _attendanceRepository.UpdateAsync(attendance, save: true, ct: cancellationToken);

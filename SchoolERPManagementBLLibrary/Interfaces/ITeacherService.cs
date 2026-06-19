@@ -1,10 +1,12 @@
 using SchoolERPManagementBLLibrary.DTOs.Teacher;
 
+using SchoolERPManagementBLLibrary.DTOs.Report.Query;
+
 namespace SchoolERPManagementBLLibrary.Interfaces;
 
 public interface ITeacherService
 {
-    Task<IReadOnlyList<TeacherResponseDTO>> GetAllTeachersAsync(CancellationToken cancellationToken);
+    Task<SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<TeacherResponseDTO>> GetAllTeachersAsync(TeacherQueryRequest request, CancellationToken cancellationToken);
     Task<TeacherResponseDTO> GetTeacherByIdAsync(int id, CancellationToken cancellationToken);
     Task<TeacherResponseDTO> GetTeacherByUsernameAsync(string username, CancellationToken cancellationToken);
     Task<TeacherResponseDTO> AddTeacherAsync(CreateTeacherDTO dto, CancellationToken cancellationToken);

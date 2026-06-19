@@ -217,6 +217,10 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("Academicyearid")
+                        .HasColumnType("integer")
+                        .HasColumnName("academicyearid");
+
                     b.Property<string>("Classname")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -235,6 +239,8 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
                     b.HasKey("Id")
                         .HasName("classes_pkey");
+
+                    b.HasIndex("Academicyearid");
 
                     b.HasIndex("Classteacherid");
 
@@ -421,6 +427,10 @@ namespace SchoolERPManagementDALLibrary.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("classid");
 
+                    b.Property<DateTime?>("Duedate")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("duedate");
+
                     b.Property<string>("Feename")
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)")
@@ -606,11 +616,6 @@ namespace SchoolERPManagementDALLibrary.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phonenumber");
-
-                    b.Property<string>("Relation")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("relation");
 
                     b.Property<int>("Userid")
                         .HasColumnType("integer")
@@ -879,10 +884,6 @@ namespace SchoolERPManagementDALLibrary.Migrations
                         .HasColumnType("character varying(150)")
                         .HasColumnName("name");
 
-                    b.Property<int?>("Parentid")
-                        .HasColumnType("integer")
-                        .HasColumnName("parentid");
-
                     b.Property<string>("Regno")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -895,8 +896,6 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
                     b.HasKey("Id")
                         .HasName("students_pkey");
-
-                    b.HasIndex("Parentid");
 
                     b.HasIndex(new[] { "Regno" }, "idx_students_regno");
 
@@ -999,6 +998,43 @@ namespace SchoolERPManagementDALLibrary.Migrations
                         .IsUnique();
 
                     b.ToTable("studentenrollments", (string)null);
+                });
+
+            modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Studentparent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Isprimarycontact")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isprimarycontact");
+
+                    b.Property<int>("Parentid")
+                        .HasColumnType("integer")
+                        .HasColumnName("parentid");
+
+                    b.Property<string>("Relation")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("relation");
+
+                    b.Property<int>("Studentid")
+                        .HasColumnType("integer")
+                        .HasColumnName("studentid");
+
+                    b.HasKey("Id")
+                        .HasName("studentparents_pkey");
+
+                    b.HasIndex("Parentid");
+
+                    b.HasIndex("Studentid");
+
+                    b.ToTable("studentparents", (string)null);
                 });
 
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Subject", b =>
@@ -1350,10 +1386,17 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Class", b =>
                 {
+                    b.HasOne("SchoolERPManagementModelLibrary.Models.Academicyear", "Academicyear")
+                        .WithMany()
+                        .HasForeignKey("Academicyearid")
+                        .HasConstraintName("classes_academicyearid_fkey");
+
                     b.HasOne("SchoolERPManagementModelLibrary.Models.Teacher", "Classteacher")
                         .WithMany("Classes")
                         .HasForeignKey("Classteacherid")
                         .HasConstraintName("classes_classteacherid_fkey");
+
+                    b.Navigation("Academicyear");
 
                     b.Navigation("Classteacher");
                 });
@@ -1587,18 +1630,11 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Student", b =>
                 {
-                    b.HasOne("SchoolERPManagementModelLibrary.Models.Parent", "Parent")
-                        .WithMany("Students")
-                        .HasForeignKey("Parentid")
-                        .HasConstraintName("students_parentid_fkey");
-
                     b.HasOne("SchoolERPManagementModelLibrary.Models.User", "User")
                         .WithOne("Student")
                         .HasForeignKey("SchoolERPManagementModelLibrary.Models.Student", "Userid")
                         .IsRequired()
                         .HasConstraintName("students_userid_fkey");
-
-                    b.Navigation("Parent");
 
                     b.Navigation("User");
                 });
@@ -1637,6 +1673,27 @@ namespace SchoolERPManagementDALLibrary.Migrations
                     b.Navigation("Academicyear");
 
                     b.Navigation("Class");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Studentparent", b =>
+                {
+                    b.HasOne("SchoolERPManagementModelLibrary.Models.Parent", "Parent")
+                        .WithMany("Studentparents")
+                        .HasForeignKey("Parentid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("studentparents_parentid_fkey");
+
+                    b.HasOne("SchoolERPManagementModelLibrary.Models.Student", "Student")
+                        .WithMany("Studentparents")
+                        .HasForeignKey("Studentid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("studentparents_studentid_fkey");
+
+                    b.Navigation("Parent");
 
                     b.Navigation("Student");
                 });
@@ -1804,7 +1861,7 @@ namespace SchoolERPManagementDALLibrary.Migrations
                 {
                     b.Navigation("Parentdocuments");
 
-                    b.Navigation("Students");
+                    b.Navigation("Studentparents");
                 });
 
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Role", b =>
@@ -1835,6 +1892,8 @@ namespace SchoolERPManagementDALLibrary.Migrations
                     b.Navigation("Studentdocuments");
 
                     b.Navigation("Studentenrollments");
+
+                    b.Navigation("Studentparents");
                 });
 
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Subject", b =>

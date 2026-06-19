@@ -12,19 +12,32 @@ namespace SchoolERPManagementAPI.Controllers
     {
         private readonly IStudentService _studentService;
         private readonly IParentService _parentService;
+        private readonly IPdfReportService _pdfReportService;
 
-        public StudentsController(IStudentService studentService, IParentService parentService)
+        public StudentsController(IStudentService studentService, IParentService parentService, IPdfReportService pdfReportService)
         {
             _studentService = studentService;
             _parentService = parentService;
+            _pdfReportService = pdfReportService;
         }
 
         [HttpGet]
         [Authorize(Roles = "Admin,Teacher")]
-        public async Task<IActionResult> GetAllStudents(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAllStudents([FromQuery] StudentQueryRequest request, CancellationToken cancellationToken)
         {
-            var result = await _studentService.GetAllStudentsAsync(cancellationToken);
+            var result = await _studentService.GetAllStudentsAsync(request, cancellationToken);
             return Ok(result);
+        }
+
+        [HttpGet("export/pdf")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> ExportStudentsPdf([FromQuery] StudentQueryRequest request, CancellationToken cancellationToken)
+        {
+            request.PageNumber = 1;
+            request.PageSize = int.MaxValue;
+            var result = await _studentService.GetAllStudentsAsync(request, cancellationToken);
+            var pdfBytes = _pdfReportService.GenerateStudentsPdf(result.Items.ToList());
+            return File(pdfBytes, "application/pdf", "students-directory.pdf");
         }
 
         [HttpGet("class/{classId}")]
@@ -82,6 +95,22 @@ namespace SchoolERPManagementAPI.Controllers
         {
             await _studentService.DeleteStudentAsync(id, cancellationToken);
             return NoContent();
+        }
+
+        [HttpPost("{id}/enroll")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> EnrollStudent(int id, [FromBody] EnrollStudentDTO dto, CancellationToken cancellationToken)
+        {
+            await _studentService.EnrollStudentAsync(id, dto, cancellationToken);
+            return Ok();
+        }
+
+        [HttpPost("bulk-enroll")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> BulkEnrollStudents([FromBody] BulkEnrollStudentsDTO dto, CancellationToken cancellationToken)
+        {
+            await _studentService.BulkEnrollStudentsAsync(dto, cancellationToken);
+            return Ok();
         }
     }
 }

@@ -11,17 +11,30 @@ namespace SchoolERPManagementAPI.Controllers
     public class TeachersController : ControllerBase
     {
         private readonly ITeacherService _teacherService;
+        private readonly IPdfReportService _pdfReportService;
 
-        public TeachersController(ITeacherService teacherService)
+        public TeachersController(ITeacherService teacherService, IPdfReportService pdfReportService)
         {
             _teacherService = teacherService;
+            _pdfReportService = pdfReportService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllTeachers(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAllTeachers([FromQuery] TeacherQueryRequest request, CancellationToken cancellationToken)
         {
-            var result = await _teacherService.GetAllTeachersAsync(cancellationToken);
+            var result = await _teacherService.GetAllTeachersAsync(request, cancellationToken);
             return Ok(result);
+        }
+
+        [HttpGet("export/pdf")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> ExportTeachersPdf([FromQuery] TeacherQueryRequest request, CancellationToken cancellationToken)
+        {
+            request.PageNumber = 1;
+            request.PageSize = int.MaxValue;
+            var result = await _teacherService.GetAllTeachersAsync(request, cancellationToken);
+            var pdfBytes = _pdfReportService.GenerateTeachersPdf(result.Items.ToList());
+            return File(pdfBytes, "application/pdf", "teachers-directory.pdf");
         }
 
         [HttpGet("{id}")]

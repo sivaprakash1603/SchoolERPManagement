@@ -49,5 +49,20 @@ public static class DataSeeder
             }
             context.SaveChanges();
         }
+
+        // Update existing classes that have null academicyearid
+        var currentYear = context.Academicyears.FirstOrDefault(y => y.Iscurrent == true);
+        if (currentYear != null)
+        {
+            var classesToUpdate = context.Classes.Where(c => c.Academicyearid == null).ToList();
+            if (classesToUpdate.Any())
+            {
+                foreach (var c in classesToUpdate)
+                {
+                    c.Academicyearid = currentYear.Id;
+                }
+                context.SaveChanges();
+            }
+        }
     }
 }

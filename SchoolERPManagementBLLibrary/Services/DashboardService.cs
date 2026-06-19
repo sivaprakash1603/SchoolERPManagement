@@ -79,7 +79,7 @@ public sealed class DashboardService : IDashboardService
 
         var revenueTrends = paymentsLast6Months
             .Where(p => p.Paymentdate.HasValue)
-            .GroupBy(p => new { p.Paymentdate.Value.Year, p.Paymentdate.Value.Month })
+            .GroupBy(p => new { p.Paymentdate!.Value.Year, p.Paymentdate!.Value.Month })
             .Select(g => new
             {
                 Date = new DateTime(g.Key.Year, g.Key.Month, 1),

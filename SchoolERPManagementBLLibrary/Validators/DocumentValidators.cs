@@ -7,6 +7,6 @@ public class VerifyDocumentValidator : AbstractValidator<VerifyDocumentDTO>
 {
     public VerifyDocumentValidator()
     {
-        RuleFor(x => x.Status).NotEmpty().Must(status => status == "Verified" || status == "Rejected" || status == "Pending").WithMessage("Verification status must be Verified, Rejected, or Pending.");
+        RuleFor(x => x.Status).NotEmpty().Must(status => status.ToLower() == "verified" || status.ToLower() == "rejected" || status.ToLower() == "pending").WithMessage("Verification status must be Verified, Rejected, or Pending.");
     }
 }

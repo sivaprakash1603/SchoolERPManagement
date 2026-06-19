@@ -39,11 +39,12 @@ public sealed class FeeService : IFeeService
             Classid = dto.ClassId,
             Academicyearid = dto.AcademicYearId,
             Feename = dto.FeeName,
-            Totalamount = dto.TotalAmount
+            Totalamount = dto.TotalAmount,
+            Duedate = dto.DueDate
         };
 
         await _feeStructureRepository.AddAsync(feeStructure, save: true, ct: cancellationToken);
-        return new FeeStructureResponseDTO(feeStructure.Id, feeStructure.Classid, feeStructure.Academicyearid, feeStructure.Feename, feeStructure.Totalamount);
+        return new FeeStructureResponseDTO(feeStructure.Id, feeStructure.Classid, feeStructure.Academicyearid, feeStructure.Feename, feeStructure.Totalamount, feeStructure.Duedate);
     }
 
     public async Task<FeePaymentResponseDTO> PayFeesAsync(FeePaymentDTO dto, CancellationToken cancellationToken)
@@ -53,13 +54,31 @@ public sealed class FeeService : IFeeService
             throw new EntityNotFoundException("Student", dto.StudentId.ToString());
         }
 
+        var feeStructure = await _feeStructureRepository.GetByIdAsync(dto.FeeStructureId);
+        if (feeStructure is null)
+        {
+            throw new EntityNotFoundException("Fee Structure", dto.FeeStructureId.ToString());
+        }
+
+        var payments = await _feePaymentRepository.Query(true)
+            .Where(payment => payment.Studentid == dto.StudentId && payment.Feestructureid == dto.FeeStructureId)
+            .ToListAsync(cancellationToken);
+
+        var totalPaid = payments.Sum(payment => payment.Amountpaid);
+        var remainingAmount = feeStructure.Totalamount - totalPaid;
+
+        if (dto.AmountPaid > remainingAmount)
+        {
+            throw new BusinessRuleException($"Payment amount of {dto.AmountPaid} exceeds the remaining balance of {remainingAmount}.");
+        }
+
         var payment = new Feepayment
         {
             Studentid = dto.StudentId,
             Feestructureid = dto.FeeStructureId,
             Amountpaid = dto.AmountPaid,
             Paymentdate = dto.PaymentDate ?? DateTime.UtcNow,
-            Paymentmethod = dto.PaymentMethod,
+            Paymentmethod = dto.PaymentMethod?.ToLower(),
             Transactionid = dto.TransactionId
         };
 

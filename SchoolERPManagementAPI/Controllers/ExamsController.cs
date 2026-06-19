@@ -37,7 +37,10 @@ namespace SchoolERPManagementAPI.Controllers
         [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> GetStudentResults(int studentId, CancellationToken cancellationToken)
         {
-            var result = await _examService.GetStudentResultsAsync(studentId, cancellationToken);
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+            var result = await _examService.GetStudentResultsAsync(studentId, userId, userRole, cancellationToken);
             return Ok(result);
         }
     }

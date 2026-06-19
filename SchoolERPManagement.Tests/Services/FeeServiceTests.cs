@@ -163,10 +163,10 @@ public class FeeServiceTests
     public async Task AddFeeStructureAsync_ValidData_ShouldReturnFeeStructure()
     {
         
-        var dto = new AddFeeStructureDTO(1, 1, "Tuition Fee", 5000m);
+        var addDto = new AddFeeStructureDTO(1, 1, "Term 1 Fee", 5000, null);
 
         
-        var result = await _feeService.AddFeeStructureAsync(dto, CancellationToken.None);
+        var result = await _feeService.AddFeeStructureAsync(addDto, CancellationToken.None);
 
         
         result.Should().NotBeNull();

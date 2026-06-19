@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace SchoolERPManagementModelLibrary.Models;
@@ -12,6 +12,10 @@ public partial class Class
     public string Section { get; set; } = null!;
 
     public int? Classteacherid { get; set; }
+
+    public int? Academicyearid { get; set; }
+
+    public virtual Academicyear? Academicyear { get; set; }
 
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
 

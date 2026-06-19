@@ -37,6 +37,69 @@ public sealed class ParentService : IParentService
         _mapper = mapper;
     }
 
+    public async Task<SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<ParentResponseDTO>> GetAllParentsAsync(ParentQueryRequest request, CancellationToken cancellationToken)
+    {
+        var query = _parentRepository.Query(true)
+            .Include(p => p.User)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.SearchQuery))
+        {
+            var search = request.SearchQuery.ToLower();
+            query = query.Where(p => (p.Name != null && p.Name.ToLower().Contains(search)) || (p.Phonenumber != null && p.Phonenumber.Contains(search)) || (p.User != null && p.User.Email != null && p.User.Email.ToLower().Contains(search)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Status) && request.Status != "All")
+        {
+            if (request.Status == "Active")
+                query = query.Where(p => p.User.Isactive == true);
+            else if (request.Status == "Inactive")
+                query = query.Where(p => p.User.Isactive != true);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(request.SortBy))
+        {
+            bool isDesc = request.SortDirection?.ToLower() == "desc";
+            query = request.SortBy.ToLower() switch
+            {
+                "name" => isDesc ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
+                "relation" => query.OrderByDescending(p => p.Id),
+                _ => query.OrderByDescending(p => p.Id)
+            };
+        }
+        else
+        {
+            query = query.OrderByDescending(p => p.Id);
+        }
+
+        var items = await query
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var dtos = items.Select(p => new ParentResponseDTO(
+            p.Id,
+            p.Userid,
+            p.Name,
+            null,
+            p.Phonenumber,
+            p.User?.Email,
+            null,
+            p.User?.Username
+        )).ToList();
+
+        return new SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<ParentResponseDTO>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+        };
+    }
+
     public async Task<ParentResponseDTO> GetParentByIdAsync(int id, CancellationToken cancellationToken)
     {
         var parent = await _parentRepository.Query(true).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -53,7 +116,7 @@ public sealed class ParentService : IParentService
         }
 
         var children = await _studentRepository.Query(true)
-            .Where(student => student.Parentid == parentId)
+            .Where(student => student.Studentparents.Any(sp => sp.Parentid == parentId))
             .ToListAsync(cancellationToken);
 
         var studentIds = children.Select(child => child.Id).ToArray();
@@ -109,7 +172,6 @@ public sealed class ParentService : IParentService
         {
             Userid = user.Id,
             Name = dto.Name,
-            Relation = dto.Relation,
             Phonenumber = dto.Phonenumber
         };
 

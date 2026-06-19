@@ -24,8 +24,15 @@ public class StaffAttendanceService : IStaffAttendanceService
     public async Task<StaffAttendanceResponseDTO> MarkAttendanceAsync(StaffAttendanceRequestDTO dto, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByIdAsync(dto.UserId);
-        if (user == null)
+        if (user is null)
+        {
             throw new EntityNotFoundException("User", dto.UserId.ToString());
+        }
+
+        if (dto.Date > DateOnly.FromDateTime(DateTime.UtcNow))
+        {
+            throw new BusinessRuleException("Attendance date cannot be in the future.");
+        }
 
         var existing = await _staffAttendanceRepository.Query(true)
             .FirstOrDefaultAsync(a => a.Userid == dto.UserId && a.Date == dto.Date, cancellationToken);
@@ -38,7 +45,7 @@ public class StaffAttendanceService : IStaffAttendanceService
             Userid = dto.UserId,
             User = user,
             Date = dto.Date,
-            Status = dto.Status,
+            Status = dto.Status!.ToLower(),
             Attendancetype = dto.AttendanceType,
             Remarks = dto.Remarks
         };
