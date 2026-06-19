@@ -42,7 +42,15 @@ public class AppMappingProfile : Profile
             .ConstructUsing(src => new AuthResponseDTO(src.Id, src.Username, src.Email, src.Roleid, src.Role != null ? src.Role.Rolename : string.Empty, ""));
 
         
-        CreateMap<Class, ClassResponseDTO>();
+        CreateMap<Class, ClassResponseDTO>()
+            .ConstructUsing(src => new ClassResponseDTO(
+                src.Id,
+                src.Classname,
+                src.Section,
+                src.Classteacherid,
+                src.Academicyearid,
+                src.Studentenrollments != null ? src.Studentenrollments.Count : 0
+            ));
 
         
         CreateMap<Studentdocument, StudentDocumentResponseDTO>();

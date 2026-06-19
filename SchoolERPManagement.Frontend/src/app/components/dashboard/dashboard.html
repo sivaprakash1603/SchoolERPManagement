@@ -1,10 +1,18 @@
 <div class="dashboard-wrapper">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>
       <h2 class="fs-2 fw-bold mb-1" style="color: var(--text-primary);">
         {{ salutation }}, <span style="color: var(--primary-accent);">{{ userName }}</span>! 👋
       </h2>
       <p class="text-muted-custom mb-0">Here is your overview of institutional metrics across all departments.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2" style="min-width: 260px;">
+      <label class="form-label text-muted-custom fw-bold text-uppercase mb-0 text-nowrap" style="font-size: 0.75rem; letter-spacing: 0.05em;"><i class="bi bi-calendar3"></i> Academic Year:</label>
+      <select class="form-select" (change)="onYearChange($event)" [value]="selectedAcademicYearId()">
+        @for (year of academicYears(); track year.id) {
+          <option [value]="year.id" [selected]="year.id === selectedAcademicYearId()">{{ year.yearName }} {{ year.isCurrent ? '(Active)' : '' }}</option>
+        }
+      </select>
     </div>
   </div>
 

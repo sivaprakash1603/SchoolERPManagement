@@ -39,7 +39,9 @@ public sealed class ClassService : IClassService
             }
         }
 
-        var query = _classRepository.Query(true);
+        var query = _classRepository.Query(true)
+            .Include(c => c.Studentenrollments)
+            .AsQueryable();
         if (academicYearId.HasValue)
         {
             query = query.Where(c => c.Academicyearid == academicYearId.Value);

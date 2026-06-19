@@ -4,5 +4,5 @@ namespace SchoolERPManagementBLLibrary.Interfaces;
 
 public interface IDashboardService
 {
-    Task<AdminDashboardDTO> GetAdminDashboardMetricsAsync(CancellationToken cancellationToken);
+    Task<AdminDashboardDTO> GetAdminDashboardMetricsAsync(int? academicYearId, CancellationToken cancellationToken);
 }

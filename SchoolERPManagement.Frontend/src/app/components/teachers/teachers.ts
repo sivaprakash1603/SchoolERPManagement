@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { TeacherService, TeacherResponseDTO, TeacherQueryRequest, PagedResponse } from '../../services/teacher.service';
 
 interface TeacherUI extends TeacherResponseDTO {
@@ -11,7 +12,7 @@ interface TeacherUI extends TeacherResponseDTO {
 @Component({
   selector: 'app-teachers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './teachers.html',
   styleUrl: './teachers.css',
 })

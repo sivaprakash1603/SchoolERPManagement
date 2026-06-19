@@ -8,6 +8,7 @@ export interface ClassResponseDTO {
   section?: string;
   classteacherId?: number;
   academicyearId?: number;
+  studentCount?: number;
 }
 
 @Injectable({

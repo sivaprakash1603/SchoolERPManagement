@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, inject, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { DashboardService } from '../../services/dashboard.service';
+import { AcademicYearService, AcademicYearResponseDTO } from '../../services/academic-year.service';
 import { AdminDashboardDTO } from '../../models/dashboard.model';
 import Chart from 'chart.js/auto';
 
@@ -13,13 +14,20 @@ import Chart from 'chart.js/auto';
 })
 export class Dashboard implements OnInit {
   private dashboardService = inject(DashboardService);
+  private academicYearService = inject(AcademicYearService);
 
   @ViewChild('demographicsChart') demographicsChartRef!: ElementRef;
   @ViewChild('revenueChart') revenueChartRef!: ElementRef;
 
+  private demographicsChartInstance: Chart | null = null;
+  private revenueChartInstance: Chart | null = null;
+
   metrics = signal<AdminDashboardDTO | null>(null);
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
+
+  academicYears = signal<AcademicYearResponseDTO[]>([]);
+  selectedAcademicYearId = signal<number | undefined>(undefined);
 
   get userName() {
     return sessionStorage.getItem('name') || 'Admin';
@@ -33,7 +41,30 @@ export class Dashboard implements OnInit {
   }
 
   ngOnInit(): void {
-    this.dashboardService.getAdminMetrics().subscribe({
+    this.academicYearService.getAllAcademicYears().subscribe({
+      next: (years) => {
+        this.academicYears.set(years);
+        const currentYear = years.find(y => y.isCurrent);
+        if (currentYear) {
+          this.selectedAcademicYearId.set(currentYear.id);
+          this.loadMetrics(currentYear.id);
+        } else if (years.length > 0) {
+          this.selectedAcademicYearId.set(years[0].id);
+          this.loadMetrics(years[0].id);
+        } else {
+          this.loadMetrics();
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load academic years', err);
+        this.loadMetrics();
+      }
+    });
+  }
+
+  loadMetrics(academicYearId?: number): void {
+    this.loading.set(true);
+    this.dashboardService.getAdminMetrics(academicYearId).subscribe({
       next: (data) => {
         this.metrics.set(data);
         this.loading.set(false);
@@ -50,10 +81,21 @@ export class Dashboard implements OnInit {
     });
   }
 
+  onYearChange(event: Event): void {
+    const selectEl = event.target as HTMLSelectElement;
+    const yearId = Number(selectEl.value);
+    this.selectedAcademicYearId.set(yearId);
+    this.loadMetrics(yearId);
+  }
+
   private initDemographicsChart(data: AdminDashboardDTO) {
     if (!this.demographicsChartRef) return;
     
-    new Chart(this.demographicsChartRef.nativeElement, {
+    if (this.demographicsChartInstance) {
+      this.demographicsChartInstance.destroy();
+    }
+
+    this.demographicsChartInstance = new Chart(this.demographicsChartRef.nativeElement, {
       type: 'doughnut',
       data: {
         labels: ['Students', 'Teachers', 'Parents'],
@@ -78,10 +120,14 @@ export class Dashboard implements OnInit {
   private initRevenueChart(data: AdminDashboardDTO) {
     if (!this.revenueChartRef || !data.revenueTrends || data.revenueTrends.length === 0) return;
 
+    if (this.revenueChartInstance) {
+      this.revenueChartInstance.destroy();
+    }
+
     const labels = data.revenueTrends.map(t => t.month);
     const values = data.revenueTrends.map(t => t.amount);
 
-    new Chart(this.revenueChartRef.nativeElement, {
+    this.revenueChartInstance = new Chart(this.revenueChartRef.nativeElement, {
       type: 'bar',
       data: {
         labels: labels,

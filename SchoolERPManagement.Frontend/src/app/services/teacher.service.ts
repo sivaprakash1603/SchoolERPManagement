@@ -65,4 +65,16 @@ export class TeacherService {
       responseType: 'blob' 
     });
   }
+
+  addTeacher(dto: { email: string, name: string, phonenumber?: string, qualifications?: string }): Observable<any> {
+    return this.http.post<any>(this.baseUrl, dto);
+  }
+
+  assignSubject(dto: { teacherId: number, subjectId: number, classId: number }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/assign-subject`, dto);
+  }
+
+  getAllSubjects(): Observable<any[]> {
+    return this.http.get<any[]>('http://localhost:5203/api/Subjects');
+  }
 }

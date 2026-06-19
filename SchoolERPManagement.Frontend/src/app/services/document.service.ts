@@ -32,6 +32,19 @@ export class DocumentService {
     return this.http.get<DocumentResponseDTO[]>(`${this.apiUrl}/documents/student/${studentId}`);
   }
 
+  uploadTeacherDocument(teacherId: number, file: File, documentName?: string): Observable<DocumentResponseDTO> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (documentName) {
+      formData.append('documentName', documentName);
+    }
+    return this.http.post<DocumentResponseDTO>(`${this.apiUrl}/documents/teacher/${teacherId}`, formData);
+  }
+
+  getTeacherDocuments(teacherId: number): Observable<DocumentResponseDTO[]> {
+    return this.http.get<DocumentResponseDTO[]>(`${this.apiUrl}/documents/teacher/${teacherId}`);
+  }
+
   deleteDocument(blobUrl: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/documents?blobUrl=${encodeURIComponent(blobUrl)}`);
   }

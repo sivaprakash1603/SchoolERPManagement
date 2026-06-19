@@ -273,7 +273,7 @@
     <div class="modal-body-custom" style="max-height: 75vh; overflow-y: auto;">
       <!-- Section 1: Details -->
       <div class="mb-4">
-        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px;">1. Student Details</h6>
+        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); padding-bottom: 5px;">1. Student Details</h6>
         <div class="row g-3">
           <div class="col-12">
             <label class="modal-form-label">Full Name</label>
@@ -314,7 +314,7 @@
 
       <!-- Section 2: Parents -->
       <div class="mb-4">
-        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px;">2. Parent / Guardian Selection</h6>
+        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); padding-bottom: 5px;">2. Parent / Guardian Selection</h6>
         
         <!-- Currently Linked Parents -->
         <div class="mb-3" *ngIf="selectedParents().length > 0">
@@ -358,7 +358,7 @@
 
       <!-- Section 3: Documents -->
       <div>
-        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px;">3. KYC Document Management</h6>
+        <h6 class="fw-bold text-uppercase text-muted-custom mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); padding-bottom: 5px;">3. KYC Document Management</h6>
         <div class="row g-3">
           <!-- Aadhaar -->
           <div class="col-md-6">
@@ -433,17 +433,29 @@
 <div class="modal-overlay" *ngIf="showEnrollModal()" (click)="closeEnrollModal()">
   <div class="modal-card modal-md" (click)="$event.stopPropagation()">
     <div class="modal-header-custom">
-      <h5 class="fw-bold mb-0" style="color: var(--primary-accent);">Promote / Enroll Student</h5>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-mortarboard fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Promote / Enroll Student</h5>
+      </div>
       <button class="btn-close" (click)="closeEnrollModal()"></button>
     </div>
-    <div class="modal-body-custom">
-      <p class="text-muted-custom mb-3">Enroll <strong>{{ enrollForm().studentName }}</strong> in a class for a new academic year.</p>
-      
+    <div class="modal-body-custom py-4">
+      <!-- Target Student Card -->
+      <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-4" style="background-color: var(--bg-canvas); border: 1px solid var(--border-color);">
+        <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: rgba(99, 102, 241, 0.15);">
+          <i class="bi bi-people-fill fs-5" style="color: var(--primary-accent);"></i>
+        </div>
+        <div>
+          <span class="text-muted-custom small d-block text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Target Student(s)</span>
+          <strong class="fs-6" style="color: var(--text-primary);">{{ enrollForm().studentName }}</strong>
+        </div>
+      </div>
+
       <div class="row g-3">
         <div class="col-12">
-          <label class="modal-form-label">Academic Session</label>
+          <label class="modal-form-label"><i class="bi bi-calendar3 me-1"></i> Target Academic Session</label>
           <select class="form-select form-control" (change)="onEnrollYearChange($event)" [value]="enrollForm().academicYearId">
-            <option [value]="null">Select Academic Session...</option>
+            <option [value]="null">Select Session...</option>
             @for (year of academicYears(); track year.id) {
               <option [value]="year.id">{{ year.yearName }}</option>
             }
@@ -451,8 +463,8 @@
         </div>
 
         <div class="col-12">
-          <label class="modal-form-label">Class</label>
-          <select class="form-select form-control" [(ngModel)]="enrollForm().classId">
+          <label class="modal-form-label"><i class="bi bi-building me-1"></i> Target Class & Section</label>
+          <select class="form-select form-control" [(ngModel)]="enrollForm().classId" [disabled]="!enrollForm().academicYearId">
             <option [ngValue]="null">Select Class...</option>
             @for (cls of enrollClasses(); track cls.id) {
               <option [ngValue]="cls.id">{{ cls.classname }} - {{ cls.section }}</option>
@@ -463,7 +475,8 @@
     </div>
     <div class="modal-footer-custom">
       <button class="btn btn-light px-4 rounded-3" (click)="closeEnrollModal()">Cancel</button>
-      <button class="btn btn-success px-4 rounded-3" (click)="saveEnrollment()" [disabled]="!enrollForm().academicYearId || !enrollForm().classId">
+      <button class="btn btn-success px-4 rounded-3 d-flex align-items-center gap-2 fw-bold" (click)="saveEnrollment()" [disabled]="!enrollForm().academicYearId || !enrollForm().classId">
+        <i class="bi bi-check2-circle"></i>
         Confirm Enrollment
       </button>
     </div>
@@ -474,12 +487,12 @@
 <div class="bulk-action-bar-container" *ngIf="selectedStudentIds().length > 0">
   <div class="bulk-action-bar d-flex align-items-center justify-content-between p-3 rounded-4 shadow-lg border">
     <div class="d-flex align-items-center gap-3">
-      <span class="badge bg-primary fs-6 rounded-pill px-3 py-2">{{ selectedStudentIds().length }}</span>
-      <span class="fw-bold text-white mb-0">Students Selected</span>
+      <span class="badge bg-primary fs-6 rounded-pill px-3 py-2" style="background-color: var(--primary-accent) !important;">{{ selectedStudentIds().length }}</span>
+      <span class="fw-bold mb-0 select-label" style="color: var(--text-primary);">Students Selected</span>
     </div>
     <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-light rounded-3 fw-bold px-3 py-2 text-dark" (click)="clearSelection()">Cancel</button>
-      <button class="btn btn-primary rounded-3 fw-bold px-4 py-2" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="openBulkEnrollModal()">
+      <button class="btn btn-outline-secondary rounded-3 fw-bold px-3 py-2" (click)="clearSelection()">Cancel</button>
+      <button class="btn btn-primary rounded-3 fw-bold px-4 py-2 border-0" style="background-color: var(--primary-accent);" (click)="openBulkEnrollModal()">
         <i class="bi bi-mortarboard-fill me-1"></i> Promote / Enroll Selected
       </button>
     </div>

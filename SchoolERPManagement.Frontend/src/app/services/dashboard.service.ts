@@ -11,7 +11,8 @@ export class DashboardService {
 
   constructor(private http: HttpClient) {}
 
-  getAdminMetrics(): Observable<AdminDashboardDTO> {
-    return this.http.get<AdminDashboardDTO>(`${this.baseUrl}/admin`);
+  getAdminMetrics(academicYearId?: number): Observable<AdminDashboardDTO> {
+    const url = academicYearId ? `${this.baseUrl}/admin?academicYearId=${academicYearId}` : `${this.baseUrl}/admin`;
+    return this.http.get<AdminDashboardDTO>(url);
   }
 }

@@ -13,46 +13,37 @@
   </button>
 </div>
 
-<!-- Controls Row -->
-<div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: var(--bg-sidebar);">
-  <div class="card-body p-3">
-    <div class="row g-3 align-items-center">
-      
-      <!-- Search -->
-      <div class="col-12 col-md-5 col-xl-4">
-        <div class="input-group">
-          <span class="input-group-text bg-transparent border-end-0 border-muted" style="color: var(--text-muted);"><i class="bi bi-search"></i></span>
-          <input type="text" class="form-control border-start-0 border-muted bg-transparent ps-0" placeholder="Search by name, ID or email..." style="color: var(--text-primary);"
-                 [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onSearchChange()">
-        </div>
-      </div>
-
-      <!-- Filters -->
-      <div class="col-12 col-md-7 col-xl-8">
-        <div class="d-flex flex-wrap gap-2 justify-content-md-end">
-          
-          <select class="form-select w-auto border-muted bg-transparent" style="color: var(--text-primary);"
-                  [ngModel]="status()" (ngModelChange)="status.set($event); onFilterChange()">
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-
-          <!-- Export Button -->
-          <button class="btn btn-outline-secondary d-flex align-items-center gap-2 border-muted" style="color: var(--text-primary);" (click)="exportPdf()">
-            <i class="bi bi-file-earmark-pdf text-danger"></i>
-            <span class="d-none d-sm-inline">Export PDF</span>
-          </button>
-        </div>
-      </div>
-
+<!-- Filter Bar -->
+<div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
+  <div class="flex-grow-1" style="min-width: 200px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Search Parent</label>
+    <div class="position-relative">
+      <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted-custom"></i>
+      <input type="text" class="form-control ps-5" placeholder="Search by name, ID or email..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onSearchChange()">
     </div>
+  </div>
+
+  <div style="width: 150px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Status</label>
+    <select class="form-select" [ngModel]="status()" (ngModelChange)="status.set($event); onFilterChange()">
+      <option value="All">All Statuses</option>
+      <option value="Active">Active</option>
+      <option value="Inactive">Inactive</option>
+    </select>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2" title="Refresh" (click)="fetchParents()">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+    <button class="btn btn-danger d-flex align-items-center justify-content-center p-2 gap-2 fw-bold" (click)="exportPdf()" title="Export PDF">
+      <i class="bi bi-file-earmark-pdf-fill"></i> Export
+    </button>
   </div>
 </div>
 
 <!-- Data Table Area -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: var(--bg-sidebar);">
-  
+<div class="minimal-card mb-4 overflow-hidden">
   @if (loading()) {
     <div class="text-center py-5">
       <div class="spinner-border text-primary mb-3" role="status"></div>
@@ -69,55 +60,52 @@
   }
 
   @if (!loading() && !error() && parents().length === 0) {
-    <div class="text-center py-5">
-      <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-        <i class="bi bi-people fs-1 text-muted-custom"></i>
-      </div>
-      <h4 class="fw-bold" style="color: var(--text-primary);">No Parents Found</h4>
-      <p class="text-muted-custom">Try adjusting your filters or search query.</p>
+    <div class="text-center py-5 text-muted-custom">
+      <i class="bi bi-person-x fs-1 mb-2 d-block"></i>
+      No parents found matching the criteria
     </div>
   }
 
   @if (!loading() && !error() && parents().length > 0) {
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0 custom-table">
-        <thead class="table-light-custom">
+      <table class="table table-hover align-middle mb-0">
+        <thead style="background-color: var(--bg-sidebar);">
           <tr>
-            <th class="ps-4 py-3 text-muted-custom fw-semibold" style="width: 40px;">
+            <th class="ps-4 py-3 border-bottom" style="width: 40px;">
               <input class="form-check-input" type="checkbox">
             </th>
-            <th class="py-3 text-muted-custom fw-semibold">Parent Details</th>
-            <th class="py-3 text-muted-custom fw-semibold">Parent ID</th>
-            <th class="py-3 text-muted-custom fw-semibold">Contact</th>
-            <th class="py-3 text-muted-custom fw-semibold">Relation</th>
-            <th class="pe-4 py-3 text-end text-muted-custom fw-semibold">Actions</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Parent Details</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Parent ID</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Contact</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Relation</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom text-end" style="font-size: 0.75rem; letter-spacing: 0.05em;">Actions</th>
           </tr>
         </thead>
         <tbody>
           @for (parent of parents(); track parent.id) {
             <tr>
-              <td class="ps-4 py-3 border-bottom border-muted">
+              <td class="ps-4 py-3">
                 <input class="form-check-input" type="checkbox">
               </td>
-              <td class="py-3 border-bottom border-muted">
+              <td class="px-4 py-3">
                 <div class="d-flex align-items-center gap-3">
                   <img [src]="parent.avatarUrl" class="rounded-circle" width="40" height="40" alt="Avatar">
                   <div>
-                    <div class="fw-bold" style="color: var(--text-primary);">{{ parent.name }}</div>
+                    <div class="fw-bold" style="color: var(--primary-accent);">{{ parent.name }}</div>
                     <div class="small text-muted-custom">{{ parent.email }}</div>
                   </div>
                 </div>
               </td>
-              <td class="py-3 border-bottom border-muted fw-medium" style="color: var(--text-primary);">
+              <td class="px-4 py-3 font-monospace" style="font-size: 0.875rem;">
                 {{ parent.username }}
               </td>
-              <td class="py-3 border-bottom border-muted">
-                <span style="color: var(--text-primary);">{{ parent.phonenumber }}</span>
+              <td class="px-4 py-3">
+                <span>{{ parent.phonenumber }}</span>
               </td>
-              <td class="py-3 border-bottom border-muted">
+              <td class="px-4 py-3">
                 <span class="badge bg-primary-subtle text-primary rounded-pill px-3">{{ parent.relation || 'N/A' }}</span>
               </td>
-              <td class="pe-4 py-3 text-end border-bottom border-muted">
+              <td class="px-4 py-3 text-end">
                 <button class="btn btn-sm btn-light rounded-circle me-2 text-muted-custom"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-sm btn-light rounded-circle text-muted-custom"><i class="bi bi-three-dots-vertical"></i></button>
               </td>
@@ -128,7 +116,7 @@
     </div>
 
     <!-- Pagination Footer -->
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center p-3 p-md-4 border-top border-muted bg-sidebar gap-3">
+    <div class="px-4 py-3 border-top d-flex flex-column flex-md-row align-items-center justify-content-between gap-3" style="background-color: var(--bg-sidebar);">
       <div class="text-muted-custom small">
         Showing <span class="fw-bold" style="color: var(--text-primary);">{{ (pageNumber() - 1) * pageSize() + 1 }}</span> to 
         <span class="fw-bold" style="color: var(--text-primary);">{{ Math.min(pageNumber() * pageSize(), totalCount()) }}</span> of 
@@ -141,7 +129,7 @@
         </button>
         
         <div class="d-flex gap-1 d-none d-sm-flex">
-          <button class="btn btn-sm btn-primary px-3 rounded-2">{{ pageNumber() }}</button>
+          <button class="btn btn-sm btn-primary px-3 rounded-2" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">{{ pageNumber() }}</button>
           <span class="px-2 text-muted-custom align-self-center">of {{ totalPages() }}</span>
         </div>
         

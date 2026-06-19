@@ -7,6 +7,7 @@ import { Parents } from './components/parents/parents';
 import { Layout } from './components/layout/layout';
 
 import { StudentOnboarding } from './components/student-onboarding/student-onboarding';
+import { TeacherOnboarding } from './components/teacher-onboarding/teacher-onboarding';
 import { AcademicSessions } from './components/academic-sessions/academic-sessions';
 import { Classes } from './components/classes/classes';
 
@@ -21,6 +22,7 @@ export const routes: Routes = [
             { path: 'students', component: Students },
             { path: 'students/onboarding', component: StudentOnboarding },
             { path: 'teachers', component: Teachers },
+            { path: 'teachers/onboarding', component: TeacherOnboarding },
             { path: 'parents', component: Parents },
             { path: 'classes', component: Classes },
             { path: 'academic-sessions', component: AcademicSessions }

@@ -18,9 +18,9 @@ namespace SchoolERPManagementAPI.Controllers
 
         [HttpGet("admin")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAdminDashboard(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAdminDashboard([FromQuery] int? academicYearId, CancellationToken cancellationToken)
         {
-            var result = await _dashboardService.GetAdminDashboardMetricsAsync(cancellationToken);
+            var result = await _dashboardService.GetAdminDashboardMetricsAsync(academicYearId, cancellationToken);
             return Ok(result);
         }
     }

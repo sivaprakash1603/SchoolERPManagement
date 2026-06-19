@@ -16,6 +16,8 @@ public sealed class DashboardService : IDashboardService
     private readonly IRepository<int, Asset> _assetRepository;
     private readonly IRepository<int, Attendance> _attendanceRepository;
     private readonly IRepository<int, Staffattendance> _staffAttendanceRepository;
+    private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
+    private readonly IRepository<int, Academicyear> _academicYearRepository;
 
     public DashboardService(
         IRepository<int, Student> studentRepository,
@@ -25,7 +27,9 @@ public sealed class DashboardService : IDashboardService
         IRepository<int, Class> classRepository,
         IRepository<int, Asset> assetRepository,
         IRepository<int, Attendance> attendanceRepository,
-        IRepository<int, Staffattendance> staffAttendanceRepository)
+        IRepository<int, Staffattendance> staffAttendanceRepository,
+        IRepository<int, Studentenrollment> studentEnrollmentRepository,
+        IRepository<int, Academicyear> academicYearRepository)
     {
         _studentRepository = studentRepository;
         _teacherRepository = teacherRepository;
@@ -35,23 +39,74 @@ public sealed class DashboardService : IDashboardService
         _assetRepository = assetRepository;
         _attendanceRepository = attendanceRepository;
         _staffAttendanceRepository = staffAttendanceRepository;
+        _studentEnrollmentRepository = studentEnrollmentRepository;
+        _academicYearRepository = academicYearRepository;
     }
 
-    public async Task<AdminDashboardDTO> GetAdminDashboardMetricsAsync(CancellationToken cancellationToken)
+    public async Task<AdminDashboardDTO> GetAdminDashboardMetricsAsync(int? academicYearId, CancellationToken cancellationToken)
     {
-        var totalStudents = await _studentRepository.Query(true).CountAsync(cancellationToken);
+        var targetYearId = academicYearId;
+        if (!targetYearId.HasValue)
+        {
+            var activeYear = await _academicYearRepository.Query(true)
+                .FirstOrDefaultAsync(y => y.Iscurrent == true, cancellationToken);
+            if (activeYear == null)
+            {
+                activeYear = await _academicYearRepository.Query(true)
+                    .OrderByDescending(y => y.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+            if (activeYear != null)
+            {
+                targetYearId = activeYear.Id;
+            }
+        }
+
+        var enrolledStudentIds = targetYearId.HasValue
+            ? await _studentEnrollmentRepository.Query(true)
+                .Where(se => se.Academicyearid == targetYearId.Value)
+                .Select(se => se.Studentid)
+                .Distinct()
+                .ToListAsync(cancellationToken)
+            : new List<int>();
+
+        var totalStudents = enrolledStudentIds.Count;
         var totalTeachers = await _teacherRepository.Query(true).CountAsync(cancellationToken);
-        var totalParents = await _parentRepository.Query(true).CountAsync(cancellationToken);
+
+        var totalParents = 0;
+        if (targetYearId.HasValue)
+        {
+            totalParents = await _studentEnrollmentRepository.Query(true)
+                .Where(se => se.Academicyearid == targetYearId.Value)
+                .SelectMany(se => se.Student.Studentparents.Select(sp => sp.Parentid))
+                .Distinct()
+                .CountAsync(cancellationToken);
+        }
+
+        var totalClasses = targetYearId.HasValue
+            ? await _classRepository.Query(true).Where(c => c.Academicyearid == targetYearId.Value).CountAsync(cancellationToken)
+            : 0;
+
         var feePaymentsQuery = _feePaymentRepository.Query(true);
+        if (targetYearId.HasValue)
+        {
+            feePaymentsQuery = feePaymentsQuery
+                .Include(f => f.Feestructure)
+                .Where(f => f.Feestructure.Academicyearid == targetYearId.Value);
+        }
+
         var totalRevenue = await feePaymentsQuery.SumAsync(f => f.Amountpaid, cancellationToken);
-        var totalClasses = await _classRepository.Query(true).CountAsync(cancellationToken);
         var totalAssets = await _assetRepository.Query(true).CountAsync(cancellationToken);
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         
-        var studentAttendanceRecords = await _attendanceRepository.Query(true)
-            .Where(a => a.Date == today)
-            .ToListAsync(cancellationToken);
+        var studentAttendanceRecords = new List<Attendance>();
+        if (enrolledStudentIds.Any())
+        {
+            studentAttendanceRecords = await _attendanceRepository.Query(true)
+                .Where(a => a.Date == today && enrolledStudentIds.Contains(a.Studentid))
+                .ToListAsync(cancellationToken);
+        }
         
         double studentAttendanceRate = 0;
         if (totalStudents > 0)
