@@ -22,3 +22,34 @@ export interface AdminDashboardDTO {
   revenueTrends: MonthlyRevenueDTO[];
   recentTransactions: RecentTransactionDTO[];
 }
+
+export interface TeacherTimetableSlotDTO {
+  id: number;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  className: string;
+  section: string;
+  subjectName: string;
+}
+
+export interface TeacherHomeworkDTO {
+  id: number;
+  title: string;
+  className: string;
+  section: string;
+  subjectName: string;
+  dueDate: string;
+  submissionsCount: number;
+  totalStudentsCount: number;
+}
+
+export interface TeacherDashboardDTO {
+  totalStudents: number;
+  totalClasses: number;
+  totalSubjects: number;
+  pendingHomeworkCount: number;
+  studentAttendanceRate: number;
+  todaySchedule: TeacherTimetableSlotDTO[];
+  recentHomework: TeacherHomeworkDTO[];
+}

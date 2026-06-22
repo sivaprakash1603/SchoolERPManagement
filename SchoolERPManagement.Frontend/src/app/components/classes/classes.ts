@@ -41,6 +41,8 @@ export class Classes implements OnInit {
   });
   isUpdating = signal(false);
   isDeleting = signal(false);
+  isAdmin = signal(false);
+  userRole = signal<string>('Student');
 
   createForm = signal({
     classname: '',
@@ -50,6 +52,9 @@ export class Classes implements OnInit {
   });
 
   ngOnInit() {
+    const role = sessionStorage.getItem('role') || 'Student';
+    this.userRole.set(role);
+    this.isAdmin.set(role === 'Admin');
     this.fetchAcademicYears();
     this.fetchTeachers();
   }

@@ -31,5 +31,12 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _timetableService.GetClassTimetableAsync(classId, cancellationToken);
             return Ok(result);
         }
+
+        [HttpGet("teacher/{teacherId}")]
+        public async Task<IActionResult> GetTeacherTimetable(int teacherId, CancellationToken cancellationToken)
+        {
+            var result = await _timetableService.GetTeacherTimetableAsync(teacherId, cancellationToken);
+            return Ok(result);
+        }
     }
 }

@@ -87,4 +87,14 @@ public sealed class TimetableService : ITimetableService
             .ToListAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<TimetableResponseDTO>>(items);
     }
+
+    public async Task<IReadOnlyList<TimetableResponseDTO>> GetTeacherTimetableAsync(int teacherId, CancellationToken cancellationToken)
+    {
+        var items = await _timetableRepository.Query(true)
+            .Where(timetable => timetable.Teacherid == teacherId)
+            .OrderBy(timetable => timetable.Dayofweek)
+            .ThenBy(timetable => timetable.Starttime)
+            .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<TimetableResponseDTO>>(items);
+    }
 }

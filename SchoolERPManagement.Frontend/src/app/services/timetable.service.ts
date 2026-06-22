@@ -35,6 +35,10 @@ export class TimetableService {
     return this.http.get<TimetableResponseDTO[]>(`${this.baseUrl}/class/${classId}`);
   }
 
+  getTeacherTimetable(teacherId: number): Observable<TimetableResponseDTO[]> {
+    return this.http.get<TimetableResponseDTO[]>(`${this.baseUrl}/teacher/${teacherId}`);
+  }
+
   createTimetable(dto: CreateTimetableDTO): Observable<TimetableResponseDTO> {
     return this.http.post<TimetableResponseDTO>(this.baseUrl, dto);
   }

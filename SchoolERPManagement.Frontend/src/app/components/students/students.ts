@@ -38,6 +38,8 @@ export class Students implements OnInit {
   notificationTargetUserIds = signal<number[]>([]);
   notificationTargetNames = signal('');
   isSendingNotification = signal(false);
+  isAdmin = signal(false);
+  userRole = signal<string>('Student');
   
   students = signal<StudentUI[]>([]);
   classes = signal<ClassResponseDTO[]>([]);
@@ -101,6 +103,9 @@ export class Students implements OnInit {
   private searchTimeout: any;
 
   ngOnInit() {
+    const role = sessionStorage.getItem('role') || 'Student';
+    this.userRole.set(role);
+    this.isAdmin.set(role === 'Admin');
     this.fetchCurrentAcademicSession();
     this.fetchParents();
   }

@@ -172,8 +172,8 @@
     </div>
   }
 
-  <!-- ADMIN / TEACHER DASHBOARD -->
-  @if ((userRole() === 'Admin' || userRole() === 'Teacher') && metrics() && !loading() && !error()) {
+  <!-- ADMIN DASHBOARD -->
+  @if (userRole() === 'Admin' && metrics() && !loading() && !error()) {
     <div class="row g-4 mb-4">
       <div class="col-12 col-sm-6 col-xl-4">
         <div class="minimal-card p-4">
@@ -296,6 +296,151 @@
                 @if (metrics()!.recentTransactions.length === 0) {
                   <tr>
                     <td colspan="4" class="text-center py-4 text-muted">No recent transactions found.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TEACHER DASHBOARD -->
+  @if (userRole() === 'Teacher' && teacherMetrics() && !loading() && !error()) {
+    <div class="row g-4 mb-4">
+      <!-- Total Students Card -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca;">
+              <i class="bi bi-people-fill fs-5"></i>
+            </div>
+            <span class="badge text-success bg-transparent px-0"><i class="bi bi-graph-up-arrow me-1"></i>{{ teacherMetrics()!.studentAttendanceRate }}% Present</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">MY STUDENTS</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ teacherMetrics()!.totalStudents }}</h3>
+        </div>
+      </div>
+
+      <!-- Total Classes Card -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #fee2e2; color: #b91c1c;">
+              <i class="bi bi-building fs-5"></i>
+            </div>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">MY CLASSES</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ teacherMetrics()!.totalClasses }}</h3>
+        </div>
+      </div>
+
+      <!-- Total Subjects Card -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #ffedd5; color: #c2410c;">
+              <i class="bi bi-book-half fs-5"></i>
+            </div>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">MY SUBJECTS</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ teacherMetrics()!.totalSubjects }}</h3>
+        </div>
+      </div>
+
+      <!-- Active Homework Card -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #d1fae5; color: #047857;">
+              <i class="bi bi-journal-text fs-5"></i>
+            </div>
+            <span class="badge text-success bg-transparent px-0"><i class="bi bi-check-circle me-1"></i>Active</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">PENDING HOMEWORK</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ teacherMetrics()!.pendingHomeworkCount }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teacher Detail Widgets -->
+    <div class="row g-4">
+      <!-- Left: Today's Schedule -->
+      <div class="col-lg-6">
+        <div class="minimal-card p-4 h-100">
+          <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
+            <i class="bi bi-calendar3"></i> Today's Teaching Schedule
+          </h5>
+          <div class="table-responsive">
+            <table class="table table-borderless align-middle mb-0 text-muted-custom">
+              <thead>
+                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Time</th>
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class</th>
+                  <th class="fw-medium text-uppercase pb-3 text-end" style="font-size: 0.7rem; letter-spacing: 0.05em;">Subject</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (slot of teacherMetrics()!.todaySchedule; track slot.id) {
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                    <td class="py-3 text-body fw-bold">
+                      <span class="badge bg-primary-subtle text-primary rounded px-2 py-1">{{ slot.startTime }} - {{ slot.endTime }}</span>
+                    </td>
+                    <td class="py-3 text-body">{{ slot.className }} - {{ slot.section }}</td>
+                    <td class="py-3 text-end text-body fw-bold">{{ slot.subjectName }}</td>
+                  </tr>
+                }
+                @if (teacherMetrics()!.todaySchedule.length === 0) {
+                  <tr>
+                    <td colspan="3" class="text-center py-5 text-muted">
+                      <i class="bi bi-emoji-smile fs-1 d-block mb-2 text-success"></i>
+                      No classes scheduled for today!
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Recent Homework & Submissions -->
+      <div class="col-lg-6">
+        <div class="minimal-card p-4 h-100">
+          <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-text"></i> Recent Homework Submissions
+          </h5>
+          <div class="table-responsive">
+            <table class="table table-borderless align-middle mb-0 text-muted-custom">
+              <thead>
+                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Title / Subject</th>
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class</th>
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Due Date</th>
+                  <th class="fw-medium text-uppercase pb-3 text-end" style="font-size: 0.7rem; letter-spacing: 0.05em;">Submissions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (hw of teacherMetrics()!.recentHomework; track hw.id) {
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                    <td class="py-3 text-body">
+                      <div class="fw-bold">{{ hw.title }}</div>
+                      <small class="text-muted-custom">{{ hw.subjectName }}</small>
+                    </td>
+                    <td class="py-3 text-body">{{ hw.className }} - {{ hw.section }}</td>
+                    <td class="py-3 text-danger fw-medium">{{ hw.dueDate | date:'mediumDate' }}</td>
+                    <td class="py-3 text-end text-body fw-bold">
+                      {{ hw.submissionsCount }} / {{ hw.totalStudentsCount }}
+                    </td>
+                  </tr>
+                }
+                @if (teacherMetrics()!.recentHomework.length === 0) {
+                  <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                      <i class="bi bi-journal-x fs-1 d-block mb-2 text-warning"></i>
+                      No homework assignments posted yet.
+                    </td>
                   </tr>
                 }
               </tbody>

@@ -17,10 +17,18 @@ namespace SchoolERPManagementAPI.Controllers
         }
 
         [HttpGet("admin")]
-        [Authorize(Roles = "Admin,Teacher")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAdminDashboard([FromQuery] int? academicYearId, CancellationToken cancellationToken)
         {
             var result = await _dashboardService.GetAdminDashboardMetricsAsync(academicYearId, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("teacher/{teacherId}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetTeacherDashboard(int teacherId, [FromQuery] int? academicYearId, CancellationToken cancellationToken)
+        {
+            var result = await _dashboardService.GetTeacherDashboardMetricsAsync(teacherId, academicYearId, cancellationToken);
             return Ok(result);
         }
     }

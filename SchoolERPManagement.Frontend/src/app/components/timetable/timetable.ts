@@ -43,6 +43,8 @@ export class Timetable implements OnInit {
   isSaving = signal(false);
   isAdmin = signal(false);
   userRole = signal<string>('Student');
+  viewMode = signal<'personal' | 'class'>('personal');
+  teacherId = signal<number | null>(null);
 
   // Form signal
   createForm = signal({
@@ -65,10 +67,22 @@ export class Timetable implements OnInit {
     return cls ? `${cls.classname} ${cls.section ? '- ' + cls.section : ''}` : '';
   });
 
+  getClassNameForSlot(classId: number): string {
+    const cls = this.classes().find(c => c.id === classId);
+    return cls ? `${cls.classname} ${cls.section ? '- ' + cls.section : ''}` : `Class #${classId}`;
+  }
+
   ngOnInit() {
     const role = sessionStorage.getItem('role') || 'Student';
     this.userRole.set(role);
     this.isAdmin.set(role === 'Admin');
+    
+    if (role === 'Teacher') {
+      this.viewMode.set('personal');
+    } else {
+      this.viewMode.set(role === 'Student' ? 'personal' : 'class');
+    }
+
     this.fetchSubjects();
     this.fetchTeachers();
 
@@ -91,6 +105,19 @@ export class Timetable implements OnInit {
           }
         });
       }
+    } else if (role === 'Teacher') {
+      this.fetchAcademicYears();
+      const username = sessionStorage.getItem('username') || '';
+      this.teacherService.getTeacherByUsername(username).subscribe({
+        next: (res) => {
+          this.teacherId.set(res.id);
+          this.fetchTeacherTimetable(res.id);
+        },
+        error: (err) => {
+          console.error('Failed to load teacher profile', err);
+          this.toastService.error('Failed to resolve teacher profile.');
+        }
+      });
     } else {
       this.fetchAcademicYears();
     }
@@ -124,10 +151,14 @@ export class Timetable implements OnInit {
         this.classes.set(res);
         if (res.length > 0) {
           this.selectedClassId.set(res[0].id);
-          this.fetchTimetable();
+          if (this.viewMode() === 'class') {
+            this.fetchTimetable();
+          }
         } else {
           this.selectedClassId.set(null);
-          this.slots.set([]);
+          if (this.viewMode() === 'class') {
+            this.slots.set([]);
+          }
         }
       },
       error: (err) => {
@@ -171,6 +202,33 @@ export class Timetable implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  fetchTeacherTimetable(teacherId: number) {
+    this.loading.set(true);
+    this.error.set(null);
+    this.timetableService.getTeacherTimetable(teacherId).subscribe({
+      next: (data) => {
+        this.slots.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load teacher timetable', err);
+        this.error.set('Failed to load teaching timetable.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  switchViewMode(mode: 'personal' | 'class') {
+    this.viewMode.set(mode);
+    if (mode === 'personal') {
+      if (this.teacherId()) {
+        this.fetchTeacherTimetable(this.teacherId()!);
+      }
+    } else {
+      this.fetchTimetable();
+    }
   }
 
   onYearSelect(val: number | null) {

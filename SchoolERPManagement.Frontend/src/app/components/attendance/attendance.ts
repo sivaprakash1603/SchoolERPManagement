@@ -8,6 +8,7 @@ import { AcademicYearService, AcademicYearResponseDTO } from '../../services/aca
 import { AcademicCalendarService } from '../../services/academic-calendar.service';
 import { ToastService } from '../../services/toast.service';
 import { TeacherService, TeacherResponseDTO } from '../../services/teacher.service';
+import { TimetableService } from '../../services/timetable.service';
 
 
 interface StudentAttendanceUI extends StudentQueryResponseDTO {
@@ -39,6 +40,7 @@ export class Attendance implements OnInit {
   private academicYearService = inject(AcademicYearService);
   private calendarService = inject(AcademicCalendarService);
   private toastService = inject(ToastService);
+  private timetableService = inject(TimetableService);
   
   // Date constraints
   minDate = signal<string>('');
@@ -50,8 +52,12 @@ export class Attendance implements OnInit {
   userRole = signal<string>('Student');
   currentUserId = signal<number | null>(null);
   resolvedStudentId = signal<number | null>(null);
+  resolvedTeacherId = signal<number | null>(null);
   studentAttendanceRecords = signal<any[]>([]);
   studentAttendanceStats = signal({ present: 0, absent: 0, leave: 0, late: 0, total: 0, rate: 0 });
+  teacherAttendanceStats = signal({ present: 0, absent: 0, leave: 0, late: 0, total: 0, rate: 0 });
+  teacherHistoryFilterMonth = signal<string>('all');
+  filteredTeacherAttendanceRecords = signal<any[]>([]);
 
   // Student Calendar
   calendarMonth = signal<number>(new Date().getMonth()); // 0-indexed
@@ -218,13 +224,59 @@ export class Attendance implements OnInit {
 
     this.classService.getAllClasses(yearId).subscribe({
       next: (res) => {
-        this.classes.set(res);
-        if (res.length > 0) {
-          this.selectedClassId.set(res[0].id);
+        if (this.userRole() === 'Teacher') {
+          const username = sessionStorage.getItem('username') || '';
+          this.teacherService.getTeacherByUsername(username).subscribe({
+            next: (teacher) => {
+              this.resolvedTeacherId.set(teacher.id);
+              this.timetableService.getTeacherTimetable(teacher.id).subscribe({
+                next: (slots) => {
+                  const assignedClassIds = new Set<number>(slots.map(s => s.classId));
+                  const filtered = res.filter(c => 
+                    assignedClassIds.has(c.id) || 
+                    (teacher.className && c.classname.toLowerCase() === teacher.className.toLowerCase() && 
+                     (!teacher.section || c.section?.toLowerCase() === teacher.section.toLowerCase()))
+                  );
+                  this.classes.set(filtered);
+                  if (filtered.length > 0) {
+                    this.selectedClassId.set(filtered[0].id);
+                  } else {
+                    this.selectedClassId.set(null);
+                  }
+                  this.fetchAttendanceSheet();
+                },
+                error: (err) => {
+                  console.error('Failed to load teacher timetable', err);
+                  const filtered = res.filter(c => 
+                    teacher.className && c.classname.toLowerCase() === teacher.className.toLowerCase() && 
+                    (!teacher.section || c.section?.toLowerCase() === teacher.section.toLowerCase())
+                  );
+                  this.classes.set(filtered);
+                  if (filtered.length > 0) {
+                    this.selectedClassId.set(filtered[0].id);
+                  } else {
+                    this.selectedClassId.set(null);
+                  }
+                  this.fetchAttendanceSheet();
+                }
+              });
+            },
+            error: (err) => {
+              console.error('Failed to load teacher profile', err);
+              this.classes.set([]);
+              this.selectedClassId.set(null);
+              this.fetchAttendanceSheet();
+            }
+          });
         } else {
-          this.selectedClassId.set(null);
+          this.classes.set(res);
+          if (res.length > 0) {
+            this.selectedClassId.set(res[0].id);
+          } else {
+            this.selectedClassId.set(null);
+          }
+          this.fetchAttendanceSheet();
         }
-        this.fetchAttendanceSheet();
       },
       error: (err) => {
         console.error('Failed to load classes', err);
@@ -376,7 +428,26 @@ export class Attendance implements OnInit {
 
     this.attendanceService.getStaffAttendanceByUser(userId).subscribe({
       next: (records) => {
-        this.personalStaffAttendance.set(records);
+        const normalized = records.map(r => ({
+          ...r,
+          status: r.status.toLowerCase()
+        }));
+        this.personalStaffAttendance.set(normalized);
+
+        const total = normalized.length;
+        if (total > 0) {
+          const present = normalized.filter(r => r.status === 'present').length;
+          const late = normalized.filter(r => r.status === 'late').length;
+          const absent = normalized.filter(r => r.status === 'absent').length;
+          const leave = normalized.filter(r => r.status === 'onleave' || r.status === 'leave').length;
+          const rate = Math.round(((present + late) / total) * 100);
+          this.teacherAttendanceStats.set({ present, absent, leave, late, total, rate });
+        } else {
+          this.teacherAttendanceStats.set({ present: 0, absent: 0, leave: 0, late: 0, total: 0, rate: 0 });
+        }
+
+        this.buildCalendar();
+        this.applyTeacherHistoryFilter();
         this.loading.set(false);
       },
       error: (err) => {
@@ -619,7 +690,9 @@ export class Attendance implements OnInit {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
-    const records = this.studentAttendanceRecords();
+    const records = (this.userRole() === 'Teacher' && this.activeTab() === 'teachers') 
+      ? this.personalStaffAttendance() 
+      : this.studentAttendanceRecords();
     const statusMap = new Map<string, string>();
     records.forEach(r => {
       const dateKey = r.date.split('T')[0];
@@ -686,6 +759,43 @@ export class Attendance implements OnInit {
 
   getAvailableMonths(): { label: string; value: string }[] {
     const records = this.studentAttendanceRecords();
+    const monthSet = new Set<string>();
+    records.forEach(r => {
+      const d = new Date(r.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthSet.add(key);
+    });
+    const months = Array.from(monthSet).sort().reverse();
+    return months.map(m => {
+      const [y, mo] = m.split('-').map(Number);
+      return { label: `${this.monthNames[mo - 1]} ${y}`, value: m };
+    });
+  }
+
+  applyTeacherHistoryFilter() {
+    const filterVal = this.teacherHistoryFilterMonth();
+    const records = this.personalStaffAttendance();
+
+    if (filterVal === 'all') {
+      this.filteredTeacherAttendanceRecords.set([...records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      return;
+    }
+
+    const [fy, fm] = filterVal.split('-').map(Number);
+    const filtered = records.filter(r => {
+      const d = new Date(r.date);
+      return d.getFullYear() === fy && d.getMonth() + 1 === fm;
+    });
+    this.filteredTeacherAttendanceRecords.set(filtered.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  }
+
+  onTeacherHistoryFilterChange(value: string) {
+    this.teacherHistoryFilterMonth.set(value);
+    this.applyTeacherHistoryFilter();
+  }
+
+  getAvailableTeacherMonths(): { label: string; value: string }[] {
+    const records = this.personalStaffAttendance();
     const monthSet = new Set<string>();
     records.forEach(r => {
       const d = new Date(r.date);

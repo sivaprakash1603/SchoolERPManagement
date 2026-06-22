@@ -8,7 +8,8 @@ import { HomeworkService, HomeworkResponseDTO } from '../../services/homework.se
 import { FeeService, FeeSummaryDTO } from '../../services/fee.service';
 import { ExamService, ExamResultResponseDTO, ExamResponseDTO } from '../../services/exam.service';
 import { SubjectService } from '../../services/subject.service';
-import { AdminDashboardDTO } from '../../models/dashboard.model';
+import { TeacherService } from '../../services/teacher.service';
+import { AdminDashboardDTO, TeacherDashboardDTO } from '../../models/dashboard.model';
 import Chart from 'chart.js/auto';
 
 @Component({
@@ -27,6 +28,7 @@ export class Dashboard implements OnInit {
   private feeService = inject(FeeService);
   private examService = inject(ExamService);
   private subjectService = inject(SubjectService);
+  private teacherService = inject(TeacherService);
 
   @ViewChild('demographicsChart') demographicsChartRef!: ElementRef;
   @ViewChild('revenueChart') revenueChartRef!: ElementRef;
@@ -41,6 +43,8 @@ export class Dashboard implements OnInit {
 
   // Admin/Teacher Metrics
   metrics = signal<AdminDashboardDTO | null>(null);
+  teacherMetrics = signal<TeacherDashboardDTO | null>(null);
+  teacherId = signal<number | null>(null);
   academicYears = signal<AcademicYearResponseDTO[]>([]);
   selectedAcademicYearId = signal<number | undefined>(undefined);
 
@@ -75,19 +79,30 @@ export class Dashboard implements OnInit {
         next: (years) => {
           this.academicYears.set(years);
           const currentYear = years.find(y => y.isCurrent);
-          if (currentYear) {
-            this.selectedAcademicYearId.set(currentYear.id);
-            this.loadMetrics(currentYear.id);
-          } else if (years.length > 0) {
-            this.selectedAcademicYearId.set(years[0].id);
-            this.loadMetrics(years[0].id);
+          const yearId = currentYear ? currentYear.id : (years.length > 0 ? years[0].id : undefined);
+          this.selectedAcademicYearId.set(yearId);
+
+          if (role === 'Teacher') {
+            const username = sessionStorage.getItem('username') || '';
+            this.teacherService.getTeacherByUsername(username).subscribe({
+              next: (res) => {
+                this.teacherId.set(res.id);
+                this.loadTeacherMetrics(res.id, yearId);
+              },
+              error: (err) => {
+                console.error('Failed to load teacher profile', err);
+                this.error.set('Failed to load teacher profile.');
+                this.loading.set(false);
+              }
+            });
           } else {
-            this.loadMetrics();
+            this.loadMetrics(yearId);
           }
         },
         error: (err) => {
           console.error('Failed to load academic years', err);
-          this.loadMetrics();
+          if (role === 'Admin') this.loadMetrics();
+          else this.loading.set(false);
         }
       });
     } else if (role === 'Student') {
@@ -117,6 +132,22 @@ export class Dashboard implements OnInit {
       error: (err) => {
         console.error('Failed to load dashboard metrics', err);
         this.error.set('Could not load dashboard metrics. Please try again later.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  loadTeacherMetrics(teacherId: number, academicYearId?: number): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.dashboardService.getTeacherMetrics(teacherId, academicYearId).subscribe({
+      next: (data) => {
+        this.teacherMetrics.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load teacher metrics', err);
+        this.error.set('Could not load teacher dashboard metrics.');
         this.loading.set(false);
       }
     });
@@ -252,7 +283,12 @@ export class Dashboard implements OnInit {
     const selectEl = event.target as HTMLSelectElement;
     const yearId = Number(selectEl.value);
     this.selectedAcademicYearId.set(yearId);
-    this.loadMetrics(yearId);
+    
+    if (this.userRole() === 'Teacher' && this.teacherId()) {
+      this.loadTeacherMetrics(this.teacherId()!, yearId);
+    } else if (this.userRole() === 'Admin') {
+      this.loadMetrics(yearId);
+    }
   }
 
   private initDemographicsChart(data: AdminDashboardDTO) {

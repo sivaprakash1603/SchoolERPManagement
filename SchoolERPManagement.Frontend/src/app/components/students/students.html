@@ -7,7 +7,7 @@
       Academic Session {{ currentSessionName() }} &bull; {{ totalCount() }} Registered Students
     </p>
   </div>
-  <button routerLink="/students/onboarding" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
+  <button *ngIf="isAdmin()" routerLink="/students/onboarding" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
     <i class="bi bi-person-plus-fill"></i>
     New Admission
   </button>
@@ -128,8 +128,8 @@
               <div class="d-flex justify-content-end gap-1">
                 <button class="btn btn-sm btn-light text-primary" title="View Profile" (click)="openViewModal(student); $event.stopPropagation();"><i class="bi bi-eye"></i></button>
                 <button class="btn btn-sm btn-light text-warning" title="Send Notification" (click)="openNotificationModal(student.name, [student.userId]); $event.stopPropagation();"><i class="bi bi-bell"></i></button>
-                <button class="btn btn-sm btn-light text-muted-custom" title="Edit" (click)="openEditModal(student); $event.stopPropagation();"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-light text-danger" title="Delete" (click)="openDeleteModal(student); $event.stopPropagation();"><i class="bi bi-trash"></i></button>
+                <button *ngIf="isAdmin()" class="btn btn-sm btn-light text-muted-custom" title="Edit" (click)="openEditModal(student); $event.stopPropagation();"><i class="bi bi-pencil"></i></button>
+                <button *ngIf="isAdmin()" class="btn btn-sm btn-light text-danger" title="Delete" (click)="openDeleteModal(student); $event.stopPropagation();"><i class="bi bi-trash"></i></button>
               </div>
             </td>
           </tr>
@@ -264,10 +264,10 @@
     </div>
     <div class="modal-footer-custom">
       <button class="btn btn-outline-secondary px-4 rounded-3" (click)="closeViewModal()">Close</button>
-      <button class="btn btn-success px-4 rounded-3" (click)="closeViewModal(); openEnrollModal(selectedStudent()!)">
+      <button *ngIf="isAdmin()" class="btn btn-success px-4 rounded-3" (click)="closeViewModal(); openEnrollModal(selectedStudent()!)">
         <i class="bi bi-mortarboard me-1"></i> Promote / Enroll
       </button>
-      <button class="btn btn-primary px-4 rounded-3" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="closeViewModal(); openEditModal(selectedStudent()!)">
+      <button *ngIf="isAdmin()" class="btn btn-primary px-4 rounded-3" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="closeViewModal(); openEditModal(selectedStudent()!)">
         <i class="bi bi-pencil me-1"></i> Edit Profile
       </button>
     </div>
@@ -506,7 +506,7 @@
       <button class="btn btn-warning rounded-3 fw-bold px-3 py-2 border-0 text-white" (click)="openBulkNotificationModal()">
         <i class="bi bi-bell-fill me-1"></i> Send Notification
       </button>
-      <button class="btn btn-primary rounded-3 fw-bold px-4 py-2 border-0" style="background-color: var(--primary-accent);" (click)="openBulkEnrollModal()">
+      <button *ngIf="isAdmin()" class="btn btn-primary rounded-3 fw-bold px-4 py-2 border-0" style="background-color: var(--primary-accent);" (click)="openBulkEnrollModal()">
         <i class="bi bi-mortarboard-fill me-1"></i> Promote / Enroll Selected
       </button>
     </div>
