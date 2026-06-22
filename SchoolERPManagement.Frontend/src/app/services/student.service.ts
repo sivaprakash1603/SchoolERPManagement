@@ -114,4 +114,12 @@ export class StudentService {
   bulkEnrollStudents(dto: { studentIds: number[]; classId: number; academicYearId: number }): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/bulk-enroll`, dto);
   }
+
+  getStudentsByClassId(classId: number): Observable<StudentQueryResponseDTO[]> {
+    return this.http.get<StudentQueryResponseDTO[]>(`${this.baseUrl}/class/${classId}`);
+  }
+
+  getStudentByUserId(userId: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/by-user/${userId}`);
+  }
 }

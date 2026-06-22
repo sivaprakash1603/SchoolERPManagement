@@ -11,6 +11,18 @@ export interface DocumentResponseDTO {
   status: string;
 }
 
+export interface PendingDocumentDTO {
+  id: number;
+  documentName: string;
+  documentType: string;
+  blobUrl: string;
+  uploadedAt?: string;
+  ownerId: number;
+  ownerName: string;
+  ownerType: string;
+  ownerIdentifier: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -47,5 +59,13 @@ export class DocumentService {
 
   deleteDocument(blobUrl: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/documents?blobUrl=${encodeURIComponent(blobUrl)}`);
+  }
+
+  verifyDocument(dto: { documentType: string; documentId: number; status: string }): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/documents/verify`, dto);
+  }
+
+  getPendingDocuments(): Observable<PendingDocumentDTO[]> {
+    return this.http.get<PendingDocumentDTO[]>(`${this.apiUrl}/documents/pending`);
   }
 }

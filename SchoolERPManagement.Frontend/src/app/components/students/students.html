@@ -111,7 +111,11 @@
             </td>
             <td class="px-4 py-3 font-monospace" style="font-size: 0.875rem;">{{ student.regNo }}</td>
             <td class="px-4 py-3">
-              {{ student.className || '-' }} <span class="text-muted-custom">/ {{ student.section || '-' }}</span>
+              @if (student.className) {
+                {{ student.className }} <span class="text-muted-custom">/ {{ student.section || '-' }}</span>
+              } @else {
+                <span class="badge bg-warning-subtle text-warning px-2 py-1">Unassigned</span>
+              }
             </td>
             <td class="px-4 py-3">{{ student.parentName || '-' }}</td>
             <td class="px-4 py-3" style="font-size: 0.875rem;">{{ (student.admissionDate | date:'mediumDate') || '-' }}</td>
@@ -123,6 +127,7 @@
             <td class="px-4 py-3 text-end">
               <div class="d-flex justify-content-end gap-1">
                 <button class="btn btn-sm btn-light text-primary" title="View Profile" (click)="openViewModal(student); $event.stopPropagation();"><i class="bi bi-eye"></i></button>
+                <button class="btn btn-sm btn-light text-warning" title="Send Notification" (click)="openNotificationModal(student.name, [student.userId]); $event.stopPropagation();"><i class="bi bi-bell"></i></button>
                 <button class="btn btn-sm btn-light text-muted-custom" title="Edit" (click)="openEditModal(student); $event.stopPropagation();"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-sm btn-light text-danger" title="Delete" (click)="openDeleteModal(student); $event.stopPropagation();"><i class="bi bi-trash"></i></button>
               </div>
@@ -223,7 +228,13 @@
         </div>
         <div class="col-md-6 detail-item">
           <span class="detail-label">Class & Section</span>
-          <span class="detail-val">{{ selectedStudent()?.className || '-' }} / {{ selectedStudent()?.section || '-' }}</span>
+          <span class="detail-val">
+            @if (selectedStudent()?.className) {
+              {{ selectedStudent()?.className }} / {{ selectedStudent()?.section || '-' }}
+            } @else {
+              <span class="text-warning fw-bold">Unassigned</span>
+            }
+          </span>
         </div>
         <div class="col-md-6 detail-item">
           <span class="detail-label">Gender</span>
@@ -492,8 +503,48 @@
     </div>
     <div class="d-flex align-items-center gap-2">
       <button class="btn btn-outline-secondary rounded-3 fw-bold px-3 py-2" (click)="clearSelection()">Cancel</button>
+      <button class="btn btn-warning rounded-3 fw-bold px-3 py-2 border-0 text-white" (click)="openBulkNotificationModal()">
+        <i class="bi bi-bell-fill me-1"></i> Send Notification
+      </button>
       <button class="btn btn-primary rounded-3 fw-bold px-4 py-2 border-0" style="background-color: var(--primary-accent);" (click)="openBulkEnrollModal()">
         <i class="bi bi-mortarboard-fill me-1"></i> Promote / Enroll Selected
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Send Notification Modal -->
+<div class="modal-overlay" *ngIf="showNotificationModal()" (click)="closeNotificationModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-bell-fill fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Send Notification</h5>
+      </div>
+      <button class="btn-close" (click)="closeNotificationModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="mb-3 p-3 rounded-3" style="background-color: var(--bg-canvas); border: 1px solid var(--border-color);">
+        <span class="text-muted-custom small d-block text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Recipient(s)</span>
+        <strong style="color: var(--text-primary);">{{ notificationTargetNames() }}</strong>
+      </div>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="modal-form-label"><i class="bi bi-type me-1"></i> Title</label>
+          <input type="text" class="form-control" [ngModel]="notificationTitle()" (ngModelChange)="notificationTitle.set($event)" placeholder="Notification Title">
+        </div>
+        <div class="col-12">
+          <label class="modal-form-label"><i class="bi bi-chat-text me-1"></i> Message</label>
+          <textarea class="form-control" [ngModel]="notificationMessage()" (ngModelChange)="notificationMessage.set($event)" placeholder="Type notification message here..." rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeNotificationModal()" [disabled]="isSendingNotification()">Cancel</button>
+      <button class="btn btn-warning px-4 rounded-3 text-white fw-bold d-flex align-items-center gap-2" (click)="sendNotification()" [disabled]="isSendingNotification() || !notificationTitle() || !notificationMessage()">
+        <span *ngIf="isSendingNotification()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <i class="bi bi-send-fill" *ngIf="!isSendingNotification()"></i>
+        {{ isSendingNotification() ? 'Sending...' : 'Send Notification' }}
       </button>
     </div>
   </div>

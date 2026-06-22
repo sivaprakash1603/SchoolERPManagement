@@ -1,5 +1,6 @@
 using AutoMapper;
 using System.Linq;
+using SchoolERPManagementBLLibrary.DTOs.AcademicCalendar;
 using SchoolERPManagementBLLibrary.DTOs.AcademicYear;
 using SchoolERPManagementBLLibrary.DTOs.Asset;
 using SchoolERPManagementBLLibrary.DTOs.Attendance;
@@ -31,6 +32,7 @@ public class AppMappingProfile : Profile
         
         CreateMap<Asset, AssetResponseDTO>();
         CreateMap<Assetreport, AssetReportResponseDTO>();
+        CreateMap<Assettype, AssetTypeResponseDTO>();
 
         
         CreateMap<Attendance, AttendanceResponseDTO>();
@@ -70,7 +72,7 @@ public class AppMappingProfile : Profile
         
         CreateMap<Homework, HomeworkResponseDTO>()
             .ConstructUsing(src => new HomeworkResponseDTO(
-                src.Id, src.Subjectid, src.Teacherid, src.Classid, src.Title, src.Description, src.Attachmenturl, src.Createdat, src.Duedate, 
+                src.Id, src.Subjectid, src.Subject != null ? src.Subject.Subjectname : null, src.Teacherid, src.Teacher != null ? src.Teacher.Name : null, src.Classid, src.Title, src.Description, src.Attachmenturl, src.Createdat, src.Duedate, 
                 src.Homeworksubmissions != null && src.Homeworksubmissions.Any() ? 
                     new HomeworkSubmissionResponseDTO(
                         src.Homeworksubmissions.First().Id, 
@@ -84,6 +86,18 @@ public class AppMappingProfile : Profile
                     : null
             ));
         CreateMap<Homeworksubmission, HomeworkSubmissionResponseDTO>();
+        CreateMap<Homeworksubmission, HomeworkSubmissionDetailsDTO>()
+            .ConstructUsing(src => new HomeworkSubmissionDetailsDTO(
+                src.Id,
+                src.Homeworkid,
+                src.Studentid,
+                src.Student != null ? src.Student.Name : string.Empty,
+                src.Uploadedfileurl,
+                src.Verificationstatus,
+                src.Marks,
+                src.Remarks,
+                src.Submittedat
+            ));
 
         
         CreateMap<Notification, NotificationResponseDTO>();
@@ -98,11 +112,35 @@ public class AppMappingProfile : Profile
 
         
         CreateMap<Parent, ParentResponseDTO>()
-            .ConstructUsing(src => new ParentResponseDTO(src.Id, src.Userid, src.Name, null, src.Phonenumber, null, null, null));
+            .ConstructUsing(src => new ParentResponseDTO(
+                src.Id, 
+                src.Userid, 
+                src.Name, 
+                src.Studentparents != null && src.Studentparents.Any()
+                    ? string.Join(", ", src.Studentparents.Select(sp => sp.Student.Name))
+                    : null, 
+                src.Phonenumber, 
+                src.User != null ? src.User.Email : null, 
+                null, 
+                src.User != null ? src.User.Username : null
+            ));
 
         
         CreateMap<Student, StudentResponseDTO>()
-            .ConstructUsing(src => new StudentResponseDTO(src.Id, src.Userid, src.Regno, src.Name, null, null));
+            .ConstructUsing(src => new StudentResponseDTO(
+                src.Id, 
+                src.Userid, 
+                src.Regno, 
+                src.Name, 
+                null, 
+                null,
+                src.Studentenrollments != null && src.Studentenrollments.Any()
+                    ? src.Studentenrollments.OrderByDescending(e => e.Id).First().Classid
+                    : null,
+                src.Studentdocuments != null && src.Studentdocuments.Any(d => d.Documentname == "Photo")
+                    ? src.Studentdocuments.First(d => d.Documentname == "Photo").Bloburl
+                    : null
+            ));
 
         
         CreateMap<Subject, SubjectResponseDTO>();
@@ -110,14 +148,39 @@ public class AppMappingProfile : Profile
         
         CreateMap<Teacher, TeacherResponseDTO>()
             .ConstructUsing(src => new TeacherResponseDTO(
-                src.Id, src.Userid, src.Name, src.Phonenumber, src.Joiningdate, src.Qualifications, null, 
+                src.Id, 
+                src.Userid, 
+                src.Name, 
+                src.Phonenumber, 
+                src.Joiningdate, 
+                src.Qualifications, 
+                null, 
                 src.User != null ? src.User.Username : string.Empty, 
                 src.Classes.FirstOrDefault() != null ? src.Classes.FirstOrDefault()!.Classname : null, 
-                src.Classes.FirstOrDefault() != null ? src.Classes.FirstOrDefault()!.Section : null));
+                src.Classes.FirstOrDefault() != null ? src.Classes.FirstOrDefault()!.Section : null,
+                src.User != null ? src.User.Email : null,
+                src.Teacherdocuments.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo") != null 
+                    ? src.Teacherdocuments.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo")!.Bloburl 
+                    : null
+            ));
         
         CreateMap<Teachersubject, TeacherSubjectResponseDTO>();
 
         
         CreateMap<Timetable, TimetableResponseDTO>();
+        CreateMap<Academiccalendar, CalendarEventResponseDTO>();
+        CreateMap<Examschedule, ExamScheduleResponseDTO>()
+            .ConstructUsing(src => new ExamScheduleResponseDTO(
+                src.Id,
+                src.Examid,
+                src.Subjectid,
+                src.Subject != null ? src.Subject.Subjectname : string.Empty,
+                src.Classid,
+                src.Class != null ? src.Class.Classname : string.Empty,
+                src.Class != null ? src.Class.Section : string.Empty,
+                src.Examdate,
+                src.Durationminutes,
+                src.Session
+            ));
     }
 }

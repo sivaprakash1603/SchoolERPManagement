@@ -1,1 +1,422 @@
-<p>attendance works!</p>
+<!-- Page Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
+  <div>
+    <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent);">
+      {{ userRole() === 'Student' ? 'My Attendance Dashboard' : (activeTab() === 'students' ? 'Daily Student Attendance' : 'Teacher & Staff Attendance') }}
+    </h2>
+    <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-calendar-check-fill"></i>
+      {{ userRole() === 'Student' ? 'Overview of your personal attendance performance.' : (activeTab() === 'students' ? 'Record and review student attendance.' : 'Record, review, and manage teacher/staff daily attendance.') }}
+    </p>
+  </div>
+  <button *ngIf="userRole() !== 'Student' && activeTab() === 'students' && isAdminOrTeacher() && students().length > 0" (click)="markAllAsPresent()" [disabled]="isHoliday()" class="btn btn-success d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold">
+    <i class="bi bi-check-all"></i>
+    Mark All Unmarked as Present
+  </button>
+</div>
+
+<!-- Switcher tabs (Only Admin and Teacher see) -->
+<div class="d-flex border-bottom border-secondary-custom mb-4" *ngIf="userRole() === 'Admin' || userRole() === 'Teacher'" style="border-bottom: 1px solid var(--border-color) !important;">
+  <button (click)="onTabChange('students')" class="flex-grow-1 py-3 text-center fw-bold border-0 bg-transparent transition-all" [class.active-tab]="activeTab() === 'students'" [class.text-muted-custom]="activeTab() !== 'students'">
+    Student Attendance
+  </button>
+  <button (click)="onTabChange('teachers')" class="flex-grow-1 py-3 text-center fw-bold border-0 bg-transparent transition-all" [class.active-tab]="activeTab() === 'teachers'" [class.text-muted-custom]="activeTab() !== 'teachers'">
+    Teacher Attendance
+  </button>
+</div>
+
+<!-- Filter Selector Bar (Admin / Teacher view only) -->
+<div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end" *ngIf="userRole() !== 'Student' && (activeTab() === 'students' || userRole() === 'Admin')">
+  <div style="width: 150px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Academic Session</label>
+    <select class="form-select" [ngModel]="selectedAcademicYearId()" (ngModelChange)="onYearSelect($event)">
+      @for (year of academicYears(); track year.id) {
+        <option [value]="year.id">{{ year.yearName }}</option>
+      }
+    </select>
+  </div>
+  <div style="width: 200px;" *ngIf="activeTab() === 'students'">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class / Section</label>
+    <select class="form-select" [(ngModel)]="selectedClassId" (ngModelChange)="onClassChange()">
+      <option [ngValue]="null" disabled>Select Class...</option>
+      @for (c of classes(); track c.id) {
+        <option [ngValue]="c.id">{{ c.classname }} {{ c.section ? '- ' + c.section : '' }}</option>
+      }
+    </select>
+  </div>
+  <div style="width: 180px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Date</label>
+    <input type="date" class="form-control" [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event); onDateChange()" [min]="minDate()" [max]="maxDate()">
+  </div>
+  <div>
+    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2" title="Refresh" (click)="fetchAttendanceSheet()">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Loader -->
+@if (loading()) {
+  <div class="d-flex justify-content-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+}
+
+<!-- Error Message -->
+@if (error()) {
+  <div class="alert alert-danger mb-4">{{ error() }}</div>
+}
+
+<!-- Student View Dashboard -->
+@if (userRole() === 'Student' && !loading() && !error()) {
+  <!-- Stats Summary Row -->
+  <div class="row g-3 mb-4">
+    <!-- Attendance Rate Card -->
+    <div class="col-6 col-lg-3">
+      <div class="minimal-card p-3 p-lg-4 h-100 student-stat-card">
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div class="stat-icon-circle stat-icon-rate">
+            <span class="fw-bold" style="font-size: 0.85rem;">{{ studentAttendanceStats().rate }}%</span>
+          </div>
+          <div>
+            <p class="stat-label mb-0">ATTENDANCE RATE</p>
+            <h5 class="fw-bold mb-0" [class.text-success]="studentAttendanceStats().rate >= 75" [class.text-danger]="studentAttendanceStats().rate < 75">
+              {{ studentAttendanceStats().rate >= 90 ? 'Excellent' : (studentAttendanceStats().rate >= 75 ? 'Good' : 'Low') }}
+            </h5>
+          </div>
+        </div>
+        <!-- Mini progress bar -->
+        <div class="progress" style="height: 5px; border-radius: 3px;">
+          <div class="progress-bar" role="progressbar" [style.width.%]="studentAttendanceStats().rate"
+               [class.bg-success]="studentAttendanceStats().rate >= 75"
+               [class.bg-danger]="studentAttendanceStats().rate < 75"
+               style="border-radius: 3px; transition: width 0.6s ease;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Present Days -->
+    <div class="col-6 col-lg-3">
+      <div class="minimal-card p-3 p-lg-4 h-100 student-stat-card">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-circle stat-icon-present">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+          </div>
+          <div>
+            <p class="stat-label mb-0">PRESENT</p>
+            <h5 class="fw-bold mb-0 text-success">{{ studentAttendanceStats().present }} <small class="fw-normal text-muted-custom" style="font-size: 0.75rem;">days</small></h5>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Absent Days -->
+    <div class="col-6 col-lg-3">
+      <div class="minimal-card p-3 p-lg-4 h-100 student-stat-card">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-circle stat-icon-absent">
+            <i class="bi bi-x-circle-fill fs-5"></i>
+          </div>
+          <div>
+            <p class="stat-label mb-0">ABSENT</p>
+            <h5 class="fw-bold mb-0 text-danger">{{ studentAttendanceStats().absent }} <small class="fw-normal text-muted-custom" style="font-size: 0.75rem;">days</small></h5>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Late + Leave -->
+    <div class="col-6 col-lg-3">
+      <div class="minimal-card p-3 p-lg-4 h-100 student-stat-card">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon-circle stat-icon-leave">
+            <i class="bi bi-clock-fill fs-5"></i>
+          </div>
+          <div>
+            <p class="stat-label mb-0">LATE / LEAVE</p>
+            <h5 class="fw-bold mb-0 text-warning">{{ studentAttendanceStats().late + studentAttendanceStats().leave }} <small class="fw-normal text-muted-custom" style="font-size: 0.75rem;">days</small></h5>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Calendar View -->
+  <div class="minimal-card mb-4 overflow-hidden">
+    <div class="p-3 d-flex align-items-center justify-content-between border-bottom" style="background: var(--bg-sidebar);">
+      <button class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" (click)="navigateMonth(-1)">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <div class="text-center">
+        <h6 class="fw-bold mb-0" style="color: var(--text-primary);">{{ monthNames[calendarMonth()] }} {{ calendarYear() }}</h6>
+        <button class="btn btn-link btn-sm p-0 text-decoration-none" style="font-size: 0.7rem;" (click)="goToCurrentMonth()">Today</button>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" (click)="navigateMonth(1)">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+    <div class="p-3">
+      <!-- Day Labels -->
+      <div class="calendar-grid mb-2">
+        @for (label of dayLabels; track label) {
+          <div class="calendar-day-label">{{ label }}</div>
+        }
+      </div>
+      <!-- Calendar Days -->
+      <div class="calendar-grid">
+        @for (blank of calendarBlanks(); track blank) {
+          <div class="calendar-cell calendar-blank"></div>
+        }
+        @for (day of calendarDays(); track day.date) {
+          <div class="calendar-cell" [class]="getCalendarStatusClass(day.status)" [class.calendar-today]="day.isToday" [title]="day.status ? (day.status | titlecase) : 'No record'">
+            <span class="calendar-date">{{ day.date }}</span>
+            @if (day.status) {
+              <span class="calendar-dot"></span>
+            }
+          </div>
+        }
+      </div>
+      <!-- Legend -->
+      <div class="d-flex flex-wrap gap-3 mt-3 pt-2 border-top" style="border-color: var(--border-color) !important;">
+        <div class="d-flex align-items-center gap-1"><span class="legend-dot legend-present"></span><small class="text-muted-custom">Present</small></div>
+        <div class="d-flex align-items-center gap-1"><span class="legend-dot legend-absent"></span><small class="text-muted-custom">Absent</small></div>
+        <div class="d-flex align-items-center gap-1"><span class="legend-dot legend-late"></span><small class="text-muted-custom">Late</small></div>
+        <div class="d-flex align-items-center gap-1"><span class="legend-dot legend-leave"></span><small class="text-muted-custom">Leave</small></div>
+        <div class="d-flex align-items-center gap-1"><span class="legend-dot legend-norecord"></span><small class="text-muted-custom">No Record</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance History Table with Month Filter -->
+  <div class="minimal-card mb-4 overflow-hidden">
+    <div class="p-3 d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 border-bottom" style="background: var(--bg-sidebar);">
+      <h6 class="fw-bold mb-0"><i class="bi bi-journal-text me-2"></i>Attendance History</h6>
+      <div class="d-flex align-items-center gap-2">
+        <label class="text-muted-custom mb-0" style="font-size: 0.75rem; white-space: nowrap;">Filter:</label>
+        <select class="form-select form-select-sm" style="width: auto; min-width: 160px;" [ngModel]="historyFilterMonth()" (ngModelChange)="onHistoryFilterChange($event)">
+          <option value="all">All Months</option>
+          @for (m of getAvailableMonths(); track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead style="background-color: var(--bg-sidebar);">
+          <tr>
+            <th class="ps-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Date</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Day</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Status</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (record of filteredAttendanceRecords(); track record.id) {
+            <tr>
+              <td class="ps-4 py-3 fw-bold" style="color: var(--text-primary);">{{ record.date | date:'mediumDate' }}</td>
+              <td class="px-4 py-3 text-muted-custom">{{ record.date | date:'EEEE' }}</td>
+              <td class="px-4 py-3">
+                <span class="badge px-3 py-1 rounded-pill fw-bold text-uppercase" style="font-size: 0.7rem;"
+                      [class.badge-present]="record.status === 'present'"
+                      [class.badge-absent]="record.status === 'absent'"
+                      [class.badge-late]="record.status === 'late'"
+                      [class.badge-onleave]="record.status === 'onleave' || record.status === 'leave'">
+                  {{ record.status === 'onleave' ? 'On Leave' : record.status }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-muted-custom fst-italic">{{ record.remarks || '—' }}</td>
+            </tr>
+          }
+          @if (filteredAttendanceRecords().length === 0) {
+            <tr>
+              <td colspan="4" class="text-center py-5 text-muted-custom">
+                <i class="bi bi-calendar-x fs-1 mb-2 d-block"></i>
+                No attendance records found{{ historyFilterMonth() !== 'all' ? ' for the selected month' : '' }}.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- Admin / Teacher Views -->
+@if (userRole() !== 'Student' && !loading() && !error()) {
+  <!-- Holiday Message -->
+  <div class="alert alert-warning d-flex align-items-center gap-3 p-3 rounded-3 mb-4" *ngIf="isHoliday() && (activeTab() === 'students' || userRole() === 'Admin')">
+    <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+    <div>
+      <h6 class="alert-heading fw-bold mb-0">School Holiday</h6>
+      <p class="mb-0 small text-black-50">{{ holidayDescription() || 'School is closed on this date.' }}</p>
+    </div>
+  </div>
+
+  <!-- Student Grid Sheet -->
+  @if (activeTab() === 'students') {
+    <div class="minimal-card mb-4 overflow-hidden border">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead style="background-color: var(--bg-sidebar);">
+            <tr>
+              <th class="ps-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 100px;">Roll No</th>
+              <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Student Info</th>
+              <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 220px;">Status</th>
+              <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 220px;">Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of students(); track student.id) {
+              <tr [class.opacity-50]="isHoliday()">
+                <td class="ps-4 py-3 font-monospace" style="color: var(--text-secondary);">#{{ student.regNo }}</td>
+                <td class="px-4 py-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <img *ngIf="student.profilePhotoUrl" [src]="'http://localhost:5203' + student.profilePhotoUrl" class="rounded-circle object-fit-cover" style="width: 36px; height: 36px;">
+                    <div *ngIf="!student.profilePhotoUrl" class="rounded-circle d-flex align-items-center justify-content-center text-muted" style="width: 36px; height: 36px; background-color: var(--bg-sidebar);">
+                      <i class="bi bi-person"></i>
+                    </div>
+                    <div>
+                      <p class="mb-0 fw-bold" style="color: var(--text-primary);">{{ student.name }}</p>
+                      <small class="text-muted-custom">{{ student.className }} {{ student.section ? '- ' + student.section : '' }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="d-flex gap-1" *ngIf="!student.isUpdatingStatus; else statusSpinner">
+                    <button class="btn btn-sm" [class.btn-success]="student.status === 'present'" [class.btn-outline-success]="student.status !== 'present'" [disabled]="!isAdminOrTeacher() || isHoliday()" (click)="updateStudentStatus(student, 'present')">Present</button>
+                    <button class="btn btn-sm" [class.btn-danger]="student.status === 'absent'" [class.btn-outline-danger]="student.status !== 'absent'" [disabled]="!isAdminOrTeacher() || isHoliday()" (click)="updateStudentStatus(student, 'absent')">Absent</button>
+                    <button class="btn btn-sm" [class.btn-warning]="student.status === 'leave' || student.status === 'onleave'" [class.btn-outline-warning]="student.status !== 'leave' && student.status !== 'onleave'" [disabled]="!isAdminOrTeacher() || isHoliday()" (click)="updateStudentStatus(student, 'leave')">Leave</button>
+                  </div>
+                  <ng-template #statusSpinner>
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                  </ng-template>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" placeholder="Add remark..." [(ngModel)]="student.remarks" [disabled]="!isAdminOrTeacher() || isHoliday()" (keyup.enter)="saveRemarks(student)">
+                    <button class="btn btn-outline-secondary" type="button" [disabled]="!isAdminOrTeacher() || isHoliday() || student.isSavingRemarks" (click)="saveRemarks(student)">
+                      <span *ngIf="student.isSavingRemarks" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <i *ngIf="!student.isSavingRemarks" class="bi bi-check"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+            @if (students().length === 0) {
+              <tr>
+                <td colspan="4" class="text-center py-5 text-muted-custom">
+                  <i class="bi bi-person-x fs-1 mb-2 d-block"></i>
+                  No students found in this class.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Teacher/Staff Grid Sheet -->
+  @if (activeTab() === 'teachers') {
+    <!-- Admin View: Modify Teacher Attendance -->
+    @if (userRole() === 'Admin') {
+      <div class="minimal-card mb-4 overflow-hidden border">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead style="background-color: var(--bg-sidebar);">
+              <tr>
+                <th class="ps-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Staff Name</th>
+                <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 250px;">Status</th>
+                <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 220px;">Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (teacher of teachers(); track teacher.id) {
+                <tr [class.opacity-50]="isHoliday()">
+                  <td class="ps-4 py-3">
+                    <div>
+                      <p class="mb-0 fw-bold" style="color: var(--text-primary);">{{ teacher.name }}</p>
+                      <small class="text-muted-custom">Teacher UserID: {{ teacher.userId }}</small>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="d-flex gap-1" *ngIf="!teacher.isUpdatingStatus; else staffStatusSpinner">
+                      <button class="btn btn-sm" [class.btn-success]="teacher.status === 'present'" [class.btn-outline-success]="teacher.status !== 'present'" [disabled]="isHoliday()" (click)="updateTeacherStatus(teacher, 'present')">Present</button>
+                      <button class="btn btn-sm" [class.btn-danger]="teacher.status === 'absent'" [class.btn-outline-danger]="teacher.status !== 'absent'" [disabled]="isHoliday()" (click)="updateTeacherStatus(teacher, 'absent')">Absent</button>
+                      <button class="btn btn-sm" [class.btn-warning]="teacher.status === 'leave' || teacher.status === 'onleave'" [class.btn-outline-warning]="teacher.status !== 'leave' && teacher.status !== 'onleave'" [disabled]="isHoliday()" (click)="updateTeacherStatus(teacher, 'onleave')">Leave</button>
+                    </div>
+                    <ng-template #staffStatusSpinner>
+                      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    </ng-template>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="input-group input-group-sm">
+                      <input type="text" class="form-control" placeholder="Add remark..." [(ngModel)]="teacher.remarks" [disabled]="isHoliday()" (keyup.enter)="saveTeacherRemarks(teacher)">
+                      <button class="btn btn-outline-secondary" type="button" [disabled]="isHoliday() || teacher.isSavingRemarks" (click)="saveTeacherRemarks(teacher)">
+                        <span *ngIf="teacher.isSavingRemarks" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <i *ngIf="!teacher.isSavingRemarks" class="bi bi-check"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (teachers().length === 0) {
+                <tr>
+                  <td colspan="3" class="text-center py-5 text-muted-custom">
+                    <i class="bi bi-person-x fs-1 mb-2 d-block"></i>
+                    No staff members found.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Teacher View: View Own Attendance History -->
+    @if (userRole() === 'Teacher') {
+      <div class="minimal-card mb-4 overflow-hidden border">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead style="background-color: var(--bg-sidebar);">
+              <tr>
+                <th class="ps-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Date</th>
+                <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Status</th>
+                <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Type</th>
+                <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (record of personalStaffAttendance(); track record.id) {
+                <tr>
+                  <td class="ps-4 py-3 fw-bold" style="color: var(--text-primary);">{{ record.date | date:'fullDate' }}</td>
+                  <td class="px-4 py-3">
+                    <span class="badge px-3 py-1.5 rounded-pill text-xs fw-bold text-uppercase"
+                          [class.badge-present]="record.status === 'present'"
+                          [class.badge-absent]="record.status === 'absent'"
+                          [class.badge-late]="record.status === 'late'"
+                          [class.badge-onleave]="record.status === 'onleave'">
+                      {{ record.status }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-muted-custom">{{ record.attendanceType }}</td>
+                  <td class="px-4 py-3 text-muted-custom italic">{{ record.remarks || 'None' }}</td>
+                </tr>
+              }
+              @if (personalStaffAttendance().length === 0) {
+                <tr>
+                  <td colspan="4" class="text-center py-5 text-muted-custom">
+                    <i class="bi bi-calendar-x fs-1 mb-2 d-block"></i>
+                    No attendance logs recorded for you yet.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
+}

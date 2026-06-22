@@ -110,5 +110,13 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _feeService.AddFeeStructureAsync(dto, cancellationToken);
             return Ok(result);
         }
+
+        [HttpGet("class/{classId}/summaries")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetClassFeeSummaries(int classId, [FromQuery] int academicYearId, CancellationToken cancellationToken)
+        {
+            var result = await _feeService.GetClassFeeSummariesAsync(classId, academicYearId, cancellationToken);
+            return Ok(result);
+        }
     }
 }

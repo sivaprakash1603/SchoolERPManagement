@@ -18,6 +18,7 @@ public class TeacherServiceTests
     private readonly Mock<IRepository<int, Subject>> _subjectRepoMock;
     private readonly Mock<IRepository<int, Class>> _classRepoMock;
     private readonly Mock<IRepository<int, Teachersubject>> _teacherSubjectRepoMock;
+    private readonly Mock<IRepository<int, Timetable>> _timetableRepoMock;
     private readonly Mock<IRepository<int, Role>> _roleRepoMock;
     private readonly Mock<IRepository<int, SchoolERPManagementModelLibrary.Models.Salary>> _salaryRepoMock;
     private readonly Mock<IEmailService> _emailServiceMock;
@@ -30,6 +31,7 @@ public class TeacherServiceTests
         _subjectRepoMock = new Mock<IRepository<int, Subject>>();
         _classRepoMock = new Mock<IRepository<int, Class>>();
         _teacherSubjectRepoMock = new Mock<IRepository<int, Teachersubject>>();
+        _timetableRepoMock = new Mock<IRepository<int, Timetable>>();
         _roleRepoMock = new Mock<IRepository<int, Role>>();
         _salaryRepoMock = new Mock<IRepository<int, SchoolERPManagementModelLibrary.Models.Salary>>();
         _emailServiceMock = new Mock<IEmailService>();
@@ -40,7 +42,9 @@ public class TeacherServiceTests
             _subjectRepoMock.Object,
             _classRepoMock.Object,
             _teacherSubjectRepoMock.Object,
-            _roleRepoMock.Object
+            _timetableRepoMock.Object,
+            _roleRepoMock.Object,
+            _emailServiceMock.Object
         );
     }
 

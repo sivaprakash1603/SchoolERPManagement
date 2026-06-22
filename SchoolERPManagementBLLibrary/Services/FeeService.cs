@@ -222,4 +222,45 @@ public sealed class FeeService : IFeeService
             throw new BusinessRuleException($"Stripe Webhook Error: {e.Message}");
         }
     }
+
+    public async Task<IReadOnlyList<ClassFeeSummaryDTO>> GetClassFeeSummariesAsync(int classId, int academicYearId, CancellationToken cancellationToken)
+    {
+        var enrollments = await _studentEnrollmentRepository.Query(true)
+            .Include(e => e.Student).ThenInclude(s => s.User)
+            .Where(e => e.Classid == classId && e.Academicyearid == academicYearId)
+            .ToListAsync(cancellationToken);
+
+        var students = enrollments.Select(e => e.Student).Where(s => s != null).ToList();
+        var studentIds = students.Select(s => s.Id).ToList();
+
+        var feeStructures = await _feeStructureRepository.Query(true)
+            .Where(f => f.Classid == classId && f.Academicyearid == academicYearId)
+            .ToListAsync(cancellationToken);
+
+        decimal totalFeeAmount = feeStructures.Sum(f => f.Totalamount);
+
+        var payments = await _feePaymentRepository.Query(true)
+            .Where(p => studentIds.Contains(p.Studentid))
+            .ToListAsync(cancellationToken);
+
+        var paymentsByStudent = payments.GroupBy(p => p.Studentid)
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.Amountpaid));
+
+        var summaries = students.Select(student =>
+        {
+            paymentsByStudent.TryGetValue(student.Id, out decimal paid);
+            decimal pending = Math.Max(totalFeeAmount - paid, 0m);
+
+            return new ClassFeeSummaryDTO(
+                student.Id,
+                student.Name ?? "Unknown Student",
+                student.Regno ?? "N/A",
+                totalFeeAmount,
+                paid,
+                pending
+            );
+        }).ToList();
+
+        return summaries;
+    }
 }

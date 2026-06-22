@@ -71,5 +71,13 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _documentService.GetTeacherDocumentsAsync(teacherId, cancellationToken);
             return Ok(result);
         }
+
+        [HttpGet("pending")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetPendingDocuments(CancellationToken cancellationToken)
+        {
+            var result = await _documentService.GetPendingDocumentsAsync(cancellationToken);
+            return Ok(result);
+        }
     }
 }

@@ -60,6 +60,7 @@
             <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Student Strength</th>
             <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Class Teacher</th>
             <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Academic Year</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom text-end" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 120px;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -80,6 +81,12 @@
               <td class="px-4 py-3" style="color: var(--text-primary);">
                 {{ getYearName(cls.academicyearId) }}
               </td>
+              <td class="px-4 py-3 text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  <button class="btn btn-sm btn-light text-muted-custom" title="Edit" (click)="openEditModal(cls); $event.stopPropagation();"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-light text-danger" title="Delete" (click)="openDeleteModal(cls); $event.stopPropagation();"><i class="bi bi-trash"></i></button>
+                </div>
+              </td>
             </tr>
           }
         </tbody>
@@ -91,7 +98,7 @@
 <!-- Create Class Modal -->
 <div class="modal-overlay" *ngIf="showCreateModal()" (click)="closeCreateModal()">
   <div class="modal-card modal-md" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom bg-light">
+    <div class="modal-header-custom" style="background-color: var(--bg-sidebar); border-bottom-color: var(--border-color) !important;">
       <h5 class="fw-bold mb-0" style="color: var(--primary-accent);">Create Class</h5>
       <button class="btn-close" (click)="closeCreateModal()"></button>
     </div>
@@ -110,7 +117,7 @@
           <label class="modal-form-label">Class Teacher</label>
           <select class="form-select form-control" [(ngModel)]="createForm().classteacherId">
             <option [value]="null">Not Assigned</option>
-            @for (teacher of teachers(); track teacher.id) {
+            @for (teacher of getAvailableTeachersForCreate(); track teacher.id) {
               <option [value]="teacher.id">{{ teacher.name }}</option>
             }
           </select>
@@ -131,6 +138,77 @@
       <button class="btn btn-success px-4 rounded-3" (click)="saveClass()" [disabled]="isSaving() || !createForm().classname || !createForm().section">
         <span *ngIf="isSaving()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
         {{ isSaving() ? 'Creating...' : 'Create Class' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Class Modal -->
+<div class="modal-overlay" *ngIf="showEditModal()" (click)="closeEditModal()">
+  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom" style="background-color: var(--bg-sidebar); border-bottom-color: var(--border-color) !important;">
+      <h5 class="fw-bold mb-0" style="color: var(--primary-accent);">Edit Class</h5>
+      <button class="btn-close" (click)="closeEditModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="modal-form-label">Class Name</label>
+          <input type="text" class="form-control" [ngModel]="editForm().classname" (ngModelChange)="editForm.set({...editForm(), classname: $event})" placeholder="e.g. Class 10">
+        </div>
+        <div class="col-md-6">
+          <label class="modal-form-label">Section</label>
+          <input type="text" class="form-control" [ngModel]="editForm().section" (ngModelChange)="editForm.set({...editForm(), section: $event})" placeholder="e.g. A">
+        </div>
+        
+        <div class="col-12">
+          <label class="modal-form-label">Class Teacher</label>
+          <select class="form-select form-control" [ngModel]="editForm().classteacherId" (ngModelChange)="editForm.set({...editForm(), classteacherId: $event})">
+            <option [value]="null">Not Assigned</option>
+            @for (teacher of getAvailableTeachersForEdit(editingClass()?.classteacherId); track teacher.id) {
+              <option [value]="teacher.id">{{ teacher.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="modal-form-label">Academic Year</label>
+          <select class="form-select form-control" [ngModel]="editForm().academicyearId" (ngModelChange)="editForm.set({...editForm(), academicyearId: $event})">
+            @for (year of academicYears(); track year.id) {
+              <option [value]="year.id">{{ year.yearName }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeEditModal()" [disabled]="isUpdating()">Cancel</button>
+      <button class="btn btn-primary px-4 rounded-3 fw-bold d-flex align-items-center gap-2" (click)="saveEdit()" [disabled]="isUpdating() || !editForm().classname || !editForm().section" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
+        <span *ngIf="isUpdating()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <i class="bi bi-save-fill" *ngIf="!isUpdating()"></i>
+        {{ isUpdating() ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Class Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
+  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom" style="background-color: var(--bg-sidebar); border-bottom-color: var(--border-color) !important;">
+      <h5 class="fw-bold mb-0 text-danger">Delete Class</h5>
+      <button class="btn-close" (click)="closeDeleteModal()"></button>
+    </div>
+    <div class="modal-body-custom text-center py-4">
+      <p class="mb-2" style="color: var(--text-primary);">Are you sure you want to delete class <strong class="text-danger">{{ deletingClass()?.classname }} - {{ deletingClass()?.section }}</strong>?</p>
+      <p class="text-muted-custom small mb-0">This action cannot be undone. You can only delete classes that have no student enrollments.</p>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeDeleteModal()" [disabled]="isDeleting()">Cancel</button>
+      <button class="btn btn-danger px-4 rounded-3 fw-bold d-flex align-items-center gap-2" (click)="confirmDelete()" [disabled]="isDeleting()">
+        <span *ngIf="isDeleting()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <i class="bi bi-trash-fill" *ngIf="!isDeleting()"></i>
+        {{ isDeleting() ? 'Deleting...' : 'Delete Class' }}
       </button>
     </div>
   </div>

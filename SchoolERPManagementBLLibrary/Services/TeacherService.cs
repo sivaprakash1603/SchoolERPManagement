@@ -17,6 +17,7 @@ public sealed class TeacherService : ITeacherService
     private readonly IRepository<int, Teachersubject> _teacherSubjectRepository;
     private readonly IRepository<int, Timetable> _timetableRepository;
     private readonly IRepository<int, Role> _roleRepository;
+    private readonly IEmailService _emailService;
 
     public TeacherService(
         IRepository<int, Teacher> teacherRepository,
@@ -25,7 +26,8 @@ public sealed class TeacherService : ITeacherService
         IRepository<int, Class> classRepository,
         IRepository<int, Teachersubject> teacherSubjectRepository,
         IRepository<int, Timetable> timetableRepository,
-        IRepository<int, Role> roleRepository)
+        IRepository<int, Role> roleRepository,
+        IEmailService emailService)
     {
         _teacherRepository = teacherRepository;
         _userRepository = userRepository;
@@ -34,6 +36,7 @@ public sealed class TeacherService : ITeacherService
         _teacherSubjectRepository = teacherSubjectRepository;
         _timetableRepository = timetableRepository;
         _roleRepository = roleRepository;
+        _emailService = emailService;
     }
 
     public async Task<SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<TeacherResponseDTO>> GetAllTeachersAsync(TeacherQueryRequest request, CancellationToken cancellationToken)
@@ -41,6 +44,7 @@ public sealed class TeacherService : ITeacherService
         var query = _teacherRepository.Query(true)
             .Include(t => t.User)
             .Include(t => t.Classes)
+            .Include(t => t.Teacherdocuments)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.SearchQuery))
@@ -79,18 +83,23 @@ public sealed class TeacherService : ITeacherService
             .Take(request.PageSize)
             .ToListAsync(cancellationToken);
 
-        var dtos = items.Select(teacher => new TeacherResponseDTO(
-            teacher.Id, 
-            teacher.Userid, 
-            teacher.Name, 
-            teacher.Phonenumber, 
-            teacher.Joiningdate, 
-            teacher.Qualifications, 
-            null, 
-            teacher.User!.Username, 
-            teacher.Classes.FirstOrDefault()?.Classname, 
-            teacher.Classes.FirstOrDefault()?.Section
-        )).ToList();
+        var dtos = items.Select(teacher => {
+            var photoDoc = teacher.Teacherdocuments?.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo");
+            return new TeacherResponseDTO(
+                teacher.Id, 
+                teacher.Userid, 
+                teacher.Name, 
+                teacher.Phonenumber, 
+                teacher.Joiningdate, 
+                teacher.Qualifications, 
+                null, 
+                teacher.User!.Username, 
+                teacher.Classes.FirstOrDefault()?.Classname, 
+                teacher.Classes.FirstOrDefault()?.Section,
+                teacher.User.Email,
+                photoDoc?.Bloburl
+            );
+        }).ToList();
 
         return new SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<TeacherResponseDTO>
         {
@@ -104,18 +113,64 @@ public sealed class TeacherService : ITeacherService
 
     public async Task<TeacherResponseDTO> GetTeacherByIdAsync(int id, CancellationToken cancellationToken)
     {
-        var teacher = await _teacherRepository.Query(true).Include(t=>t.User).Include(t=>t.Classes).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        return teacher is null
-            ? throw new EntityNotFoundException("Teacher", id.ToString())
-            : new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, null, teacher.User.Username, teacher.Classes.FirstOrDefault()?.Classname, teacher.Classes.FirstOrDefault()?.Section);
+        var teacher = await _teacherRepository.Query(true)
+            .Include(t=>t.User)
+            .Include(t=>t.Classes)
+            .Include(t=>t.Teacherdocuments)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (teacher is null)
+        {
+            throw new EntityNotFoundException("Teacher", id.ToString());
+        }
+
+        var photoDoc = teacher.Teacherdocuments?.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo");
+
+        return new TeacherResponseDTO(
+            teacher.Id, 
+            teacher.Userid, 
+            teacher.Name, 
+            teacher.Phonenumber, 
+            teacher.Joiningdate, 
+            teacher.Qualifications, 
+            null, 
+            teacher.User.Username, 
+            teacher.Classes.FirstOrDefault()?.Classname, 
+            teacher.Classes.FirstOrDefault()?.Section,
+            teacher.User.Email,
+            photoDoc?.Bloburl
+        );
     }
 
     public async Task<TeacherResponseDTO> GetTeacherByUsernameAsync(string username, CancellationToken cancellationToken)
     {
-        var teacher = await _teacherRepository.Query(true).Include(t=>t.User).Include(t=>t.Classes).FirstOrDefaultAsync(x => x.User.Username == username, cancellationToken);
-        return teacher is null
-            ? throw new EntityNotFoundException("Teacher", username)
-            : new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications,null, teacher.User.Username, teacher.Classes.FirstOrDefault()?.Classname, teacher.Classes.FirstOrDefault()?.Section);
+        var teacher = await _teacherRepository.Query(true)
+            .Include(t=>t.User)
+            .Include(t=>t.Classes)
+            .Include(t=>t.Teacherdocuments)
+            .FirstOrDefaultAsync(x => x.User.Username == username, cancellationToken);
+
+        if (teacher is null)
+        {
+            throw new EntityNotFoundException("Teacher", username);
+        }
+
+        var photoDoc = teacher.Teacherdocuments?.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo");
+
+        return new TeacherResponseDTO(
+            teacher.Id, 
+            teacher.Userid, 
+            teacher.Name, 
+            teacher.Phonenumber, 
+            teacher.Joiningdate, 
+            teacher.Qualifications, 
+            null, 
+            teacher.User.Username, 
+            teacher.Classes.FirstOrDefault()?.Classname, 
+            teacher.Classes.FirstOrDefault()?.Section,
+            teacher.User.Email,
+            photoDoc?.Bloburl
+        );
     }
 
     public async Task<TeacherResponseDTO> AddTeacherAsync(CreateTeacherDTO dto, CancellationToken cancellationToken)
@@ -157,7 +212,27 @@ public sealed class TeacherService : ITeacherService
         };
 
         await _teacherRepository.AddAsync(teacher, save: true, ct: cancellationToken);
-        return new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, generatedPassword, generatedUsername,null,null);
+
+        string emailBody = $@"
+        <h2>Welcome to School ERP System</h2>
+        <p>Dear {dto.Name},</p>
+        <p>Your teacher account has been successfully created. Here are your login details:</p>
+        <ul>
+            <li><strong>Username:</strong> {generatedUsername}</li>
+            <li><strong>Password:</strong> {generatedPassword}</li>
+        </ul>
+        <p>Please log in and change your password as soon as possible.</p>";
+
+        try
+        {
+            await _emailService.SendEmailAsync(dto.Email, "Your Teacher Account Details", emailBody, cancellationToken);
+        }
+        catch
+        {
+            // Ensure onboarding completes even if email delivery fails.
+        }
+
+        return new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, generatedPassword, generatedUsername, null, null, user.Email, null);
     }
 
     public async Task<TeacherSubjectResponseDTO> AssignSubjectAsync(AssignTeacherSubjectDTO dto, CancellationToken cancellationToken)
@@ -209,5 +284,72 @@ public sealed class TeacherService : ITeacherService
             .AnyAsync(t => t.Teacherid == teacherId && t.Classid == classId && t.Subjectid == subjectId, cancellationToken);
 
         return isAssigned || isAssignedInTimetable;
+    }
+
+    public async Task<TeacherResponseDTO> UpdateTeacherAsync(int id, UpdateTeacherDTO dto, CancellationToken cancellationToken)
+    {
+        var teacher = await _teacherRepository.Query(false)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
+        if (teacher is null)
+        {
+            throw new EntityNotFoundException("Teacher", id.ToString());
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.Name))
+        {
+            teacher.Name = dto.Name;
+        }
+
+        if (dto.Phonenumber != null)
+        {
+            teacher.Phonenumber = dto.Phonenumber;
+        }
+
+        if (dto.Qualifications != null)
+        {
+            teacher.Qualifications = dto.Qualifications;
+        }
+
+        await _teacherRepository.SaveChangesAsync(cancellationToken);
+
+        var updatedTeacher = await _teacherRepository.Query(true)
+            .Include(t => t.User)
+            .Include(t => t.Classes)
+            .Include(t => t.Teacherdocuments)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
+        var photoDoc = updatedTeacher?.Teacherdocuments?.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo");
+
+        return new TeacherResponseDTO(
+            updatedTeacher!.Id,
+            updatedTeacher.Userid,
+            updatedTeacher.Name,
+            updatedTeacher.Phonenumber,
+            updatedTeacher.Joiningdate,
+            updatedTeacher.Qualifications,
+            null,
+            updatedTeacher.User?.Username,
+            updatedTeacher.Classes.FirstOrDefault()?.Classname,
+            updatedTeacher.Classes.FirstOrDefault()?.Section,
+            updatedTeacher.User?.Email,
+            photoDoc?.Bloburl
+        );
+    }
+
+    public async Task DeleteTeacherAsync(int id, CancellationToken cancellationToken)
+    {
+        var teacher = await _teacherRepository.GetByIdAsync(id);
+        if (teacher is null)
+        {
+            throw new EntityNotFoundException("Teacher", id.ToString());
+        }
+
+        var user = await _userRepository.GetByIdAsync(teacher.Userid);
+        if (user != null)
+        {
+            user.Isactive = false;
+            await _userRepository.UpdateAsync(user, save: true, ct: cancellationToken);
+        }
     }
 }

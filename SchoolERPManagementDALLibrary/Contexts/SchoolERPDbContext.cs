@@ -18,6 +18,8 @@ public partial class SchoolERPDbContext : DbContext
     }
 
     public virtual DbSet<Academicyear> Academicyears { get; set; }
+    
+    public virtual DbSet<Academiccalendar> Academiccalendars { get; set; }
 
     public virtual DbSet<Asset> Assets { get; set; }
 
@@ -108,6 +110,27 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Yearname)
                 .HasMaxLength(20)
                 .HasColumnName("yearname");
+        });
+
+        modelBuilder.Entity<Academiccalendar>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("academiccalendar_pkey");
+
+            entity.ToTable("academiccalendar");
+
+            entity.HasIndex(e => new { e.Academicyearid, e.Date }, "academiccalendar_academicyearid_date_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Academicyearid).HasColumnName("academicyearid");
+            entity.Property(e => e.Date).HasColumnName("date");
+            entity.Property(e => e.Description)
+                .HasMaxLength(250)
+                .HasColumnName("description");
+            entity.Property(e => e.Isholiday).HasColumnName("isholiday");
+
+            entity.HasOne(d => d.Academicyear).WithMany(p => p.Academiccalendars)
+                .HasForeignKey(d => d.Academicyearid)
+                .HasConstraintName("academiccalendar_academicyearid_fkey");
         });
 
         modelBuilder.Entity<Asset>(entity =>

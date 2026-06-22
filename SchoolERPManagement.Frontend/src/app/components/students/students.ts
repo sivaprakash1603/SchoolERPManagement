@@ -7,6 +7,7 @@ import { ParentService, ParentResponseDTO } from '../../services/parent.service'
 import { DocumentService, DocumentResponseDTO } from '../../services/document.service';
 import { AcademicYearService, AcademicYearResponseDTO } from '../../services/academic-year.service';
 import { ToastService } from '../../services/toast.service';
+import { NotificationService } from '../../services/notification.service';
 
 interface StudentUI extends StudentQueryResponseDTO {
   email: string;
@@ -29,6 +30,14 @@ export class Students implements OnInit {
   private documentService = inject(DocumentService);
   private academicYearService = inject(AcademicYearService);
   private toastService = inject(ToastService);
+  private notificationService = inject(NotificationService);
+
+  showNotificationModal = signal(false);
+  notificationTitle = signal('');
+  notificationMessage = signal('');
+  notificationTargetUserIds = signal<number[]>([]);
+  notificationTargetNames = signal('');
+  isSendingNotification = signal(false);
   
   students = signal<StudentUI[]>([]);
   classes = signal<ClassResponseDTO[]>([]);
@@ -494,7 +503,7 @@ export class Students implements OnInit {
       },
       error: (err) => {
         console.error('Failed to update student', err);
-        this.toastService.error('Failed to update student. Please check the inputs.');
+        this.toastService.error(err.error?.message || 'Failed to update student. Please check the inputs.');
         this.isSaving.set(false);
       }
     });
@@ -523,7 +532,7 @@ export class Students implements OnInit {
       },
       error: (err) => {
         console.error('Failed to delete student', err);
-        this.toastService.error('Failed to delete student.');
+        this.toastService.error(err.error?.message || 'Failed to delete student.');
         this.isDeleting.set(false);
       }
     });
@@ -553,4 +562,50 @@ export class Students implements OnInit {
     }
   }
 
+  openNotificationModal(targetName: string, targetUserIds: number[]) {
+    this.notificationTitle.set('');
+    this.notificationMessage.set('');
+    this.notificationTargetNames.set(targetName);
+    this.notificationTargetUserIds.set(targetUserIds);
+    this.showNotificationModal.set(true);
+  }
+
+  closeNotificationModal() {
+    this.showNotificationModal.set(false);
+  }
+
+  sendNotification() {
+    if (!this.notificationTitle() || !this.notificationMessage() || this.notificationTargetUserIds().length === 0) {
+      return;
+    }
+
+    this.isSendingNotification.set(true);
+    const dto = {
+      title: this.notificationTitle(),
+      message: this.notificationMessage(),
+      targetUserIds: this.notificationTargetUserIds()
+    };
+
+    this.notificationService.sendNotification(dto).subscribe({
+      next: () => {
+        this.isSendingNotification.set(false);
+        this.toastService.success('Notification sent successfully');
+        this.closeNotificationModal();
+        this.clearSelection();
+      },
+      error: (err) => {
+        console.error('Failed to send notification', err);
+        this.toastService.error(err.error?.message || 'Failed to send notification');
+        this.isSendingNotification.set(false);
+      }
+    });
+  }
+
+  openBulkNotificationModal() {
+    const ids = this.selectedStudentIds();
+    const selectedStudents = this.students().filter(s => ids.includes(s.id));
+    const targetUserIds = selectedStudents.map(s => s.userId);
+    const targetNames = `${selectedStudents.length} Selected Students`;
+    this.openNotificationModal(targetNames, targetUserIds);
+  }
 }

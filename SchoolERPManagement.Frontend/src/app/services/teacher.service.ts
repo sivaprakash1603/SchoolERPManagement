@@ -20,6 +20,8 @@ export interface TeacherResponseDTO {
   username: string;
   className?: string;
   section?: string;
+  email?: string;
+  profilePhotoUrl?: string;
 }
 
 export interface TeacherQueryRequest {
@@ -76,5 +78,17 @@ export class TeacherService {
 
   getAllSubjects(): Observable<any[]> {
     return this.http.get<any[]>('http://localhost:5203/api/Subjects');
+  }
+
+  updateTeacher(id: number, dto: { name: string, phonenumber?: string, qualifications?: string }): Observable<TeacherResponseDTO> {
+    return this.http.put<TeacherResponseDTO>(`${this.baseUrl}/${id}`, dto);
+  }
+
+  deleteTeacher(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  getTeacherByUsername(username: string): Observable<TeacherResponseDTO> {
+    return this.http.get<TeacherResponseDTO>(`${this.baseUrl}/username/${username}`);
   }
 }

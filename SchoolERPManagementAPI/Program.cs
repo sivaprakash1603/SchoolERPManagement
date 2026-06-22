@@ -104,9 +104,10 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:4200")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -143,6 +144,7 @@ builder.Services.AddControllers(options =>
 });
 #region Repository
 builder.Services.AddScoped<IRepository<int, Academicyear>, AbstractRepository<int, Academicyear>>();
+builder.Services.AddScoped<IRepository<int, Academiccalendar>, AbstractRepository<int, Academiccalendar>>();
 builder.Services.AddScoped<IRepository<int, Asset>, AbstractRepository<int, Asset>>();
 builder.Services.AddScoped<IRepository<int, Assetreport>, AbstractRepository<int, Assetreport>>();
 builder.Services.AddScoped<IRepository<int, Assettype>, AbstractRepository<int, Assettype>>();
@@ -181,6 +183,7 @@ builder.Services.AddScoped<JwtTokenGenerator>();
 
 #region Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAcademicCalendarService, AcademicCalendarService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentService, ParentService>();

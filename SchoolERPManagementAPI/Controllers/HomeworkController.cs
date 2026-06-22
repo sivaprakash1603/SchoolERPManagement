@@ -101,5 +101,13 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _homeworkService.GetHomeworksByStudentIdAsync(studentId, cancellationToken);
             return Ok(result);
         }
+
+        [HttpGet("{homeworkId}/submissions")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetSubmissions(int homeworkId, CancellationToken cancellationToken)
+        {
+            var result = await _homeworkService.GetSubmissionsByHomeworkIdAsync(homeworkId, cancellationToken);
+            return Ok(result);
+        }
     }
 }

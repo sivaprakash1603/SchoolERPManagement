@@ -163,4 +163,52 @@ public sealed class DocumentService : IDocumentService
 
         return _mapper.Map<IReadOnlyList<TeacherDocumentResponseDTO>>(documents);
     }
+
+    public async Task<IReadOnlyList<PendingDocumentDTO>> GetPendingDocumentsAsync(CancellationToken cancellationToken)
+    {
+        var studentPendingDocs = await _studentDocumentRepository.Query(true)
+            .Include(d => d.Student)
+            .Where(d => d.Status == "Pending")
+            .ToListAsync(cancellationToken);
+
+        var teacherPendingDocs = await _teacherDocumentRepository.Query(true)
+            .Include(d => d.Teacher)
+            .ThenInclude(t => t.User)
+            .Where(d => d.Status == "Pending")
+            .ToListAsync(cancellationToken);
+
+        var result = new List<PendingDocumentDTO>();
+
+        foreach (var d in studentPendingDocs)
+        {
+            result.Add(new PendingDocumentDTO(
+                d.Id,
+                d.Documentname,
+                d.Documenttype,
+                d.Bloburl,
+                d.Uploadedat,
+                d.Studentid,
+                d.Student?.Name ?? "Unknown Student",
+                "Student",
+                d.Student?.Regno ?? "N/A"
+            ));
+        }
+
+        foreach (var d in teacherPendingDocs)
+        {
+            result.Add(new PendingDocumentDTO(
+                d.Id,
+                d.Documentname,
+                d.Documenttype,
+                d.Bloburl,
+                d.Uploadedat,
+                d.Teacherid,
+                d.Teacher?.Name ?? "Unknown Teacher",
+                "Teacher",
+                d.Teacher?.User?.Username ?? "N/A"
+            ));
+        }
+
+        return result;
+    }
 }

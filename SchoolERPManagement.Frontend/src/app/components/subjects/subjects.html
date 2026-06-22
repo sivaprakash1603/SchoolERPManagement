@@ -1,1 +1,165 @@
-<p>subjects works!</p>
+<!-- Page Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
+  <div>
+    <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent);">Subject Management</h2>
+    <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-book"></i>
+      {{ subjects().length }} Registered Academic Subjects
+    </p>
+  </div>
+  <button *ngIf="isAdmin()" (click)="openCreateModal()" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
+    <i class="bi bi-plus-circle"></i>
+    Add New Subject
+  </button>
+</div>
+
+<!-- Filter / Search Bar -->
+<div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
+  <div class="flex-grow-1" style="min-width: 250px;">
+    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Search Subject</label>
+    <div class="position-relative">
+      <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted-custom"></i>
+      <input type="text" class="form-control ps-5" placeholder="Search by subject name..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+    </div>
+  </div>
+  <div>
+    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2" title="Refresh" (click)="fetchSubjects()">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Data Table / List -->
+@if (loading()) {
+  <div class="d-flex justify-content-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+}
+
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+
+@if (!loading() && !error()) {
+  <div class="minimal-card mb-4 overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead style="background-color: var(--bg-sidebar);">
+          <tr>
+            <th class="ps-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 100px;">Subject ID</th>
+            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Subject Name</th>
+            <th *ngIf="isAdmin()" class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom text-end" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 150px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sub of filteredSubjects(); track sub.id) {
+            <tr>
+              <td class="ps-4 py-3 font-monospace" style="font-size: 0.875rem; color: var(--text-secondary);">#{{ sub.id }}</td>
+              <td class="px-4 py-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center text-primary" style="width: 36px; height: 36px; background-color: rgba(99, 102, 241, 0.1);">
+                    <i class="bi bi-journal-text fs-5"></i>
+                  </div>
+                  <div>
+                    <p class="mb-0 fw-bold" style="color: var(--text-primary);">{{ sub.subjectName }}</p>
+                  </div>
+                </div>
+              </td>
+              <td *ngIf="isAdmin()" class="px-4 py-3 text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  <button class="btn btn-sm btn-light text-muted-custom" title="Edit Subject" (click)="openEditModal(sub)"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-light text-danger" title="Delete Subject" (click)="openDeleteModal(sub)"><i class="bi bi-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          }
+          @if (filteredSubjects().length === 0) {
+            <tr>
+              <td [attr.colspan]="isAdmin() ? 3 : 2" class="text-center py-5 text-muted-custom">
+                <i class="bi bi-book-half fs-1 mb-2 d-block"></i>
+                No subjects found matching your criteria.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- Create Subject Modal -->
+<div class="modal-overlay" *ngIf="showCreateModal()" (click)="closeCreateModal()">
+  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-plus-circle-fill fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Add New Subject</h5>
+      </div>
+      <button class="btn-close" (click)="closeCreateModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="modal-form-label">Subject Name</label>
+          <input type="text" class="form-control" [ngModel]="createForm().subjectName" (ngModelChange)="createForm.set({ subjectName: $event })" placeholder="e.g. Mathematics, Physics, History" required>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeCreateModal()" [disabled]="isSaving()">Cancel</button>
+      <button class="btn btn-primary px-4 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="saveSubject()" [disabled]="isSaving() || !createForm().subjectName.trim()">
+        <span *ngIf="isSaving()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ isSaving() ? 'Saving...' : 'Add Subject' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Subject Modal -->
+<div class="modal-overlay" *ngIf="showEditModal()" (click)="closeEditModal()">
+  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-pencil-fill fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Edit Subject</h5>
+      </div>
+      <button class="btn-close" (click)="closeEditModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="modal-form-label">Subject Name</label>
+          <input type="text" class="form-control" [ngModel]="editForm().subjectName" (ngModelChange)="editForm.set({ subjectName: $event })" placeholder="Enter subject name" required>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeEditModal()" [disabled]="isSaving()">Cancel</button>
+      <button class="btn btn-primary px-4 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="saveEdit()" [disabled]="isSaving() || !editForm().subjectName.trim()">
+        <span *ngIf="isSaving()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Subject Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
+  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom bg-danger-subtle text-danger">
+      <h5 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Subject</h5>
+      <button class="btn-close" (click)="closeDeleteModal()"></button>
+    </div>
+    <div class="modal-body-custom py-4">
+      <p class="mb-2">Are you sure you want to delete the subject <strong>{{ deletingSubject()?.subjectName }}</strong>?</p>
+      <p class="text-muted-custom small mb-0">This action cannot be undone. You will not be able to delete the subject if it is linked to any teacher subject mappings or timetables.</p>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeDeleteModal()" [disabled]="isDeleting()">Cancel</button>
+      <button class="btn btn-danger px-4 rounded-3 fw-bold" (click)="confirmDelete()" [disabled]="isDeleting()">
+        <span *ngIf="isDeleting()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ isDeleting() ? 'Deleting...' : 'Confirm Delete' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,1 +1,451 @@
-<p>fees works!</p>
+<!-- Page Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
+  <div>
+    <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent);">Fee Management & Receipts</h2>
+    <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-cash-coin"></i>
+      View fee schedules, transaction history, and manage outstanding balances.
+    </p>
+  </div>
+  <div class="d-flex gap-2" *ngIf="userRole() === 'Admin'">
+    <button (click)="openCreateStructureModal()" class="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-2 rounded-3 fw-bold">
+      <i class="bi bi-file-earmark-plus"></i>
+      Define Fee Structure
+    </button>
+    <button [disabled]="!selectedStudentId()" (click)="openPaymentModal()" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
+      <i class="bi bi-plus-circle"></i>
+      Record Payment
+    </button>
+  </div>
+</div>
+
+<!-- Selector Bar -->
+<div class="minimal-card p-3 mb-4">
+  <!-- Admin selectors -->
+  <div class="row g-3 align-items-end" *ngIf="userRole() === 'Admin'">
+    <div class="col-12 col-md-4">
+      <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Academic Session</label>
+      <select class="form-select" [ngModel]="selectedAcademicYearId()" (ngModelChange)="onYearChange($event)">
+        <option [ngValue]="null" disabled>Select Session...</option>
+        @for (year of academicYears(); track year.id) {
+          <option [value]="year.id">{{ year.yearName }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class / Grade</label>
+      <select class="form-select" [ngModel]="selectedClassId()" (ngModelChange)="onClassChange($event)" [disabled]="loadingClasses()">
+        <option [ngValue]="null" disabled>Select Class...</option>
+        @for (c of classes(); track c.id) {
+          <option [value]="c.id">{{ c.classname }} {{ c.section ? '- ' + c.section : '' }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <button class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2 p-2" title="Refresh" (click)="selectedClassId() ? fetchStudents(selectedClassId()!) : null">
+        <i class="bi bi-arrow-clockwise"></i> Refresh Statuses
+      </button>
+    </div>
+  </div>
+
+  <!-- Parent selectors -->
+  <div class="row g-3 align-items-end" *ngIf="userRole() === 'Parent'">
+    <div class="col-12 col-md-6">
+      <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Select Child</label>
+      <select class="form-select" [ngModel]="selectedStudentId()" (ngModelChange)="onChildChange($event)">
+        <option [ngValue]="null" disabled>Select Child...</option>
+        @for (c of children(); track c.studentId) {
+          <option [value]="c.studentId">{{ c.name }} ({{ c.regNo }} - {{ c.className }})</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Student summary selector (Static Info) -->
+  <div class="d-flex align-items-center gap-3 py-1" *ngIf="userRole() === 'Student'">
+    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: var(--bg-sidebar);">
+      <i class="bi bi-person-fill fs-4 text-primary"></i>
+    </div>
+    <div>
+      <h6 class="fw-bold mb-0">My Fee Details</h6>
+      <small class="text-muted-custom">Logged in as Student</small>
+    </div>
+  </div>
+</div>
+
+<!-- Main Area -->
+<div *ngIf="!selectedStudentId() && !loadingSummary() && userRole() !== 'Admin'" class="minimal-card p-5 text-center text-muted-custom border">
+  <i class="bi bi-cash-coin fs-1 mb-2 d-block"></i>
+  No student selected. Please select a student/child to view fee details.
+</div>
+
+<div class="d-flex justify-content-center py-5" *ngIf="loadingSummary() && userRole() !== 'Admin'">
+  <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<!-- ADMIN SPLIT VIEW LAYOUT -->
+<div class="row g-4" *ngIf="userRole() === 'Admin'">
+  <!-- Left Side: Student List with filters -->
+  <div class="col-12 col-md-4">
+    <div class="minimal-card p-0 mb-4 overflow-hidden border">
+      <div class="p-3 border-bottom" style="background-color: var(--bg-sidebar); border-bottom-color: var(--border-color) !important;">
+        <h6 class="fw-bold mb-3">Class Students</h6>
+        
+        <!-- Search -->
+        <div class="input-group input-group-sm mb-2">
+          <span class="input-group-text" style="background-color: var(--bg-sidebar); color: var(--text-primary); border-color: var(--border-color);"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" placeholder="Search by name or reg no..." [ngModel]="studentSearchQuery()" (ngModelChange)="onSearchQueryChange($event)">
+        </div>
+
+        <!-- Status Filter Toggles -->
+        <div class="d-flex gap-1.5 pt-1.5">
+          <button (click)="onFilterStatusChange('all')" class="btn btn-xs rounded-pill px-2.5 py-1 fw-bold" [class.btn-primary]="feeStatusFilter() === 'all'" [class.btn-light]="feeStatusFilter() !== 'all'">All</button>
+          <button (click)="onFilterStatusChange('paid')" class="btn btn-xs rounded-pill px-2.5 py-1 fw-bold" [class.btn-success]="feeStatusFilter() === 'paid'" [class.btn-light]="feeStatusFilter() !== 'paid'">Paid</button>
+          <button (click)="onFilterStatusChange('pending')" class="btn btn-xs rounded-pill px-2.5 py-1 fw-bold" [class.btn-danger]="feeStatusFilter() === 'pending'" [class.btn-light]="feeStatusFilter() !== 'pending'">Pending</button>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-center py-5" *ngIf="loadingStudents()">
+        <div class="spinner-border text-primary" role="status"></div>
+      </div>
+
+      <div class="list-group list-group-flush scrollable-students-list" *ngIf="!loadingStudents()" style="max-height: 550px; overflow-y: auto;">
+        @for (item of filteredStudentSummaries(); track item.studentId) {
+          <button type="button" class="list-group-item list-group-item-action py-3 px-3 d-flex flex-column gap-1" [class.active]="selectedStudentId() === item.studentId" (click)="onStudentSelect(item.studentId)">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-truncate" style="max-width: 170px;">{{ item.studentName }}</span>
+              <span class="badge" [class.bg-success-subtle]="item.pendingAmount === 0" [class.text-success]="item.pendingAmount === 0" [class.bg-danger-subtle]="item.pendingAmount > 0" [class.text-danger]="item.pendingAmount > 0" style="font-size: 0.7rem; font-weight: 700;">
+                {{ item.pendingAmount === 0 ? 'PAID' : 'PENDING' }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center text-muted-custom" style="font-size: 0.75rem;">
+              <span>Reg: {{ item.regNo }}</span>
+              <span class="fw-bold text-danger" *ngIf="item.pendingAmount > 0">Bal: {{ item.pendingAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+            </div>
+          </button>
+        }
+        @if (filteredStudentSummaries().length === 0) {
+          <div class="text-center py-5 text-muted-custom px-3">
+            <i class="bi bi-people-fill fs-2 mb-2 d-block"></i>
+            No students found matching filters.
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Detailed summary and breakdown for selected student -->
+  <div class="col-12 col-md-8">
+    <div *ngIf="!selectedStudentId()" class="minimal-card p-5 text-center text-muted-custom border">
+      <i class="bi bi-info-circle fs-1 mb-2 d-block"></i>
+      Select a student from the left list to view their fee profile details.
+    </div>
+
+    <div class="d-flex justify-content-center py-5" *ngIf="loadingSummary() && selectedStudentId()">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div *ngIf="selectedStudentId() && !loadingSummary()">
+      <!-- Summary Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+          <div class="stat-gradient-card card-total">
+            <div class="icon-wrapper"><i class="bi bi-calculator"></i></div>
+            <div class="card-label">Total Fee</div>
+            <div class="card-value">{{ totalFeeAmount() !== null ? (totalFeeAmount() | currency:'INR':'symbol':'1.0-0') : '₹0' }}</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="stat-gradient-card card-paid">
+            <div class="icon-wrapper"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="card-label">Paid</div>
+            <div class="card-value">{{ totalPaid() | currency:'INR':'symbol':'1.0-0' }}</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="stat-gradient-card card-pending">
+            <div class="icon-wrapper"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="card-label">Balance</div>
+            <div class="card-value">{{ pendingAmount() | currency:'INR':'symbol':'1.0-0' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tables Section -->
+      <div class="row g-3">
+        <!-- Components -->
+        <div class="col-12">
+          <div class="minimal-card p-4 border mb-4">
+            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-list-columns-reverse text-primary"></i> Fee Components
+            </h6>
+            <div class="table-responsive rounded-3 overflow-hidden border">
+              <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                <thead class="bg-light text-uppercase font-monospace" style="font-size: 0.75rem;">
+                  <tr>
+                    <th class="ps-3 py-2.5">Name</th>
+                    <th class="px-3 py-2.5 text-end">Scheduled</th>
+                    <th class="px-3 py-2.5 text-end">Due</th>
+                    <th class="px-3 py-2.5 text-center">Status</th>
+                    <th class="px-3 py-2.5 text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (comp of feeComponents(); track comp.id) {
+                    <tr>
+                      <td class="ps-3 py-2.5 fw-bold">{{ comp.name }}</td>
+                      <td class="px-3 py-2.5 text-end">{{ comp.amount | currency:'INR':'symbol':'1.0-0' }}</td>
+                      <td class="px-3 py-2.5 text-end text-danger fw-bold">
+                        {{ getOutstandingBalance(comp) | currency:'INR':'symbol':'1.0-0' }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center">
+                        <span class="badge" [class.bg-success-subtle]="getOutstandingBalance(comp) === 0" [class.text-success]="getOutstandingBalance(comp) === 0" [class.bg-danger-subtle]="getOutstandingBalance(comp) === comp.amount" [class.text-danger]="getOutstandingBalance(comp) === comp.amount" [class.bg-warning-subtle]="getOutstandingBalance(comp) > 0 && getOutstandingBalance(comp) < comp.amount" [class.text-warning]="getOutstandingBalance(comp) > 0 && getOutstandingBalance(comp) < comp.amount" style="font-size: 0.7rem;">
+                          {{ getOutstandingBalance(comp) === 0 ? 'Paid' : (getOutstandingBalance(comp) === comp.amount ? 'Unpaid' : 'Partial') }}
+                        </span>
+                      </td>
+                      <td class="px-3 py-2.5 text-end">
+                        <button *ngIf="getOutstandingBalance(comp) > 0" (click)="openPaymentModal()" class="btn btn-xs btn-outline-primary rounded-pill fw-bold px-2 py-0.5">
+                          Record Pay
+                        </button>
+                        <span class="text-success small" *ngIf="getOutstandingBalance(comp) === 0"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                      </td>
+                    </tr>
+                  }
+                  @if (feeComponents().length === 0) {
+                    <tr>
+                      <td colspan="5" class="text-center py-4 text-muted-custom">
+                        No components defined.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div class="col-12">
+          <div class="minimal-card p-4 border">
+            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-clock-history text-primary"></i> Receipt History
+            </h6>
+            <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+              @for (pay of payments(); track pay.id) {
+                <div class="payment-card p-2.5 border rounded-3 d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="fw-bold d-block small">{{ getComponentName(pay.feeStructureId) }}</span>
+                    <small class="text-muted-custom" style="font-size: 0.7rem;">{{ pay.paymentDate | date:'short' }} (Method: {{ pay.paymentMethod }})</small>
+                  </div>
+                  <span class="fw-bold text-success small">+{{ pay.amountPaid | currency:'INR':'symbol':'1.0-0' }}</span>
+                </div>
+              }
+              @if (payments().length === 0) {
+                <div class="text-center py-4 text-muted-custom">No transaction history.</div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT & PARENT VIEW LAYOUT (NON-ADMIN) -->
+<div class="row g-4" *ngIf="selectedStudentId() && !loadingSummary() && userRole() !== 'Admin'">
+  <!-- Left Column: Details -->
+  <div class="col-12 col-lg-8">
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-4">
+        <div class="stat-gradient-card card-total">
+          <div class="icon-wrapper"><i class="bi bi-calculator"></i></div>
+          <div class="card-label">Total Fee</div>
+          <div class="card-value">{{ totalFeeAmount() !== null ? (totalFeeAmount() | currency:'INR':'symbol':'1.0-0') : '₹0' }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="stat-gradient-card card-paid">
+          <div class="icon-wrapper"><i class="bi bi-check-circle-fill"></i></div>
+          <div class="card-label">Total Paid</div>
+          <div class="card-value">{{ totalPaid() | currency:'INR':'symbol':'1.0-0' }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="stat-gradient-card card-pending">
+          <div class="icon-wrapper"><i class="bi bi-exclamation-triangle-fill"></i></div>
+          <div class="card-label">Outstanding Balance</div>
+          <div class="card-value">{{ pendingAmount() | currency:'INR':'symbol':'1.0-0' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Components Table -->
+    <div class="minimal-card p-4 border">
+      <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-list-columns-reverse text-primary"></i> Fee Breakdown
+      </h5>
+      <div class="table-responsive rounded-3 overflow-hidden border">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+          <thead class="bg-light text-uppercase font-monospace" style="font-size: 0.75rem;">
+            <tr>
+              <th class="ps-3 py-3">Fee Component</th>
+              <th class="px-3 py-3 text-end">Total Amount</th>
+              <th class="px-3 py-3 text-end">Balance Due</th>
+              <th class="px-3 py-3 text-center">Status</th>
+              <th class="px-3 py-3 text-end" *ngIf="userRole() === 'Parent'">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (comp of feeComponents(); track comp.id) {
+              <tr>
+                <td class="ps-3 py-3 fw-bold">{{ comp.name }}</td>
+                <td class="px-3 py-3 text-end fw-bold">{{ comp.amount | currency:'INR':'symbol':'1.0-0' }}</td>
+                <td class="px-3 py-3 text-end text-danger fw-bold">{{ getOutstandingBalance(comp) | currency:'INR':'symbol':'1.0-0' }}</td>
+                <td class="px-3 py-3 text-center">
+                  <span class="badge" [class.bg-success-subtle]="getOutstandingBalance(comp) === 0" [class.text-success]="getOutstandingBalance(comp) === 0" [class.bg-danger-subtle]="getOutstandingBalance(comp) === comp.amount" [class.text-danger]="getOutstandingBalance(comp) === comp.amount" [class.bg-warning-subtle]="getOutstandingBalance(comp) > 0 && getOutstandingBalance(comp) < comp.amount" [class.text-warning]="getOutstandingBalance(comp) > 0 && getOutstandingBalance(comp) < comp.amount" style="font-size: 0.75rem;">
+                    {{ getOutstandingBalance(comp) === 0 ? 'Paid' : (getOutstandingBalance(comp) === comp.amount ? 'Unpaid' : 'Partial') }}
+                  </span>
+                </td>
+                <td class="px-3 py-3 text-end" *ngIf="userRole() === 'Parent'">
+                  <button *ngIf="getOutstandingBalance(comp) > 0" (click)="payViaStripe(comp)" class="btn btn-sm btn-primary rounded-pill fw-bold" [disabled]="isProcessingStripe()">
+                    <i class="bi bi-credit-card me-1"></i> Pay Online
+                  </button>
+                  <span class="text-success" *ngIf="getOutstandingBalance(comp) === 0"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Receipt History -->
+  <div class="col-12 col-lg-4">
+    <div class="minimal-card p-4 border h-100">
+      <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-clock-history text-primary"></i> Receipt History
+      </h5>
+      <div class="d-flex flex-column gap-3 overflow-auto" style="max-height: 500px;">
+        @for (pay of payments(); track pay.id) {
+          <div class="payment-card p-3 border rounded-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <span class="fw-bold d-block">{{ getComponentName(pay.feeStructureId) }}</span>
+                <small class="text-muted-custom" style="font-size: 0.75rem;">{{ pay.paymentDate | date:'medium' }}</small>
+              </div>
+              <span class="fw-bold text-success" style="font-size: 1.1rem;">+{{ pay.amountPaid | currency:'INR':'symbol':'1.0-0' }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="font-size: 0.75rem;">
+              <span class="text-uppercase text-muted-custom font-monospace">Method: {{ pay.paymentMethod }}</span>
+              <span class="text-muted-custom font-monospace text-truncate ms-2" style="max-width: 150px;">ID: {{ pay.transactionId || 'N/A' }}</span>
+            </div>
+          </div>
+        }
+        @if (payments().length === 0) {
+          <div class="text-center py-5 text-muted-custom my-auto">
+            <i class="bi bi-receipt-cutoff d-block fs-1 mb-2"></i> No transaction history.
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Fee Structure Modal (Admin Only) -->
+<div class="modal-overlay" *ngIf="showCreateStructureModal()" (click)="closeCreateStructureModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-file-earmark-plus-fill fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Define Class Fee Structure</h5>
+      </div>
+      <button class="btn-close" (click)="closeCreateStructureModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="modal-form-label">Class / Grade *</label>
+          <select class="form-select" [ngModel]="structureForm().classId" (ngModelChange)="structureForm.set({ ...structureForm(), classId: $event })" required>
+            <option [ngValue]="null" disabled>Select Class...</option>
+            @for (c of classes(); track c.id) {
+              <option [value]="c.id">{{ c.classname }} {{ c.section ? '- ' + c.section : '' }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="modal-form-label">Fee Title / Component Name *</label>
+          <input type="text" class="form-control" [ngModel]="structureForm().feeName" (ngModelChange)="structureForm.set({ ...structureForm(), feeName: $event })" placeholder="e.g. Tuition Fee Q1, Library Fee" required>
+        </div>
+        <div class="col-12">
+          <label class="modal-form-label">Total Amount (₹) *</label>
+          <input type="number" class="form-control" [ngModel]="structureForm().totalAmount" (ngModelChange)="structureForm.set({ ...structureForm(), totalAmount: $event })" min="1" required>
+        </div>
+        <div class="col-12">
+          <label class="modal-form-label">Due Date</label>
+          <input type="date" class="form-control" [ngModel]="structureForm().dueDate" (ngModelChange)="structureForm.set({ ...structureForm(), dueDate: $event })">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeCreateStructureModal()" [disabled]="isSavingStructure()">Cancel</button>
+      <button class="btn btn-primary px-4 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="saveFeeStructure()" [disabled]="isSavingStructure() || !structureForm().classId || !structureForm().feeName.trim() || structureForm().totalAmount <= 0">
+        <span *ngIf="isSavingStructure()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        Define Fee
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Record Manual Payment Modal (Admin Only) -->
+<div class="modal-overlay" *ngIf="showPaymentModal()" (click)="closePaymentModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-cash-stack fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Record Manual Fee Payment</h5>
+      </div>
+      <button class="btn-close" (click)="closePaymentModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="modal-form-label">Fee Component *</label>
+          <select class="form-select" [ngModel]="paymentForm().feeStructureId" (ngModelChange)="paymentForm.set({ ...paymentForm(), feeStructureId: $event })" required>
+            <option [ngValue]="null" disabled>Select Fee Component...</option>
+            @for (comp of feeComponents(); track comp.id) {
+              <option [value]="comp.id">{{ comp.name }} (Bal: {{ getOutstandingBalance(comp) | currency:'INR':'symbol':'1.0-0' }})</option>
+            }
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="modal-form-label">Amount Paid (₹) *</label>
+          <input type="number" class="form-control" [ngModel]="paymentForm().amountPaid" (ngModelChange)="paymentForm.set({ ...paymentForm(), amountPaid: $event })" min="1" required>
+        </div>
+        <div class="col-md-6">
+          <label class="modal-form-label">Payment Method *</label>
+          <select class="form-select" [ngModel]="paymentForm().paymentMethod" (ngModelChange)="paymentForm.set({ ...paymentForm(), paymentMethod: $event })" required>
+            <option value="cash">Cash</option>
+            <option value="cheque">Cheque</option>
+            <option value="bank transfer">Bank Transfer</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="modal-form-label">Payment Date</label>
+          <input type="date" class="form-control" [ngModel]="paymentForm().paymentDate" (ngModelChange)="paymentForm.set({ ...paymentForm(), paymentDate: $event })">
+        </div>
+        <div class="col-12">
+          <label class="modal-form-label">Transaction ID / Cheque Reference</label>
+          <input type="text" class="form-control" [ngModel]="paymentForm().transactionId" (ngModelChange)="paymentForm.set({ ...paymentForm(), transactionId: $event })" placeholder="e.g. TXN1029302">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closePaymentModal()" [disabled]="isSavingPayment()">Cancel</button>
+      <button class="btn btn-primary px-4 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="savePayment()" [disabled]="isSavingPayment() || !paymentForm().feeStructureId || paymentForm().amountPaid <= 0">
+        <span *ngIf="isSavingPayment()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        Record Payment
+      </button>
+    </div>
+  </div>
+</div>

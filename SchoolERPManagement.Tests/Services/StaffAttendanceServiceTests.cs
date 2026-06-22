@@ -64,22 +64,26 @@ public class StaffAttendanceServiceTests
     }
 
     [Fact]
-    public async Task MarkAttendanceAsync_DuplicateAttendance_ShouldThrowDuplicateEntityException()
+    public async Task MarkAttendanceAsync_DuplicateAttendance_ShouldUpdateAttendance()
     {
-        
-        var dto = new StaffAttendanceRequestDTO(1, DateOnly.Parse("2025-01-01"), "Present", "Daily", null);
+        // Arrange
+        var dto = new StaffAttendanceRequestDTO(1, DateOnly.Parse("2025-01-01"), "Absent", "Daily", "Updated Remarks");
 
         var user = new User { Id = 1, Username = "teacher_jdoe" };
         _userRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(user);
 
-        var existingAttendance = new Staffattendance { Userid = 1, Date = DateOnly.Parse("2025-01-01") };
+        var existingAttendance = new Staffattendance { Userid = 1, Date = DateOnly.Parse("2025-01-01"), Status = "present" };
         _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Staffattendance> { existingAttendance }.BuildMockDbSet().Object);
 
-        
-        Func<Task> action = async () => await _staffAttendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
+        // Act
+        var result = await _staffAttendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
 
-        
-        await action.Should().ThrowAsync<DuplicateEntityException>().WithMessage($"StaffAttendance with Date '{dto.Date}' already exists.");
+        // Assert
+        result.Should().NotBeNull();
+        result.Status.Should().Be("absent");
+        result.Remarks.Should().Be("Updated Remarks");
+
+        _staffAttendanceRepoMock.Verify(r => r.UpdateAsync(It.IsAny<Staffattendance>(), true, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

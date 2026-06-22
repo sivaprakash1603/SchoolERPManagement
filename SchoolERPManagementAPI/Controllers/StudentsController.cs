@@ -112,5 +112,23 @@ namespace SchoolERPManagementAPI.Controllers
             await _studentService.BulkEnrollStudentsAsync(dto, cancellationToken);
             return Ok();
         }
+
+        [HttpGet("by-user/{userId}")]
+        public async Task<IActionResult> GetStudentByUserId(int userId, CancellationToken cancellationToken)
+        {
+            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+            if (userRole != "Admin" && userRole != "Teacher" && currentUserId != userId)
+            {
+                return Forbid();
+            }
+
+            var studentId = await _studentService.GetStudentIdByUserIdAsync(userId, cancellationToken);
+            if (studentId == null) return NotFound("Student not found for this user.");
+            
+            var result = await _studentService.GetStudentByIdAsync(studentId.Value, cancellationToken);
+            return Ok(result);
+        }
     }
 }

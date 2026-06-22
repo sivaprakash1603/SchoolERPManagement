@@ -9,4 +9,5 @@ public interface ISubjectService
     Task<SubjectResponseDTO> GetSubjectByIdAsync(int id, CancellationToken cancellationToken);
     Task<SubjectResponseDTO> UpdateSubjectAsync(int id, CreateSubjectDTO dto, CancellationToken cancellationToken);
     Task DeleteSubjectAsync(int id, CancellationToken cancellationToken);
+    Task<IReadOnlyList<SubjectResponseDTO>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken);
 }

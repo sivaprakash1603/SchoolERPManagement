@@ -11,4 +11,5 @@ public interface IDocumentService
     Task VerifyDocumentAsync(VerifyDocumentDTO dto, int verifyingUserId, string userRole, CancellationToken cancellationToken);
     Task<IReadOnlyList<StudentDocumentResponseDTO>> GetStudentDocumentsAsync(int studentId, int userId, string userRole, CancellationToken cancellationToken);
     Task<IReadOnlyList<TeacherDocumentResponseDTO>> GetTeacherDocumentsAsync(int teacherId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<PendingDocumentDTO>> GetPendingDocumentsAsync(CancellationToken cancellationToken);
 }

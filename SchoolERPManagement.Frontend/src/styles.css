@@ -92,3 +92,60 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Bootstrap 5 Theme Overrides to align with our premium design tokens */
+[data-bs-theme="light"], :root {
+  --bs-body-bg: var(--bg-canvas);
+  --bs-body-color: var(--text-primary);
+  --bs-card-bg: var(--bg-main);
+  --bs-border-color: var(--border-color);
+}
+
+[data-bs-theme="dark"] {
+  --bs-body-bg: var(--bg-canvas);
+  --bs-body-color: var(--text-primary);
+  --bs-card-bg: var(--bg-main);
+  --bs-border-color: var(--border-color);
+  --bs-tertiary-bg: var(--bg-sidebar);
+}
+
+/* Ensure form controls and tables match our theme variables */
+.form-control, .form-select {
+  background-color: var(--bg-main) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--bg-main) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--primary-accent) !important;
+  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25) !important;
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: var(--bg-sidebar);
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.table th, .table td {
+  border-color: var(--border-color) !important;
+}
+
+.modal-content {
+  background-color: var(--bg-main) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.modal-header, .modal-footer {
+  border-color: var(--border-color) !important;
+}
+
+/* Text Muted helper fallback */
+.text-muted {
+  color: var(--text-secondary) !important;
+}
+

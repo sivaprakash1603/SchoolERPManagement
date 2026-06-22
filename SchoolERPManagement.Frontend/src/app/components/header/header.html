@@ -1,16 +1,10 @@
 <header class="py-2 py-md-3 px-3 px-md-4 bg-main border-bottom" style="background-color: var(--bg-main);">
   <div class="d-flex align-items-center justify-content-between gap-2">
-    <!-- Left: Hamburger & Desktop Search -->
-    <div class="d-flex align-items-center gap-3 flex-grow-1">
+    <!-- Left: Hamburger Menu -->
+    <div class="d-flex align-items-center gap-3">
       <button class="btn btn-link text-muted-custom p-0 border-0 d-md-none" (click)="layoutService.toggleSidebar()" aria-label="Toggle Menu">
         <i class="bi bi-list fs-3"></i>
       </button>
-      
-      <!-- Desktop Search -->
-      <div class="input-group input-group-sm rounded border-0 px-2 py-1 d-none d-md-flex" style="max-width: 400px; background-color: var(--bg-sidebar);">
-        <span class="input-group-text bg-transparent border-0 text-muted-custom px-2"><i class="bi bi-search"></i></span>
-        <input type="text" class="form-control bg-transparent border-0 shadow-none ps-0 text-muted-custom" placeholder="Search institutional records...">
-      </div>
     </div>
 
     <!-- Right: Icons & Profile -->
@@ -32,17 +26,13 @@
       </button>
       
       <div class="d-flex align-items-center gap-2" style="cursor: pointer;">
-        <img [src]="'https://ui-avatars.com/api/?name=' + userName + '&background=111827&color=fff'" alt="mdo" width="32" height="32" class="rounded-circle">
-        <span class="fw-bold d-none d-sm-inline" style="color: var(--primary-accent);">{{ userName }}</span>
+        @if (displayPhotoUrl()) {
+          <img [src]="displayPhotoUrl()" alt="Profile Photo" width="32" height="32" class="rounded-circle object-fit-cover">
+        } @else {
+          <img [src]="'https://ui-avatars.com/api/?name=' + displayName() + '&background=3730a3&color=fff'" alt="Avatar" width="32" height="32" class="rounded-circle">
+        }
+        <span class="fw-bold d-none d-sm-inline" style="color: var(--primary-accent);">{{ displayName() }}</span>
       </div>
-    </div>
-  </div>
-
-  <!-- Mobile Search (Below top row) -->
-  <div class="mt-2 d-md-none w-100">
-    <div class="input-group input-group-sm rounded border-0 px-2 py-1 w-100" style="background-color: var(--bg-sidebar);">
-      <span class="input-group-text bg-transparent border-0 text-muted-custom px-2"><i class="bi bi-search"></i></span>
-      <input type="text" class="form-control bg-transparent border-0 shadow-none ps-0 text-muted-custom" placeholder="Search records...">
     </div>
   </div>
 </header>

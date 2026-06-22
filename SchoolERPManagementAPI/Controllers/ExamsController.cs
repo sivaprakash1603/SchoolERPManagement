@@ -43,5 +43,34 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _examService.GetStudentResultsAsync(studentId, userId, userRole, cancellationToken);
             return Ok(result);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllExams(CancellationToken cancellationToken)
+        {
+            var result = await _examService.GetAllExamsAsync(cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPost("schedule")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> CreateExamSchedule([FromBody] CreateExamScheduleDTO dto, CancellationToken cancellationToken)
+        {
+            var result = await _examService.CreateExamScheduleAsync(dto, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("{examId}/schedules")]
+        public async Task<IActionResult> GetExamSchedules(int examId, CancellationToken cancellationToken)
+        {
+            var result = await _examService.GetExamSchedulesByExamIdAsync(examId, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("results")]
+        public async Task<IActionResult> GetExamResultsByClass([FromQuery] int examId, [FromQuery] int classId, [FromQuery] int subjectId, CancellationToken cancellationToken)
+        {
+            var result = await _examService.GetExamResultsByClassAsync(examId, classId, subjectId, cancellationToken);
+            return Ok(result);
+        }
     }
 }

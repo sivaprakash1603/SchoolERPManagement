@@ -26,7 +26,7 @@ namespace SchoolERPManagementAPI.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Teacher")]
+        [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> GetAllAcademicYears(CancellationToken cancellationToken)
         {
             var result = await _academicYearService.GetAllAcademicYearsAsync(cancellationToken);

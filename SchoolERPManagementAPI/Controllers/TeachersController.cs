@@ -66,5 +66,21 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _teacherService.AssignSubjectAsync(dto, cancellationToken);
             return Ok(result);
         }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateTeacher(int id, [FromBody] UpdateTeacherDTO dto, CancellationToken cancellationToken)
+        {
+            var result = await _teacherService.UpdateTeacherAsync(id, dto, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteTeacher(int id, CancellationToken cancellationToken)
+        {
+            await _teacherService.DeleteTeacherAsync(id, cancellationToken);
+            return NoContent();
+        }
     }
 }

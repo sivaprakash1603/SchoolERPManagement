@@ -32,7 +32,7 @@
 
   @if (!loading() && !error() && sessions().length === 0) {
     <div class="text-center py-5">
-      <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+      <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background-color: var(--bg-sidebar);">
         <i class="bi bi-calendar-x fs-1 text-muted-custom"></i>
       </div>
       <h4 class="fw-bold" style="color: var(--text-primary);">No Sessions Created</h4>
@@ -91,7 +91,7 @@
 <!-- Create Academic Session Modal -->
 <div class="modal-overlay" *ngIf="showCreateModal()" (click)="closeCreateModal()">
   <div class="modal-card modal-md" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom bg-light">
+    <div class="modal-header-custom" style="background-color: var(--bg-sidebar); border-bottom-color: var(--border-color) !important;">
       <h5 class="fw-bold mb-0" style="color: var(--primary-accent);">Create Academic Session</h5>
       <button class="btn-close" (click)="closeCreateModal()"></button>
     </div>

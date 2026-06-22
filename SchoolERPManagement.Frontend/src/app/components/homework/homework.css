@@ -1,0 +1,182 @@
+/* Custom Modal Backdrop Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  opacity: 0;
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Modal Content Card */
+.modal-card {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 1.25rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 500px;
+  transform: translateY(20px);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+.modal-card.modal-lg {
+  max-width: 850px;
+}
+
+.modal-header-custom {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-body-custom {
+  padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-footer-custom {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background-color: var(--bg-sidebar);
+}
+
+/* Micro-animations */
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  to { transform: translateY(0); }
+}
+
+.modal-form-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.375rem;
+}
+
+.modal-body-custom input,
+.modal-body-custom select,
+.modal-body-custom textarea {
+  background-color: var(--bg-canvas);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.modal-body-custom input:focus,
+.modal-body-custom select:focus,
+.modal-body-custom textarea:focus {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+}
+
+/* Metrics blocks */
+.metric-box {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* =========================================
+   STUDENT HOMEWORK STYLES
+   ========================================= */
+
+/* Stat Cards */
+.hw-stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hw-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.hw-stat-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hw-stat-total { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+.hw-stat-pending { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.hw-stat-submitted { background: rgba(14, 165, 233, 0.12); color: #0ea5e9; }
+.hw-stat-graded { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+
+.hw-stat-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Homework Cards */
+.hw-card {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid var(--border-color);
+}
+.hw-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.hw-card-overdue {
+  border-left: 3px solid #ef4444 !important;
+}
+
+.hw-subject-badge {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-accent, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}

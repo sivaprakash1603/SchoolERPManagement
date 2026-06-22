@@ -74,4 +74,20 @@ export class ParentService {
       responseType: 'blob' 
     });
   }
+
+  updateParent(id: number, dto: { name: string, email: string, phonenumber: string }): Observable<ParentResponseDTO> {
+    return this.http.put<ParentResponseDTO>(`${this.baseUrl}/${id}`, dto);
+  }
+
+  deleteParent(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/${id}`);
+  }
+
+  getParentByUserId(userId: number): Observable<ParentResponseDTO> {
+    return this.http.get<ParentResponseDTO>(`${this.baseUrl}/by-user/${userId}`);
+  }
+
+  getParentChildren(parentId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/${parentId}/children`);
+  }
 }

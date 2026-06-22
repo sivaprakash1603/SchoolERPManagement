@@ -14,6 +14,8 @@ public sealed class AttendanceService : IAttendanceService
     private readonly IRepository<int, Student> _studentRepository;
     private readonly IRepository<int, Teacher> _teacherRepository;
     private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
+    private readonly IRepository<int, Academiccalendar> _calendarRepository;
+    private readonly IRepository<int, Academicyear> _academicYearRepository;
     private readonly IMapper _mapper;
 
     public AttendanceService(
@@ -21,12 +23,16 @@ public sealed class AttendanceService : IAttendanceService
         IRepository<int, Student> studentRepository,
         IRepository<int, Teacher> teacherRepository,
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
+        IRepository<int, Academiccalendar> calendarRepository,
+        IRepository<int, Academicyear> academicYearRepository,
         IMapper mapper)
     {
         _attendanceRepository = attendanceRepository;
         _studentRepository = studentRepository;
         _teacherRepository = teacherRepository;
         _studentEnrollmentRepository = studentEnrollmentRepository;
+        _calendarRepository = calendarRepository;
+        _academicYearRepository = academicYearRepository;
         _mapper = mapper;
     }
 
@@ -40,6 +46,36 @@ public sealed class AttendanceService : IAttendanceService
         if (dto.Date > DateOnly.FromDateTime(DateTime.UtcNow))
         {
             throw new BusinessRuleException("Attendance date cannot be in the future.");
+        }
+
+        var enrollment = await _studentEnrollmentRepository.Query(true)
+            .Include(e => e.Class)
+            .Include(e => e.Academicyear)
+            .Where(e => e.Studentid == dto.StudentId)
+            .FirstOrDefaultAsync(e => e.Academicyear.Startdate <= dto.Date && e.Academicyear.Enddate >= dto.Date, cancellationToken);
+
+        if (enrollment is null)
+        {
+            // Fallback: try to find any enrollment for this student to give a better error message
+            var anyEnrollment = await _studentEnrollmentRepository.Query(true)
+                .AnyAsync(e => e.Studentid == dto.StudentId, cancellationToken);
+
+            if (!anyEnrollment)
+            {
+                throw new BusinessRuleException("Student is not enrolled in any class.");
+            }
+
+            throw new BusinessRuleException("No enrollment found for this student that covers the selected attendance date. Ensure the student is enrolled in a class for the relevant academic year.");
+        }
+
+        var academicYear = enrollment.Academicyear;
+
+        var isHoliday = await _calendarRepository.Query(true)
+            .AnyAsync(x => x.Academicyearid == academicYear.Id && x.Date == dto.Date && x.Isholiday, cancellationToken);
+
+        if (isHoliday)
+        {
+            throw new BusinessRuleException("Cannot mark attendance on a school holiday.");
         }
 
         if (dto.MarkedByTeacherId.HasValue)

@@ -17,6 +17,7 @@ public sealed class ExamService : IExamService
     private readonly IRepository<int, Student> _studentRepository;
     private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
     private readonly IRepository<int, Examschedule> _examScheduleRepository;
+    private readonly IRepository<int, Class> _classRepository;
     private readonly IMapper _mapper;
 
     public ExamService(
@@ -27,6 +28,7 @@ public sealed class ExamService : IExamService
         IRepository<int, Student> studentRepository,
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
         IRepository<int, Examschedule> examScheduleRepository,
+        IRepository<int, Class> classRepository,
         IMapper mapper)
     {
         _examRepository = examRepository;
@@ -36,6 +38,7 @@ public sealed class ExamService : IExamService
         _studentRepository = studentRepository;
         _studentEnrollmentRepository = studentEnrollmentRepository;
         _examScheduleRepository = examScheduleRepository;
+        _classRepository = classRepository;
         _mapper = mapper;
     }
 
@@ -148,5 +151,84 @@ public sealed class ExamService : IExamService
             .OrderByDescending(result => result.Id)
             .ToListAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<ExamResultResponseDTO>>(items);
+    }
+
+    public async Task<IReadOnlyList<ExamResponseDTO>> GetAllExamsAsync(CancellationToken cancellationToken)
+    {
+        var exams = await _examRepository.Query(true)
+            .OrderByDescending(x => x.Id)
+            .ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<ExamResponseDTO>>(exams);
+    }
+
+    public async Task<ExamScheduleResponseDTO> CreateExamScheduleAsync(CreateExamScheduleDTO dto, CancellationToken cancellationToken)
+    {
+        if (await _examRepository.GetByIdAsync(dto.ExamId) is null)
+        {
+            throw new EntityNotFoundException("Exam", dto.ExamId.ToString());
+        }
+
+        if (await _subjectRepository.GetByIdAsync(dto.SubjectId) is null)
+        {
+            throw new EntityNotFoundException("Subject", dto.SubjectId.ToString());
+        }
+
+        if (await _classRepository.GetByIdAsync(dto.ClassId) is null)
+        {
+            throw new EntityNotFoundException("Class", dto.ClassId.ToString());
+        }
+
+        var existing = await _examScheduleRepository.Query(true)
+            .FirstOrDefaultAsync(x => x.Examid == dto.ExamId && x.Classid == dto.ClassId && x.Subjectid == dto.SubjectId, cancellationToken);
+
+        if (existing != null)
+        {
+            throw new BusinessRuleException("This subject is already scheduled for the selected exam and class.");
+        }
+
+        var schedule = new Examschedule
+        {
+            Examid = dto.ExamId,
+            Subjectid = dto.SubjectId,
+            Classid = dto.ClassId,
+            Examdate = dto.ExamDate,
+            Durationminutes = dto.DurationMinutes,
+            Session = dto.Session
+        };
+
+        await _examScheduleRepository.AddAsync(schedule, save: true, ct: cancellationToken);
+
+        var savedSchedule = await _examScheduleRepository.Query(true)
+            .Include(x => x.Subject)
+            .Include(x => x.Class)
+            .FirstOrDefaultAsync(x => x.Id == schedule.Id, cancellationToken);
+
+        return _mapper.Map<ExamScheduleResponseDTO>(savedSchedule);
+    }
+
+    public async Task<IReadOnlyList<ExamScheduleResponseDTO>> GetExamSchedulesByExamIdAsync(int examId, CancellationToken cancellationToken)
+    {
+        var schedules = await _examScheduleRepository.Query(true)
+            .Include(x => x.Subject)
+            .Include(x => x.Class)
+            .Where(x => x.Examid == examId)
+            .OrderBy(x => x.Examdate)
+            .ToListAsync(cancellationToken);
+
+        return _mapper.Map<IReadOnlyList<ExamScheduleResponseDTO>>(schedules);
+    }
+
+    public async Task<IReadOnlyList<ExamResultResponseDTO>> GetExamResultsByClassAsync(int examId, int classId, int subjectId, CancellationToken cancellationToken)
+    {
+        var studentIds = await _studentEnrollmentRepository.Query(true)
+            .Where(e => e.Classid == classId)
+            .Select(e => e.Studentid)
+            .ToListAsync(cancellationToken);
+
+        var results = await _examResultRepository.Query(true)
+            .Where(r => r.Examid == examId && r.Subjectid == subjectId && studentIds.Contains(r.Studentid))
+            .ToListAsync(cancellationToken);
+
+        return _mapper.Map<IReadOnlyList<ExamResultResponseDTO>>(results);
     }
 }

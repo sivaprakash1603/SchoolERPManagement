@@ -10,4 +10,5 @@ public interface IHomeworkService
     Task<IReadOnlyList<HomeworkResponseDTO>> GetHomeworksAsync(int classId, int? subjectId, CancellationToken cancellationToken);
     Task<IReadOnlyList<HomeworkResponseDTO>> GetHomeworksByUserIdAsync(int userId, CancellationToken cancellationToken);
     Task<IReadOnlyList<HomeworkResponseDTO>> GetHomeworksByStudentIdAsync(int studentId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<HomeworkSubmissionDetailsDTO>> GetSubmissionsByHomeworkIdAsync(int homeworkId, CancellationToken cancellationToken);
 }

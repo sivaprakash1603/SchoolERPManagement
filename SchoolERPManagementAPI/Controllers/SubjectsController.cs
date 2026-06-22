@@ -54,4 +54,11 @@ public class SubjectsController : ControllerBase
         await _subjectService.DeleteSubjectAsync(id, cancellationToken);
         return NoContent();
     }
+
+    [HttpGet("class/{classId}")]
+    public async Task<IActionResult> GetSubjectsByClass(int classId, CancellationToken cancellationToken)
+    {
+        var result = await _subjectService.GetSubjectsByClassAsync(classId, cancellationToken);
+        return Ok(result);
+    }
 }

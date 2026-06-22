@@ -38,7 +38,13 @@ public class StaffAttendanceService : IStaffAttendanceService
             .FirstOrDefaultAsync(a => a.Userid == dto.UserId && a.Date == dto.Date, cancellationToken);
 
         if (existing != null)
-            throw new DuplicateEntityException("StaffAttendance", "Date", dto.Date.ToString());
+        {
+            existing.Status = dto.Status!.ToLower();
+            existing.Attendancetype = dto.AttendanceType;
+            existing.Remarks = dto.Remarks;
+            await _staffAttendanceRepository.UpdateAsync(existing, true, cancellationToken);
+            return _mapper.Map<StaffAttendanceResponseDTO>(existing);
+        }
 
         var attendance = new Staffattendance
         {

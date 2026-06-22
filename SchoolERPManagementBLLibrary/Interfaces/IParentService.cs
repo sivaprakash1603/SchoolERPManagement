@@ -11,4 +11,6 @@ public interface IParentService
     Task<IReadOnlyList<ChildResponseDTO>> GetChildrenAsync(int parentId, CancellationToken cancellationToken);
     Task<ParentResponseDTO> AddParentAsync(CreateParentDTO dto, CancellationToken cancellationToken);
     Task<int?> GetParentIdByUserIdAsync(int userId, CancellationToken cancellationToken);
+    Task<ParentResponseDTO> UpdateParentAsync(int id, UpdateParentDTO dto, CancellationToken cancellationToken);
+    Task DeleteParentAsync(int id, CancellationToken cancellationToken);
 }

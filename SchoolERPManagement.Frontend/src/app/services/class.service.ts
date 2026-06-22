@@ -27,4 +27,12 @@ export class ClassService {
   createClass(dto: { classname: string; section: string; classteacherId?: number; academicyearId?: number }): Observable<ClassResponseDTO> {
     return this.http.post<ClassResponseDTO>(this.baseUrl, dto);
   }
+
+  updateClass(id: number, dto: { classname: string; section: string; classteacherId?: number; academicyearId?: number }): Observable<ClassResponseDTO> {
+    return this.http.put<ClassResponseDTO>(`${this.baseUrl}/${id}`, dto);
+  }
+
+  deleteClass(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/${id}`);
+  }
 }

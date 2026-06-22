@@ -83,5 +83,39 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _parentService.AddParentAsync(dto, cancellationToken);
             return Ok(result);
         }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> UpdateParent(int id, [FromBody] UpdateParentDTO dto, CancellationToken cancellationToken)
+        {
+            var result = await _parentService.UpdateParentAsync(id, dto, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteParent(int id, CancellationToken cancellationToken)
+        {
+            await _parentService.DeleteParentAsync(id, cancellationToken);
+            return Ok(new { Message = "Parent deleted successfully." });
+        }
+
+        [HttpGet("by-user/{userId}")]
+        public async Task<IActionResult> GetParentByUserId(int userId, CancellationToken cancellationToken)
+        {
+            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+            if (userRole != "Admin" && userRole != "Teacher" && currentUserId != userId)
+            {
+                return Forbid();
+            }
+
+            var parentId = await _parentService.GetParentIdByUserIdAsync(userId, cancellationToken);
+            if (parentId == null || parentId == 0) return NotFound("Parent not found for this user.");
+
+            var result = await _parentService.GetParentByIdAsync(parentId.Value, cancellationToken);
+            return Ok(result);
+        }
     }
 }

@@ -11,11 +11,19 @@ namespace SchoolERPManagementBLLibrary.Services;
 public class SubjectService : ISubjectService
 {
     private readonly IRepository<int, Subject> _subjectRepository;
+    private readonly IRepository<int, Teachersubject> _teacherSubjectRepository;
+    private readonly IRepository<int, Timetable> _timetableRepository;
     private readonly IMapper _mapper;
 
-    public SubjectService(IRepository<int, Subject> subjectRepository, IMapper mapper)
+    public SubjectService(
+        IRepository<int, Subject> subjectRepository,
+        IRepository<int, Teachersubject> teacherSubjectRepository,
+        IRepository<int, Timetable> timetableRepository,
+        IMapper mapper)
     {
         _subjectRepository = subjectRepository;
+        _teacherSubjectRepository = teacherSubjectRepository;
+        _timetableRepository = timetableRepository;
         _mapper = mapper;
     }
 
@@ -77,5 +85,26 @@ public class SubjectService : ISubjectService
             throw new EntityNotFoundException("Subject", id.ToString());
 
         await _subjectRepository.DeleteAsync(subject, save: true, ct: cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<SubjectResponseDTO>> GetSubjectsByClassAsync(int classId, CancellationToken cancellationToken)
+    {
+        var teacherSubjectIds = await _teacherSubjectRepository.Query(true)
+            .Where(ts => ts.Classid == classId)
+            .Select(ts => ts.Subjectid)
+            .ToListAsync(cancellationToken);
+
+        var timetableSubjectIds = await _timetableRepository.Query(true)
+            .Where(t => t.Classid == classId)
+            .Select(t => t.Subjectid)
+            .ToListAsync(cancellationToken);
+
+        var subjectIds = teacherSubjectIds.Union(timetableSubjectIds).Distinct().ToList();
+
+        var subjects = await _subjectRepository.Query(true)
+            .Where(s => subjectIds.Contains(s.Id))
+            .ToListAsync(cancellationToken);
+
+        return _mapper.Map<IReadOnlyList<SubjectResponseDTO>>(subjects);
     }
 }

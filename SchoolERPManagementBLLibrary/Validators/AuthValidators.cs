@@ -7,7 +7,10 @@ public class LoginRequestValidator : AbstractValidator<LoginRequestDTO>
 {
     public LoginRequestValidator()
     {
-        RuleFor(x => x.Username).NotEmpty().WithMessage("Username is required.");
+        RuleFor(x => x.Username)
+            .NotEmpty().WithMessage("Username is required.")
+            .Matches(@"^(admin|ST\d{3}[a-zA-Z0-9]+|T\d{3}\d{4}|P\d{7,15})$")
+            .WithMessage("Username must match a valid auto-generated format.");
         RuleFor(x => x.Password).NotEmpty().WithMessage("Password is required.");
     }
 }

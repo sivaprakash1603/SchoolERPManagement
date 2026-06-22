@@ -14,4 +14,12 @@ export class Auth {
   loginApiCall(data: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`, data);
   }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(data: { email: string, token: string, newPassword: string }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/reset-password`, data);
+  }
 }

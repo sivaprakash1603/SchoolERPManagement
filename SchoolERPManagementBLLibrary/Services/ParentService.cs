@@ -41,6 +41,8 @@ public sealed class ParentService : IParentService
     {
         var query = _parentRepository.Query(true)
             .Include(p => p.User)
+            .Include(p => p.Studentparents)
+                .ThenInclude(sp => sp.Student)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.SearchQuery))
@@ -83,7 +85,9 @@ public sealed class ParentService : IParentService
             p.Id,
             p.Userid,
             p.Name,
-            null,
+            p.Studentparents != null && p.Studentparents.Any() 
+                ? string.Join(", ", p.Studentparents.Select(sp => sp.Student.Name)) 
+                : "No linked children",
             p.Phonenumber,
             p.User?.Email,
             null,
@@ -102,10 +106,26 @@ public sealed class ParentService : IParentService
 
     public async Task<ParentResponseDTO> GetParentByIdAsync(int id, CancellationToken cancellationToken)
     {
-        var parent = await _parentRepository.Query(true).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var parent = await _parentRepository.Query(true)
+            .Include(p => p.User)
+            .Include(p => p.Studentparents)
+                .ThenInclude(sp => sp.Student)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
         return parent is null
             ? throw new EntityNotFoundException("Parent", id.ToString())
-            : _mapper.Map<ParentResponseDTO>(parent);
+            : new ParentResponseDTO(
+                parent.Id,
+                parent.Userid,
+                parent.Name,
+                parent.Studentparents != null && parent.Studentparents.Any()
+                    ? string.Join(", ", parent.Studentparents.Select(sp => sp.Student.Name))
+                    : null,
+                parent.Phonenumber,
+                parent.User?.Email,
+                null,
+                parent.User?.Username
+            );
     }
 
     public async Task<IReadOnlyList<ChildResponseDTO>> GetChildrenAsync(int parentId, CancellationToken cancellationToken)
@@ -204,5 +224,49 @@ public sealed class ParentService : IParentService
     {
         var parent = await _parentRepository.Query(true).FirstOrDefaultAsync(x => x.Userid == userId, cancellationToken);
         return parent?.Id;
+    }
+
+    public async Task<ParentResponseDTO> UpdateParentAsync(int id, UpdateParentDTO dto, CancellationToken cancellationToken)
+    {
+        var parent = await _parentRepository.Query(false)
+            .Include(p => p.User)
+            .Include(p => p.Studentparents)
+                .ThenInclude(sp => sp.Student)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+        if (parent is null)
+        {
+            throw new EntityNotFoundException("Parent", id.ToString());
+        }
+
+        parent.Name = dto.Name;
+        parent.Phonenumber = dto.Phonenumber;
+        
+        if (parent.User != null)
+        {
+            parent.User.Email = dto.Email;
+            await _userRepository.UpdateAsync(parent.User, save: true, ct: cancellationToken);
+        }
+
+        await _parentRepository.UpdateAsync(parent, save: true, ct: cancellationToken);
+
+        var response = _mapper.Map<ParentResponseDTO>(parent);
+        return response;
+    }
+
+    public async Task DeleteParentAsync(int id, CancellationToken cancellationToken)
+    {
+        var parent = await _parentRepository.GetByIdAsync(id);
+        if (parent is null)
+        {
+            throw new EntityNotFoundException("Parent", id.ToString());
+        }
+
+        var user = await _userRepository.GetByIdAsync(parent.Userid);
+        if (user != null)
+        {
+            user.Isactive = false;
+            await _userRepository.UpdateAsync(user, save: true, ct: cancellationToken);
+        }
     }
 }

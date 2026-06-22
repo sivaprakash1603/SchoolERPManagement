@@ -72,7 +72,7 @@
         <thead style="background-color: var(--bg-sidebar);">
           <tr>
             <th class="ps-4 py-3 border-bottom" style="width: 40px;">
-              <input class="form-check-input" type="checkbox">
+              <input class="form-check-input" type="checkbox" (change)="toggleSelectAll($event)">
             </th>
             <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Teacher Details</th>
             <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Teacher ID</th>
@@ -86,7 +86,7 @@
           @for (teacher of teachers(); track teacher.id) {
             <tr>
               <td class="ps-4 py-3">
-                <input class="form-check-input" type="checkbox">
+                <input class="form-check-input" type="checkbox" [checked]="isTeacherSelected(teacher.id)" (change)="toggleSelectTeacher(teacher.id)">
               </td>
               <td class="px-4 py-3">
                 <div class="d-flex align-items-center gap-3">
@@ -110,8 +110,12 @@
                 <span>{{ teacher.joiningdate | date:'mediumDate' }}</span>
               </td>
               <td class="px-4 py-3 text-end">
-                <button class="btn btn-sm btn-light rounded-circle me-2 text-muted-custom"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-light rounded-circle text-muted-custom"><i class="bi bi-three-dots-vertical"></i></button>
+                <div class="d-flex justify-content-end gap-1">
+                  <button class="btn btn-sm btn-light text-primary" title="View Profile" (click)="openViewModal(teacher); $event.stopPropagation();"><i class="bi bi-eye"></i></button>
+                  <button class="btn btn-sm btn-light text-warning" title="Send Notification" (click)="openNotificationModal(teacher.name, [teacher.userId]); $event.stopPropagation();"><i class="bi bi-bell"></i></button>
+                  <button class="btn btn-sm btn-light text-muted-custom" title="Edit" (click)="openEditModal(teacher); $event.stopPropagation();"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-light text-danger" title="Delete" (click)="openDeleteModal(teacher); $event.stopPropagation();"><i class="bi bi-trash"></i></button>
+                </div>
               </td>
             </tr>
           }
@@ -143,4 +147,172 @@
       </div>
     </div>
   }
+</div>
+
+<!-- View Teacher Details Modal -->
+<div class="modal-overlay" *ngIf="showViewModal()" (click)="closeViewModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-briefcase fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Teacher Profile Details</h5>
+      </div>
+      <button class="btn-close" (click)="closeViewModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <!-- Profile Header -->
+      <div class="text-center pb-4 mb-4 border-bottom">
+        <img [src]="selectedTeacher()?.avatarUrl" class="rounded-circle object-fit-cover shadow mb-3" style="width: 90px; height: 90px;" alt="Avatar">
+        <h4 class="fw-bold mb-1" style="color: var(--primary-accent);">{{ selectedTeacher()?.name }}</h4>
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" style="font-size: 0.85rem; background-color: rgba(99, 102, 241, 0.1) !important;">{{ selectedTeacher()?.qualifications || 'No Qualifications Specified' }}</span>
+      </div>
+
+      <!-- Info Grid -->
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="detail-item">
+            <span class="detail-label">Teacher ID / Username</span>
+            <span class="detail-val font-monospace">{{ selectedTeacher()?.username }}</span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item">
+            <span class="detail-label">Email Address</span>
+            <span class="detail-val">{{ selectedTeacher()?.email || 'N/A' }}</span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item">
+            <span class="detail-label">Phone Number</span>
+            <span class="detail-val">{{ selectedTeacher()?.phonenumber || 'N/A' }}</span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item">
+            <span class="detail-label">Joining Date</span>
+            <span class="detail-val">{{ selectedTeacher()?.joiningdate | date:'longDate' }}</span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item">
+            <span class="detail-label">Assigned Class</span>
+            <span class="detail-val">{{ selectedTeacher()?.className ? (selectedTeacher()?.className + ' - ' + selectedTeacher()?.section) : 'None' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-primary px-4 rounded-3" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="closeViewModal()">Close View</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Teacher Modal -->
+<div class="modal-overlay" *ngIf="showEditModal()" (click)="closeEditModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-pencil-square fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Edit Teacher Profile</h5>
+      </div>
+      <button class="btn-close" (click)="closeEditModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="modal-form-label"><i class="bi bi-person me-1"></i> Full Name</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm().name" placeholder="Enter full name">
+        </div>
+        <div class="col-md-6">
+          <label class="modal-form-label"><i class="bi bi-telephone me-1"></i> Phone Number</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm().phonenumber" placeholder="Enter phone number">
+        </div>
+        <div class="col-md-6">
+          <label class="modal-form-label"><i class="bi bi-mortarboard me-1"></i> Qualifications</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm().qualifications" placeholder="e.g. M.Sc, B.Ed">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeEditModal()" [disabled]="isSaving()">Cancel</button>
+      <button class="btn btn-success px-4 rounded-3" (click)="saveTeacher()" [disabled]="isSaving() || !editForm().name">
+        <span *ngIf="isSaving()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
+  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom bg-danger-subtle text-danger">
+      <h5 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Deactivate Teacher Account</h5>
+      <button class="btn-close" (click)="closeDeleteModal()"></button>
+    </div>
+    <div class="modal-body-custom py-4">
+      <p class="mb-2">Are you sure you want to deactivate the account for <strong>{{ selectedTeacher()?.name }}</strong>?</p>
+      <p class="text-muted-custom small mb-0">Deactivating the teacher account will set their status to Inactive and block their portal login. This action is reversible.</p>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeDeleteModal()" [disabled]="isDeleting()">Cancel</button>
+      <button class="btn btn-danger px-4 rounded-3" (click)="confirmDelete()" [disabled]="isDeleting()">
+        <span *ngIf="isDeleting()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ isDeleting() ? 'Deactivating...' : 'Confirm Deactivation' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Send Notification Modal -->
+<div class="modal-overlay" *ngIf="showNotificationModal()" (click)="closeNotificationModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-bell-fill fs-4" style="color: var(--primary-accent);"></i>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Send Notification</h5>
+      </div>
+      <button class="btn-close" (click)="closeNotificationModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="mb-3 p-3 rounded-3" style="background-color: var(--bg-canvas); border: 1px solid var(--border-color);">
+        <span class="text-muted-custom small d-block text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Recipient(s)</span>
+        <strong style="color: var(--text-primary);">{{ notificationTargetNames() }}</strong>
+      </div>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="modal-form-label"><i class="bi bi-type me-1"></i> Title</label>
+          <input type="text" class="form-control" [ngModel]="notificationTitle()" (ngModelChange)="notificationTitle.set($event)" placeholder="Notification Title">
+        </div>
+        <div class="col-12">
+          <label class="modal-form-label"><i class="bi bi-chat-text me-1"></i> Message</label>
+          <textarea class="form-control" [ngModel]="notificationMessage()" (ngModelChange)="notificationMessage.set($event)" placeholder="Type notification message here..." rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-light px-4 rounded-3" (click)="closeNotificationModal()" [disabled]="isSendingNotification()">Cancel</button>
+      <button class="btn btn-warning px-4 rounded-3 text-white fw-bold d-flex align-items-center gap-2" (click)="sendNotification()" [disabled]="isSendingNotification() || !notificationTitle() || !notificationMessage()">
+        <span *ngIf="isSendingNotification()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <i class="bi bi-send-fill" *ngIf="!isSendingNotification()"></i>
+        {{ isSendingNotification() ? 'Sending...' : 'Send Notification' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Bulk Action Bar -->
+<div class="bulk-action-bar-container" *ngIf="selectedTeacherIds().length > 0">
+  <div class="bulk-action-bar d-flex align-items-center justify-content-between p-3 rounded-4 shadow-lg border">
+    <div class="d-flex align-items-center gap-3">
+      <span class="badge bg-primary fs-6 rounded-pill px-3 py-2" style="background-color: var(--primary-accent) !important;">{{ selectedTeacherIds().length }}</span>
+      <span class="fw-bold mb-0 select-label" style="color: var(--text-primary);">Teachers Selected</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-outline-secondary rounded-3 fw-bold px-3 py-2" (click)="clearSelection()">Cancel</button>
+      <button class="btn btn-warning rounded-3 fw-bold px-4 py-2 border-0 text-white" (click)="openBulkNotificationModal()">
+        <i class="bi bi-bell-fill me-1"></i> Send Notification
+      </button>
+    </div>
+  </div>
 </div>

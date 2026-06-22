@@ -1,1 +1,408 @@
-<p>assets works!</p>
+<!-- Role Restriction Check -->
+@if (userRole() !== 'Admin' && userRole() !== 'Teacher' && userRole() !== 'Student') {
+  <div class="access-denied-container d-flex align-items-center justify-content-center py-5">
+    <div class="minimal-card text-center p-5 max-w-lg-custom glassmorphic-card">
+      <div class="access-denied-icon mb-4">
+        <i class="bi bi-shield-lock-fill text-danger display-1"></i>
+      </div>
+      <h3 class="fw-bold mb-3" style="color: var(--primary-accent);">Access Denied</h3>
+      <p class="text-muted-custom mb-4">
+        We're sorry, but the Asset Management portal is only available to school administrators, teachers, and students.
+      </p>
+      <button class="btn btn-primary px-4 py-2" onclick="window.history.back()">
+        <i class="bi bi-arrow-left me-2"></i> Go Back
+      </button>
+    </div>
+  </div>
+} @else {
+  <!-- Main Assets Page Content -->
+  <div class="assets-page-container">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
+      <div>
+        <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent);">
+          {{ userRole() === 'Student' ? 'Classroom Assets & Reports' : 'Asset & Inventory Management' }}
+        </h2>
+        <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-pc-display"></i>
+          <span *ngIf="userRole() !== 'Student'">Monitor and track school equipment, hardware, class furnishings, and report active maintenance issues.</span>
+          <span *ngIf="userRole() === 'Student'">View assets assigned to your classroom and report maintenance issues (e.g. broken fans, lights, or projectors).</span>
+        </p>
+      </div>
+      @if (userRole() === 'Admin') {
+        <button (click)="openAddAssetModal()" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
+          <i class="bi bi-plus-circle"></i> Add New Asset
+        </button>
+      }
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="row g-4 mb-4" *ngIf="userRole() !== 'Student'">
+      <!-- Total Assets -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="minimal-card p-3 d-flex align-items-center justify-content-between relative overflow-hidden card-hover">
+          <div>
+            <span class="text-muted-custom fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Total Assets</span>
+            <h3 class="fw-extrabold fs-2 mt-1 mb-0">{{ totalAssetsCount() }}</h3>
+          </div>
+          <div class="icon-circle bg-primary-transparent text-primary">
+            <i class="bi bi-archive-fill"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Assets -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="minimal-card p-3 d-flex align-items-center justify-content-between relative overflow-hidden card-hover">
+          <div>
+            <span class="text-muted-custom fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Active</span>
+            <h3 class="fw-extrabold fs-2 mt-1 mb-0 text-success">{{ activeAssetsCount() }}</h3>
+          </div>
+          <div class="icon-circle bg-success-transparent text-success">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Under Repair -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="minimal-card p-3 d-flex align-items-center justify-content-between relative overflow-hidden card-hover">
+          <div>
+            <span class="text-muted-custom fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Under Repair</span>
+            <h3 class="fw-extrabold fs-2 mt-1 mb-0 text-warning">{{ underRepairAssetsCount() }}</h3>
+          </div>
+          <div class="icon-circle bg-warning-transparent text-warning">
+            <i class="bi bi-tools"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Broken -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="minimal-card p-3 d-flex align-items-center justify-content-between relative overflow-hidden card-hover">
+          <div>
+            <span class="text-muted-custom fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Broken</span>
+            <h3 class="fw-extrabold fs-2 mt-1 mb-0 text-danger">{{ brokenAssetsCount() }}</h3>
+          </div>
+          <div class="icon-circle bg-danger-transparent text-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="minimal-card p-3 mb-4" *ngIf="userRole() !== 'Student'">
+      <div class="row g-3">
+        <!-- Search -->
+        <div class="col-12 col-md-4">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Search Assets</label>
+          <div class="input-group">
+            <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control border-start-0" placeholder="Type asset name..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+          </div>
+        </div>
+
+        <!-- Asset Type -->
+        <div class="col-12 col-md-4">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Filter by Category</label>
+          <select class="form-select" [ngModel]="selectedTypeId()" (ngModelChange)="selectedTypeId.set($event)">
+            <option [ngValue]="null">All Categories</option>
+            @for (t of assetTypes(); track t.id) {
+              <option [value]="t.id">{{ t.typename }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-12 col-md-4">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Status</label>
+          <select class="form-select" [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)">
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="under repair">Under Repair</option>
+            <option value="broken">Broken</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assets List Table -->
+    <div class="minimal-card p-0 overflow-hidden mb-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-header-custom">
+            <tr>
+              <th scope="col" class="ps-4">Asset Name</th>
+              <th scope="col">Category</th>
+              <th scope="col" *ngIf="userRole() !== 'Student'">Assigned Location / Class</th>
+              <th scope="col" *ngIf="userRole() !== 'Student'">Purchase Date</th>
+              <th scope="col" *ngIf="userRole() !== 'Student'">Warranty Expiry</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (getFilteredAssets().length === 0) {
+              <tr>
+                <td [attr.colspan]="userRole() === 'Student' ? 4 : 7" class="text-center py-5 text-muted-custom">
+                  <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                  No assets assigned to your classroom.
+                </td>
+              </tr>
+            } @else {
+              @for (asset of getFilteredAssets(); track asset.id) {
+                <tr class="table-row-hover">
+                  <td class="ps-4 fw-bold text-light-custom">{{ asset.assetname }}</td>
+                  <td>
+                    <span class="badge bg-secondary-subtle text-secondary-custom px-2.5 py-1.5 rounded-pill text-xs fw-semibold">
+                      {{ getTypeName(asset.assettypeId) }}
+                    </span>
+                  </td>
+                  <td *ngIf="userRole() !== 'Student'">{{ getClassName(asset.assignedClassId) }}</td>
+                  <td *ngIf="userRole() !== 'Student'">{{ asset.purchasedate ? asset.purchasedate : 'N/A' }}</td>
+                  <td *ngIf="userRole() !== 'Student'">{{ asset.warrantyexpiry ? asset.warrantyexpiry : 'N/A' }}</td>
+                  <td>
+                    @if (asset.status?.toLowerCase() === 'active') {
+                      <span class="badge bg-success-subtle text-success px-2.5 py-1.5 rounded-pill text-xs fw-semibold">
+                        <i class="bi bi-circle-fill text-xs me-1"></i> Active
+                      </span>
+                    } @else if (asset.status?.toLowerCase() === 'under repair' || asset.status?.toLowerCase() === 'under_repair') {
+                      <span class="badge bg-warning-subtle text-warning px-2.5 py-1.5 rounded-pill text-xs fw-semibold">
+                        <i class="bi bi-tools text-xs me-1"></i> Repairing
+                      </span>
+                    } @else if (asset.status?.toLowerCase() === 'broken') {
+                      <span class="badge bg-danger-subtle text-danger px-2.5 py-1.5 rounded-pill text-xs fw-semibold">
+                        <i class="bi bi-exclamation-triangle-fill text-xs me-1"></i> Broken
+                      </span>
+                    } @else {
+                      <span class="badge bg-light text-dark px-2.5 py-1.5 rounded-pill text-xs fw-semibold">
+                        {{ asset.status }}
+                      </span>
+                    }
+                  </td>
+                  <td class="text-end pe-4">
+                    @if (userRole() === 'Teacher' || userRole() === 'Student') {
+                      <button (click)="openReportIssueModal(asset)" class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1.5 fw-semibold py-1.5 px-3 rounded-2">
+                        <i class="bi bi-flag-fill"></i> Report Issue
+                      </button>
+                    } @else if (userRole() === 'Admin') {
+                      <button (click)="openResolveModal(asset)" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1.5 fw-semibold py-1.5 px-3 rounded-2">
+                        <i class="bi bi-check2-circle"></i> Address / Resolve
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Maintenance Reports History Log (Admin Only) -->
+    @if (userRole() === 'Admin') {
+      <div class="mt-5">
+        <h4 class="fw-bold mb-3" style="color: var(--primary-accent);">
+          <i class="bi bi-file-earmark-medical-fill me-2"></i> Maintenance & Issue Reports Log
+        </h4>
+        <div class="minimal-card p-0 overflow-hidden">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-header-custom">
+                <tr>
+                  <th scope="col" class="ps-4">Asset</th>
+                  <th scope="col">Date Reported</th>
+                  <th scope="col">Status Change</th>
+                  <th scope="col">Issue / Resolution Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (assetReports().length === 0) {
+                  <tr>
+                    <td colspan="4" class="text-center py-4 text-muted-custom">
+                      No maintenance history logs found.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (r of assetReports(); track r.id) {
+                    <tr class="table-row-hover">
+                      <td class="ps-4 fw-bold text-light-custom">{{ getAssetNameById(r.assetid) }}</td>
+                      <td>{{ r.createdat ? (r.createdat | date:'short') : 'N/A' }}</td>
+                      <td>
+                        @if (r.status?.toLowerCase() === 'active') {
+                          <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill text-xs fw-semibold">
+                            Active / Resolved
+                          </span>
+                        } @else if (r.status?.toLowerCase() === 'under repair' || r.status?.toLowerCase() === 'under_repair') {
+                          <span class="badge bg-warning-subtle text-warning px-2 py-1 rounded-pill text-xs fw-semibold">
+                            Under Repair
+                          </span>
+                        } @else if (r.status?.toLowerCase() === 'broken') {
+                          <span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill text-xs fw-semibold">
+                            Broken
+                          </span>
+                        } @else {
+                          <span class="badge bg-light text-dark px-2 py-1 rounded-pill text-xs">
+                            {{ r.status }}
+                          </span>
+                        }
+                      </td>
+                      <td class="text-muted-custom text-wrap">{{ r.report }}</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Add Asset Modal (Admin Only) -->
+  @if (showAddAssetModal() && userRole() === 'Admin') {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content custom-modal-content border-0 shadow-lg">
+          <div class="modal-header border-bottom-custom p-4">
+            <h5 class="modal-title fw-bold" style="color: var(--primary-accent);">
+              <i class="bi bi-plus-circle-fill me-2"></i> Add New Inventory Asset
+            </h5>
+            <button type="button" class="btn-close" (click)="closeAddAssetModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label text-muted-custom fw-semibold mb-1">Asset Name *</label>
+              <input type="text" class="form-control" placeholder="e.g. Science Lab Projector" [(ngModel)]="newAsset().assetname">
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label text-muted-custom fw-semibold mb-1">Asset Category *</label>
+                <select class="form-select" [(ngModel)]="newAsset().assettypeId">
+                  <option [ngValue]="undefined">Select Category</option>
+                  @for (t of assetTypes(); track t.id) {
+                    <option [value]="t.id">{{ t.typename }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-muted-custom fw-semibold mb-1">Status</label>
+                <select class="form-select" [(ngModel)]="newAsset().status">
+                  <option value="active">Active</option>
+                  <option value="under repair">Under Repair</option>
+                  <option value="broken">Broken</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label text-muted-custom fw-semibold mb-1">Purchase Date</label>
+                <input type="date" class="form-control" [(ngModel)]="newAsset().purchasedate">
+              </div>
+              <div class="col-6">
+                <label class="form-label text-muted-custom fw-semibold mb-1">Warranty Expiry</label>
+                <input type="date" class="form-control" [(ngModel)]="newAsset().warrantyexpiry">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted-custom fw-semibold mb-1">Assign Class / Location</label>
+              <select class="form-select" [(ngModel)]="newAsset().assignedClassId">
+                <option [ngValue]="undefined">Not Assigned (General Inventory)</option>
+                @for (c of classes(); track c.id) {
+                  <option [value]="c.id">{{ c.classname }} {{ c.section ? '- ' + c.section : '' }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer border-top-custom p-4">
+            <button type="button" class="btn btn-outline-secondary px-4" (click)="closeAddAssetModal()">Cancel</button>
+            <button type="button" class="btn btn-primary px-4 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="saveAsset()">Save Asset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Report Issue Modal (Teachers & Students) -->
+  @if (showReportIssueModal() && (userRole() === 'Teacher' || userRole() === 'Student')) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content custom-modal-content border-0 shadow-lg">
+          <div class="modal-header border-bottom-custom p-4">
+            <h5 class="modal-title fw-bold text-warning">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> Report Asset Maintenance Issue
+            </h5>
+            <button type="button" class="btn-close" (click)="closeReportIssueModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label text-muted-custom fw-semibold mb-1">Reporting For</label>
+              <input type="text" class="form-control-plaintext text-light-custom fw-bold fs-5" readonly [value]="selectedAssetNameForReport()">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted-custom fw-semibold mb-1">New Condition / Status *</label>
+              <select class="form-select" [(ngModel)]="reportIssue().status">
+                <option value="under repair">Under Repair</option>
+                <option value="broken">Broken</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted-custom fw-semibold mb-1">Describe the Issue *</label>
+              <textarea class="form-control" rows="4" placeholder="Describe what is wrong or needs maintenance..." [(ngModel)]="reportIssue().report"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-top-custom p-4">
+            <button type="button" class="btn btn-outline-secondary px-4" (click)="closeReportIssueModal()">Cancel</button>
+            <button type="button" class="btn btn-warning px-4 fw-bold text-dark" (click)="submitIssueReport()">Submit Report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Address / Resolve Issue Modal (Admin Only) -->
+  @if (showResolveModal() && userRole() === 'Admin') {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content custom-modal-content border-0 shadow-lg">
+          <div class="modal-header border-bottom-custom p-4">
+            <h5 class="modal-title fw-bold text-info">
+              <i class="bi bi-shield-check me-2"></i> Resolve / Address Maintenance Issue
+            </h5>
+            <button type="button" class="btn-close" (click)="closeResolveModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label text-muted-custom fw-semibold mb-1">Asset Name</label>
+              <input type="text" class="form-control-plaintext text-light-custom fw-bold fs-5" readonly [value]="selectedAssetNameForResolve()">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted-custom fw-semibold mb-1">Update Status / Action</label>
+              <select class="form-select" [(ngModel)]="resolveForm().status">
+                <option value="active">Active (Fully Resolved)</option>
+                <option value="under repair">Keep Under Repair</option>
+                <option value="broken">Broken (Out of Order)</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted-custom fw-semibold mb-1">Resolution / Maintenance Notes *</label>
+              <textarea class="form-control" rows="4" placeholder="Describe the resolution, repairs performed, or update details..." [(ngModel)]="resolveForm().report"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-top-custom p-4">
+            <button type="button" class="btn btn-outline-secondary px-4" (click)="closeResolveModal()">Cancel</button>
+            <button type="button" class="btn btn-info px-4 fw-bold text-white" (click)="submitResolve()">Submit Update</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+}

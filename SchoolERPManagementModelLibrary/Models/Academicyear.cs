@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace SchoolERPManagementModelLibrary.Models;
@@ -20,4 +20,6 @@ public partial class Academicyear
     public virtual ICollection<Feestructure> Feestructures { get; set; } = new List<Feestructure>();
 
     public virtual ICollection<Studentenrollment> Studentenrollments { get; set; } = new List<Studentenrollment>();
+
+    public virtual ICollection<Academiccalendar> Academiccalendars { get; set; } = new List<Academiccalendar>();
 }

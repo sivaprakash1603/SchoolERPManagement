@@ -225,6 +225,8 @@ public sealed class HomeworkService : IHomeworkService
             if (enrollment != null)
             {
                 var studentHomeworks = await _homeworkRepository.Query(true)
+                    .Include(h => h.Subject)
+                    .Include(h => h.Teacher)
                     .Include(h => h.Homeworksubmissions.Where(sub => sub.Studentid == studentId))
                     .Where(h => h.Classid == enrollment.Classid)
                     .OrderByDescending(h => h.Createdat)
@@ -233,6 +235,16 @@ public sealed class HomeworkService : IHomeworkService
             }
         }
         return Array.Empty<HomeworkResponseDTO>();
+    }
+
+    public async Task<IReadOnlyList<HomeworkSubmissionDetailsDTO>> GetSubmissionsByHomeworkIdAsync(int homeworkId, CancellationToken cancellationToken)
+    {
+        var submissions = await _submissionRepository.Query(true)
+            .Include(x => x.Student)
+            .Where(x => x.Homeworkid == homeworkId)
+            .ToListAsync(cancellationToken);
+
+        return _mapper.Map<IReadOnlyList<HomeworkSubmissionDetailsDTO>>(submissions);
     }
 
     private async Task EnsureReferencesAsync(int subjectId, int teacherId, int classId, CancellationToken cancellationToken)

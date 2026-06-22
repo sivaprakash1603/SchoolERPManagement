@@ -31,5 +31,21 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _classService.CreateClassAsync(dto, cancellationToken);
             return Ok(result);
         }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateClass(int id, [FromBody] UpdateClassDTO dto, CancellationToken cancellationToken)
+        {
+            var result = await _classService.UpdateClassAsync(id, dto, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteClass(int id, CancellationToken cancellationToken)
+        {
+            await _classService.DeleteClassAsync(id, cancellationToken);
+            return Ok(new { Message = "Class deleted successfully." });
+        }
     }
 }

@@ -22,6 +22,42 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Academiccalendar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Academicyearid")
+                        .HasColumnType("integer")
+                        .HasColumnName("academicyearid");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("Isholiday")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isholiday");
+
+                    b.HasKey("Id")
+                        .HasName("academiccalendar_pkey");
+
+                    b.HasIndex(new[] { "Academicyearid", "Date" }, "academiccalendar_academicyearid_date_key")
+                        .IsUnique();
+
+                    b.ToTable("academiccalendar", (string)null);
+                });
+
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Academicyear", b =>
                 {
                     b.Property<int>("Id")
@@ -1338,6 +1374,18 @@ namespace SchoolERPManagementDALLibrary.Migrations
                     b.ToTable("usernotifications", (string)null);
                 });
 
+            modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Academiccalendar", b =>
+                {
+                    b.HasOne("SchoolERPManagementModelLibrary.Models.Academicyear", "Academicyear")
+                        .WithMany("Academiccalendars")
+                        .HasForeignKey("Academicyearid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("academiccalendar_academicyearid_fkey");
+
+                    b.Navigation("Academicyear");
+                });
+
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Asset", b =>
                 {
                     b.HasOne("SchoolERPManagementModelLibrary.Models.Assettype", "Assettype")
@@ -1806,6 +1854,8 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Academicyear", b =>
                 {
+                    b.Navigation("Academiccalendars");
+
                     b.Navigation("Exams");
 
                     b.Navigation("Feestructures");

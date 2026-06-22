@@ -29,6 +29,19 @@ export class Classes implements OnInit {
   showCreateModal = signal(false);
   isSaving = signal(false);
 
+  showEditModal = signal(false);
+  showDeleteModal = signal(false);
+  editingClass = signal<ClassResponseDTO | null>(null);
+  deletingClass = signal<ClassResponseDTO | null>(null);
+  editForm = signal({
+    classname: '',
+    section: '',
+    classteacherId: null as number | null,
+    academicyearId: null as number | null
+  });
+  isUpdating = signal(false);
+  isDeleting = signal(false);
+
   createForm = signal({
     classname: '',
     section: '',
@@ -100,6 +113,20 @@ export class Classes implements OnInit {
     return teacher ? teacher.name : 'Unknown';
   }
 
+  getAvailableTeachersForCreate(): TeacherResponseDTO[] {
+    const assignedTeacherIds = this.classes()
+      .map(c => c.classteacherId)
+      .filter((id): id is number => !!id);
+    return this.teachers().filter(t => !assignedTeacherIds.includes(t.id));
+  }
+
+  getAvailableTeachersForEdit(currentClassteacherId?: number): TeacherResponseDTO[] {
+    const assignedTeacherIds = this.classes()
+      .map(c => c.classteacherId)
+      .filter((id): id is number => !!id && id !== currentClassteacherId);
+    return this.teachers().filter(t => !assignedTeacherIds.includes(t.id));
+  }
+
   getYearName(yearId?: number): string {
     if (!yearId) return 'N/A';
     const year = this.academicYears().find(y => y.id === yearId);
@@ -154,6 +181,85 @@ export class Classes implements OnInit {
         console.error('Failed to save class', err);
         this.isSaving.set(false);
         this.toastService.error(err.error?.message || 'Failed to save class. A teacher might already be assigned to another class.');
+      }
+    });
+  }
+
+  openEditModal(cls: ClassResponseDTO) {
+    this.editingClass.set(cls);
+    this.editForm.set({
+      classname: cls.classname,
+      section: cls.section || '',
+      classteacherId: cls.classteacherId || null,
+      academicyearId: cls.academicyearId || null
+    });
+    this.showEditModal.set(true);
+  }
+
+  closeEditModal() {
+    this.showEditModal.set(false);
+    this.editingClass.set(null);
+  }
+
+  saveEdit() {
+    const cls = this.editingClass();
+    if (!cls) return;
+
+    const form = this.editForm();
+    if (!form.classname || !form.section) {
+      this.toastService.warning('Please fill in both Class Name and Section.');
+      return;
+    }
+
+    this.isUpdating.set(true);
+    const dto = {
+      classname: form.classname,
+      section: form.section,
+      classteacherId: form.classteacherId || undefined,
+      academicyearId: form.academicyearId || undefined
+    };
+
+    this.classService.updateClass(cls.id, dto).subscribe({
+      next: () => {
+        this.toastService.success('Class updated successfully!');
+        this.isUpdating.set(false);
+        this.closeEditModal();
+        this.fetchClasses();
+      },
+      error: (err) => {
+        console.error('Failed to update class', err);
+        this.isUpdating.set(false);
+        this.toastService.error(err.error?.message || 'Failed to update class.');
+      }
+    });
+  }
+
+  openDeleteModal(cls: ClassResponseDTO) {
+    this.deletingClass.set(cls);
+    this.showDeleteModal.set(true);
+  }
+
+  closeDeleteModal() {
+    this.showDeleteModal.set(false);
+    this.deletingClass.set(null);
+  }
+
+  confirmDelete() {
+    const cls = this.deletingClass();
+    if (!cls) return;
+
+    this.isDeleting.set(true);
+    this.classService.deleteClass(cls.id).subscribe({
+      next: () => {
+        this.toastService.success('Class deleted successfully!');
+        this.isDeleting.set(false);
+        this.closeDeleteModal();
+        this.fetchClasses();
+      },
+      error: (err) => {
+        console.error('Failed to delete class', err);
+        this.isDeleting.set(false);
+        this.toastService.error(err.error?.message || 'Failed to delete class.');
       }
     });
   }

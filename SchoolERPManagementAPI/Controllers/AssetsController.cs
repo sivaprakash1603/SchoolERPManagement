@@ -26,7 +26,7 @@ namespace SchoolERPManagementAPI.Controllers
         }
 
         [HttpPost("report")]
-        [Authorize(Roles = "Admin,Teacher")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<IActionResult> ReportAssetIssue([FromBody] AssetIssueDTO dto, CancellationToken cancellationToken)
         {
             var result = await _assetService.ReportAssetIssueAsync(dto, cancellationToken);
@@ -34,10 +34,26 @@ namespace SchoolERPManagementAPI.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Teacher")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<IActionResult> GetAssets(CancellationToken cancellationToken)
         {
             var result = await _assetService.GetAssetsAsync(cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("types")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
+        public async Task<IActionResult> GetAssetTypes(CancellationToken cancellationToken)
+        {
+            var result = await _assetService.GetAssetTypesAsync(cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("reports")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAssetReports(CancellationToken cancellationToken)
+        {
+            var result = await _assetService.GetAssetReportsAsync(cancellationToken);
             return Ok(result);
         }
     }

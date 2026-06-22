@@ -84,4 +84,16 @@ public sealed class AssetService : IAssetService
         var items = await _assetRepository.Query(true).ToListAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<AssetResponseDTO>>(items);
     }
+
+    public async Task<IReadOnlyList<AssetTypeResponseDTO>> GetAssetTypesAsync(CancellationToken cancellationToken)
+    {
+        var items = await _assetTypeRepository.Query(true).ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<AssetTypeResponseDTO>>(items);
+    }
+
+    public async Task<IReadOnlyList<AssetReportResponseDTO>> GetAssetReportsAsync(CancellationToken cancellationToken)
+    {
+        var items = await _assetReportRepository.Query(true).ToListAsync(cancellationToken);
+        return _mapper.Map<IReadOnlyList<AssetReportResponseDTO>>(items);
+    }
 }

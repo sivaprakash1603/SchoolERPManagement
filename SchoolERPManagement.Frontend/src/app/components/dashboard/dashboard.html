@@ -1,12 +1,17 @@
 <div class="dashboard-wrapper">
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>
       <h2 class="fs-2 fw-bold mb-1" style="color: var(--text-primary);">
         {{ salutation }}, <span style="color: var(--primary-accent);">{{ userName }}</span>! 👋
       </h2>
-      <p class="text-muted-custom mb-0">Here is your overview of institutional metrics across all departments.</p>
+      <p class="text-muted-custom mb-0">
+        {{ userRole() === 'Student' ? 'Welcome back! Here is a summary of your academic progress.' : 'Here is your overview of institutional metrics across all departments.' }}
+      </p>
     </div>
-    <div class="d-flex align-items-center gap-2" style="min-width: 260px;">
+    
+    <!-- Academic Year Selector (Only for Admin/Teacher) -->
+    <div class="d-flex align-items-center gap-2" style="min-width: 260px;" *ngIf="userRole() === 'Admin' || userRole() === 'Teacher'">
       <label class="form-label text-muted-custom fw-bold text-uppercase mb-0 text-nowrap" style="font-size: 0.75rem; letter-spacing: 0.05em;"><i class="bi bi-calendar3"></i> Academic Year:</label>
       <select class="form-select" (change)="onYearChange($event)" [value]="selectedAcademicYearId()">
         @for (year of academicYears(); track year.id) {
@@ -26,7 +31,149 @@
     <div class="alert alert-danger">{{ error() }}</div>
   }
 
-  @if (metrics()) {
+  <!-- STUDENT DASHBOARD -->
+  @if (userRole() === 'Student' && !loading() && !error()) {
+    <div class="row g-4 mb-4">
+      <!-- Attendance Stats Card -->
+      <div class="col-12 col-md-4">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca;">
+              <i class="bi bi-calendar-check-fill fs-5"></i>
+            </div>
+            <span class="badge text-success bg-transparent px-0"><i class="bi bi-check-circle me-1"></i>Tracked</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">ATTENDANCE RATE</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ studentAttendanceRate() }}%</h3>
+        </div>
+      </div>
+
+      <!-- Pending Homework Card -->
+      <div class="col-12 col-md-4">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #ffedd5; color: #c2410c;">
+              <i class="bi bi-journal-album fs-5"></i>
+            </div>
+            <span class="badge" [class.text-danger]="pendingHomeworkCount() > 0" [class.text-success]="pendingHomeworkCount() === 0" class="bg-transparent px-0">
+              {{ pendingHomeworkCount() > 0 ? 'Needs Attention' : 'All Clear' }}
+            </span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">PENDING HOMEWORK</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ pendingHomeworkCount() }}</h3>
+        </div>
+      </div>
+
+      <!-- Fee Status Card -->
+      <div class="col-12 col-md-4">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #d1fae5; color: #047857;">
+              <i class="bi bi-credit-card-fill fs-5"></i>
+            </div>
+            <span class="badge" [class.text-danger]="feeSummary() && feeSummary()!.pendingAmount > 0" [class.text-success]="!feeSummary() || feeSummary()!.pendingAmount === 0" class="bg-transparent px-0">
+              {{ feeSummary() && feeSummary()!.pendingAmount > 0 ? 'Pending Payment' : 'Paid' }}
+            </span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">PENDING FEES</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">
+            ₹{{ (feeSummary() ? feeSummary()!.pendingAmount : 0) | number:'1.2-2' }}
+          </h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Detail Widgets -->
+    <div class="row g-4">
+      <!-- Left: Upcoming Homework -->
+      <div class="col-lg-7">
+        <div class="minimal-card p-4 h-100">
+          <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history"></i> Upcoming Assignments & Homework
+          </h5>
+          <div class="table-responsive">
+            <table class="table table-borderless align-middle mb-0 text-muted-custom">
+              <thead>
+                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Subject</th>
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Title</th>
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Due Date</th>
+                  <th class="fw-medium text-uppercase pb-3 text-end" style="font-size: 0.7rem; letter-spacing: 0.05em;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (hw of upcomingHomework(); track hw.id) {
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                    <td class="py-3 text-body fw-bold">
+                      <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">{{ hw.subjectName }}</span>
+                    </td>
+                    <td class="py-3 text-body">{{ hw.title }}</td>
+                    <td class="py-3 text-danger fw-medium">{{ hw.dueDate | date:'mediumDate' }}</td>
+                    <td class="py-3 text-end">
+                      <span class="badge rounded-pill px-2 py-1" 
+                            [class.bg-success-subtle]="hw.submission" [class.text-success]="hw.submission"
+                            [class.bg-warning-subtle]="!hw.submission" [class.text-warning]="!hw.submission">
+                        {{ hw.submission ? 'Submitted' : 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+                @if (upcomingHomework().length === 0) {
+                  <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                      <i class="bi bi-journal-check fs-1 d-block mb-2 text-success"></i>
+                      No upcoming homework assignments found!
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Recent Exam Results -->
+      <div class="col-lg-5">
+        <div class="minimal-card p-4 h-100">
+          <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
+            <i class="bi bi-award"></i> Recent Exam Marks
+          </h5>
+          <div class="table-responsive">
+            <table class="table table-borderless align-middle mb-0 text-muted-custom">
+              <thead>
+                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Exam / Subject</th>
+                  <th class="fw-medium text-uppercase pb-3 text-end" style="font-size: 0.7rem; letter-spacing: 0.05em;">Marks</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (res of recentResults(); track res.id) {
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
+                    <td class="py-3 text-body">
+                      <div class="fw-bold">{{ res.subjectName }}</div>
+                      <small class="text-muted-custom">{{ res.examName }}</small>
+                    </td>
+                    <td class="py-3 text-end text-body fw-bold fs-6">{{ res.marks }}</td>
+                  </tr>
+                }
+                @if (recentResults().length === 0) {
+                  <tr>
+                    <td colspan="2" class="text-center py-5 text-muted">
+                      <i class="bi bi-file-earmark-bar-graph fs-1 d-block mb-2 text-warning"></i>
+                      No exam results published yet.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ADMIN / TEACHER DASHBOARD -->
+  @if ((userRole() === 'Admin' || userRole() === 'Teacher') && metrics() && !loading() && !error()) {
     <div class="row g-4 mb-4">
       <div class="col-12 col-sm-6 col-xl-4">
         <div class="minimal-card p-4">

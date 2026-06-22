@@ -76,12 +76,17 @@ public sealed class StudentService : IStudentService
 
         if (academicYearId.HasValue)
         {
-            query = query.Where(s => s.Studentenrollments.Any(e => e.Academicyearid == academicYearId.Value));
-        }
-
-        if (request.ClassId.HasValue)
-        {
-            query = query.Where(s => s.Studentenrollments.Any(e => e.Classid == request.ClassId.Value));
+            if (request.ClassId.HasValue)
+            {
+                query = query.Where(s => s.Studentenrollments.Any(e => e.Classid == request.ClassId.Value && e.Academicyearid == academicYearId.Value));
+            }
+            else
+            {
+                query = query.Where(s => 
+                    s.Studentenrollments.Any(e => e.Academicyearid == academicYearId.Value) ||
+                    (s.User.Isactive == true && !s.Studentenrollments.Any(e => e.Academicyearid == academicYearId.Value))
+                );
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(request.Status) && request.Status != "All")
@@ -118,7 +123,7 @@ public sealed class StudentService : IStudentService
         var dtos = items.Select(s => 
         {
             var enrollment = s.Studentenrollments.FirstOrDefault(e => e.Academicyearid == academicYearId);
-            if (enrollment == null)
+            if (enrollment == null && !request.AcademicYearId.HasValue)
             {
                 enrollment = s.Studentenrollments.OrderByDescending(e => e.Academicyearid).FirstOrDefault();
             }
@@ -155,7 +160,10 @@ public sealed class StudentService : IStudentService
 
     public async Task<StudentResponseDTO> GetStudentByIdAsync(int id, CancellationToken cancellationToken)
     {
-        var student = await _studentRepository.Query(true).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var student = await _studentRepository.Query(true)
+            .Include(x => x.Studentenrollments)
+            .Include(x => x.Studentdocuments)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         return student is null
             ? throw new EntityNotFoundException("Student", id.ToString())
             : _mapper.Map<StudentResponseDTO>(student);
@@ -201,7 +209,9 @@ public sealed class StudentService : IStudentService
             .CountAsync(e => e.Classid == dto.ClassId && e.Academicyearid == dto.AcademicYearId, cancellationToken);
         int rollNo = currentEnrollmentCount + 1;
 
-        string generatedUsername = $"ST{rollNo:D3}{classEntity.Classname}{classEntity.Section}";
+        string cleanClassName = classEntity.Classname.Replace(" ", "");
+        string cleanSection = classEntity.Section?.Replace(" ", "") ?? "";
+        string generatedUsername = $"ST{rollNo:D3}{cleanClassName}{cleanSection}";
         string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); 
 
         var user = new User

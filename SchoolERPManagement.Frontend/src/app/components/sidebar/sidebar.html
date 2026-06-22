@@ -10,7 +10,7 @@
   </div>
   
   <ul class="nav flex-column flex-nowrap mb-auto sidebar-nav pe-2 overflow-y-auto overflow-x-hidden">
-    @for (item of menuItems; track item.route) {
+    @for (item of menuItems(); track item.route) {
       <li class="nav-item">
         <a [routerLink]="item.route" routerLinkActive="active" class="nav-link d-flex align-items-center gap-3 py-2 px-3 sans-text text-decoration-none" (click)="onMenuClick()">
           <i class="bi {{ item.icon }} fs-5"></i>

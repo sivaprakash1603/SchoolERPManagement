@@ -11,3 +11,12 @@ public class CreateClassValidator : AbstractValidator<CreateClassDTO>
         RuleFor(x => x.Section).NotEmpty().MaximumLength(10);
     }
 }
+
+public class UpdateClassValidator : AbstractValidator<UpdateClassDTO>
+{
+    public UpdateClassValidator()
+    {
+        RuleFor(x => x.Classname).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.Section).NotEmpty().MaximumLength(10);
+    }
+}
