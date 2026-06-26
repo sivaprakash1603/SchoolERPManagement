@@ -21,6 +21,7 @@ export interface PendingDocumentDTO {
   ownerName: string;
   ownerType: string;
   ownerIdentifier: string;
+  classId?: number;
 }
 
 @Injectable({

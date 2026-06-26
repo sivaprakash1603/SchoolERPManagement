@@ -1,14 +1,21 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { Auth } from '../../services/auth';
 import { Router, ActivatedRoute } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.css',
 })
@@ -27,7 +34,7 @@ export class ResetPassword implements OnInit {
     private authService: Auth,
     private router: Router,
     private route: ActivatedRoute,
-    private toastService: ToastService
+    private toastService: ToastService,
   ) {}
 
   ngOnInit() {
@@ -39,13 +46,21 @@ export class ResetPassword implements OnInit {
       this.errorMessage.set('Invalid password reset link. Please request a new one.');
     }
 
-    this.resetForm = this.fb.group({
-      newPassword: ['', [
-        Validators.required,
-        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
-      ]],
-      confirmPassword: ['', [Validators.required]]
-    }, { validators: this.passwordMatchValidator });
+    this.resetForm = this.fb.group(
+      {
+        newPassword: [
+          '',
+          [
+            Validators.required,
+            Validators.pattern(
+              /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+            ),
+          ],
+        ],
+        confirmPassword: ['', [Validators.required]],
+      },
+      { validators: this.passwordMatchValidator },
+    );
   }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -59,11 +74,11 @@ export class ResetPassword implements OnInit {
   }
 
   toggleNewPasswordVisibility() {
-    this.showNewPassword.update(v => !v);
+    this.showNewPassword.update((v) => !v);
   }
 
   toggleConfirmPasswordVisibility() {
-    this.showConfirmPassword.update(v => !v);
+    this.showConfirmPassword.update((v) => !v);
   }
 
   handleResetClick() {
@@ -78,7 +93,7 @@ export class ResetPassword implements OnInit {
     const resetData = {
       email: this.email,
       token: this.token,
-      newPassword: this.resetForm.value.newPassword
+      newPassword: this.resetForm.value.newPassword,
     };
 
     this.authService.resetPassword(resetData).subscribe({
@@ -89,8 +104,10 @@ export class ResetPassword implements OnInit {
       },
       error: (err) => {
         this.progress.set(false);
-        this.errorMessage.set(err.error?.message || 'Failed to reset password. The link may have expired.');
-      }
+        this.errorMessage.set(
+          err.error?.message || 'Failed to reset password. The link may have expired.',
+        );
+      },
     });
   }
 }

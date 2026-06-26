@@ -7,6 +7,7 @@ import { TeacherService, TeacherResponseDTO } from '../../services/teacher.servi
 import { ParentService } from '../../services/parent.service';
 import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { ToastService } from '../../services/toast.service';
+import { TimetableService } from '../../services/timetable.service';
 
 @Component({
   selector: 'app-documents',
@@ -22,14 +23,17 @@ export class Documents implements OnInit {
   private parentService = inject(ParentService);
   private classService = inject(ClassService);
   private toastService = inject(ToastService);
+  private timetableService = inject(TimetableService);
 
   // Auth & Roles
   userRole = signal<string>('Student');
   currentUserId = signal<number | null>(null);
+  teacherClassIds = signal<number[]>([]);
 
   // Profile references for Student / Parent
   resolvedStudentId = signal<number | null>(null);
   resolvedTeacherId = signal<number | null>(null);
+  currentTeacher = signal<TeacherResponseDTO | null>(null);
   parentChildren = signal<any[]>([]); // list of children for parent
   selectedChildId = signal<number | null>(null);
 
@@ -57,6 +61,9 @@ export class Documents implements OnInit {
   pendingDocuments = signal<PendingDocumentDTO[]>([]);
   onlyShowPending = signal<boolean>(true);
 
+  // Teacher self-management
+  teacherViewMode = signal<'verify' | 'self'>('verify');
+
   // Modals Visibility
   showUploadModal = signal<boolean>(false);
 
@@ -78,22 +85,72 @@ export class Documents implements OnInit {
     const uid = uidStr ? parseInt(uidStr, 10) : null;
     this.currentUserId.set(uid);
 
-    if (role === 'Admin' || role === 'Teacher') {
+    if (role === 'Admin') {
       this.loadDirectoryClasses();
       this.loadPendingDocuments();
+    } else if (role === 'Teacher') {
+      const username = sessionStorage.getItem('username');
+      if (username) {
+        this.teacherService.getTeacherByUsername(username).subscribe({
+          next: (profile) => {
+            this.resolvedTeacherId.set(profile.id);
+            this.currentTeacher.set(profile);
+            
+            this.timetableService.getTeacherTimetable(profile.id).subscribe({
+              next: (slots) => {
+                const classIds = Array.from(new Set<number>(slots.map(s => s.classId)));
+                this.teacherClassIds.set(classIds);
+                this.loadDirectoryClasses();
+                this.loadPendingDocuments();
+              },
+              error: (err) => {
+                console.error(err);
+                this.loadDirectoryClasses();
+                this.loadPendingDocuments();
+              }
+            });
+          },
+          error: (err) => console.error(err)
+        });
+      }
     } else if (role === 'Student') {
       if (uid) this.fetchStudentProfileAndDocs(uid);
     } else if (role === 'Parent') {
       if (uid) this.fetchParentProfileAndChildren(uid);
-    } else if (role === 'Teacher') {
-      // In addition to student verification directory, teachers can view their own documents
-      const username = sessionStorage.getItem('username');
-      if (username) {
-        this.teacherService.getTeacherByUsername(username).subscribe({
-          next: (profile) => this.resolvedTeacherId.set(profile.id),
-          error: (err) => console.error(err)
-        });
-      }
+    }
+  }
+
+  loadTeacherSelfDocuments() {
+    this.isLoading.set(true);
+    const teacherId = this.resolvedTeacherId();
+    if (teacherId) {
+      this.documentService.getTeacherDocuments(teacherId).subscribe({
+        next: (docs) => {
+          this.activeDocumentsList.set(docs);
+          this.calculateStats(docs);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error(err);
+          this.toastService.error('Failed to load your documents.');
+          this.isLoading.set(false);
+        }
+      });
+    } else {
+      this.isLoading.set(false);
+    }
+  }
+
+  switchTeacherViewMode(mode: 'verify' | 'self') {
+    this.teacherViewMode.set(mode);
+    if (mode === 'self') {
+      this.selectedStudent.set(null);
+      this.selectedTeacher.set(null);
+      this.loadTeacherSelfDocuments();
+    } else {
+      this.activeDocumentsList.set([]);
+      this.calculateStats([]);
+      this.loadPendingDocuments();
     }
   }
 
@@ -182,7 +239,19 @@ export class Documents implements OnInit {
   // --- ADMIN / TEACHER DIRECTORY FLOWS ---
   loadDirectoryClasses() {
     this.classService.getAllClasses().subscribe({
-      next: (classes) => this.classesList.set(classes),
+      next: (classes) => {
+        if (this.userRole() === 'Teacher') {
+          const teacher = this.currentTeacher();
+          const filtered = classes.filter(c => 
+            this.teacherClassIds().includes(c.id) || 
+            (teacher && teacher.className && c.classname.toLowerCase() === teacher.className.toLowerCase() && 
+             (!teacher.section || c.section?.toLowerCase() === teacher.section.toLowerCase()))
+          );
+          this.classesList.set(filtered);
+        } else {
+          this.classesList.set(classes);
+        }
+      },
       error: (err) => console.error(err)
     });
   }
@@ -202,18 +271,30 @@ export class Documents implements OnInit {
             regNo: d.ownerIdentifier,
             name: d.ownerName,
             className: 'Pending Verification',
-            profilePhotoUrl: ''
+            profilePhotoUrl: '',
+            classId: d.classId // If available, or we verify by loading details
           }));
 
-        const uniqueStudentsMap = new Map<number, any>();
-        for (const s of students) {
-          if (!uniqueStudentsMap.has(s.id)) {
-            if (!query || s.name.toLowerCase().includes(query) || s.regNo.toLowerCase().includes(query)) {
-              uniqueStudentsMap.set(s.id, s);
+        // Let's filter pending students by class if user is Teacher
+        this.studentService.getAllStudents({ pageNumber: 1, pageSize: 1000 }).subscribe({
+          next: (res) => {
+            const validClassIds = this.classesList().map(c => c.id);
+            const allowedStudentIds = res.items
+              .filter(s => this.userRole() !== 'Teacher' || (s.classId && validClassIds.includes(s.classId)))
+              .map(s => s.id);
+
+            const uniqueStudentsMap = new Map<number, any>();
+            for (const s of students) {
+              if (allowedStudentIds.includes(s.id) && !uniqueStudentsMap.has(s.id)) {
+                if (!query || s.name.toLowerCase().includes(query) || s.regNo.toLowerCase().includes(query)) {
+                  uniqueStudentsMap.set(s.id, s);
+                }
+              }
             }
-          }
-        }
-        this.studentsDirectory.set(Array.from(uniqueStudentsMap.values()));
+            this.studentsDirectory.set(Array.from(uniqueStudentsMap.values()));
+          },
+          error: (err) => console.error(err)
+        });
       } else {
         const teachers = pendingList
           .filter(d => d.ownerType === 'Teacher')
@@ -248,7 +329,15 @@ export class Documents implements OnInit {
         }
 
         this.studentService.getAllStudents(request).subscribe({
-          next: (res) => this.studentsDirectory.set(res.items),
+          next: (res) => {
+            if (this.userRole() === 'Teacher' && !this.selectedClassId()) {
+              const validClassIds = this.classesList().map(c => c.id);
+              const filtered = res.items.filter(s => s.classId && validClassIds.includes(s.classId));
+              this.studentsDirectory.set(filtered);
+            } else {
+              this.studentsDirectory.set(res.items);
+            }
+          },
           error: (err) => console.error(err)
         });
       } else {
@@ -369,6 +458,25 @@ export class Documents implements OnInit {
         next: () => {
           this.toastService.success('Document uploaded successfully!');
           this.loadDocumentsForStudent(this.selectedChildId()!);
+          this.closeUploadModal();
+          this.isUploading.set(false);
+        },
+        error: (err) => {
+          console.error(err);
+          this.toastService.error('Failed to upload document.');
+          this.isUploading.set(false);
+        }
+      });
+    } else if (role === 'Teacher' && this.resolvedTeacherId()) {
+      this.documentService.uploadTeacherDocument(this.resolvedTeacherId()!, form.selectedFile, docName).subscribe({
+        next: () => {
+          this.toastService.success('Document uploaded successfully!');
+          this.documentService.getTeacherDocuments(this.resolvedTeacherId()!).subscribe({
+            next: (docs) => {
+              this.activeDocumentsList.set(docs);
+              this.calculateStats(docs);
+            }
+          });
           this.closeUploadModal();
           this.isUploading.set(false);
         },

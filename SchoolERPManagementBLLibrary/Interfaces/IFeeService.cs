@@ -11,4 +11,6 @@ public interface IFeeService
     Task HandleStripeWebhookAsync(string json, string signature, CancellationToken cancellationToken);
     Task<FeeStructureResponseDTO> AddFeeStructureAsync(AddFeeStructureDTO dto, CancellationToken cancellationToken);
     Task<IReadOnlyList<ClassFeeSummaryDTO>> GetClassFeeSummariesAsync(int classId, int academicYearId, CancellationToken cancellationToken);
+    Task<CheckoutSessionResultDTO> GetCheckoutSessionDetailsAsync(string sessionId, CancellationToken cancellationToken);
+    Task<byte[]> GenerateReceiptPdfAsync(string transactionId, CancellationToken cancellationToken);
 }

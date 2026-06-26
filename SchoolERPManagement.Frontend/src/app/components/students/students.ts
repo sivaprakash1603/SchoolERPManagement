@@ -106,21 +106,65 @@ export class Students implements OnInit {
     const role = sessionStorage.getItem('role') || 'Student';
     this.userRole.set(role);
     this.isAdmin.set(role === 'Admin');
+    this.loadFilterState();
     this.fetchCurrentAcademicSession();
     this.fetchParents();
+  }
+
+  loadFilterState() {
+    const savedState = sessionStorage.getItem('students_filter_state');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        this.searchQuery.set(state.searchQuery || '');
+        this.status.set(state.status || 'All');
+        this.gender.set(state.gender || 'Any Gender');
+        this.pageNumber.set(state.pageNumber || 1);
+        if (state.classId !== undefined) {
+          this.classId.set(state.classId);
+        }
+        if (state.selectedAcademicYearId !== undefined) {
+          this.selectedAcademicYearId.set(state.selectedAcademicYearId);
+        }
+      } catch (e) {
+        console.error('Failed to parse saved filter state', e);
+      }
+    }
+  }
+
+  saveFilterState() {
+    const state = {
+      searchQuery: this.searchQuery(),
+      status: this.status(),
+      gender: this.gender(),
+      pageNumber: this.pageNumber(),
+      classId: this.classId(),
+      selectedAcademicYearId: this.selectedAcademicYearId()
+    };
+    sessionStorage.setItem('students_filter_state', JSON.stringify(state));
   }
 
   fetchCurrentAcademicSession() {
     this.academicYearService.getAllAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
-        const current = years.find(y => y.isCurrent);
-        if (current) {
-          this.currentSessionName.set(current.yearName);
-          this.selectedAcademicYearId.set(current.id);
-        } else if (years.length > 0) {
-          this.currentSessionName.set(years[0].yearName);
-          this.selectedAcademicYearId.set(years[0].id);
+        
+        // Only set current session if we don't have a saved one from filter state
+        if (this.selectedAcademicYearId() === null) {
+          const current = years.find(y => y.isCurrent);
+          if (current) {
+            this.currentSessionName.set(current.yearName);
+            this.selectedAcademicYearId.set(current.id);
+          } else if (years.length > 0) {
+            this.currentSessionName.set(years[0].yearName);
+            this.selectedAcademicYearId.set(years[0].id);
+          }
+        } else {
+          // Sync name with saved ID
+          const matched = years.find(y => y.id === this.selectedAcademicYearId());
+          if (matched) {
+            this.currentSessionName.set(matched.yearName);
+          }
         }
         this.fetchClasses();
         this.fetchStudents();
@@ -157,6 +201,7 @@ export class Students implements OnInit {
       this.currentSessionName.set(matched.yearName);
     }
     this.classId.set(null); // reset class filter since classes change per year
+    this.saveFilterState();
     this.fetchClasses();
     this.onFilterChange();
   }
@@ -206,6 +251,7 @@ export class Students implements OnInit {
 
   onFilterChange() {
     this.pageNumber.set(1);
+    this.saveFilterState();
     this.fetchStudents();
   }
 
@@ -563,6 +609,14 @@ export class Students implements OnInit {
   nextPage() {
     if (this.pageNumber() < this.totalPages()) {
       this.pageNumber.update(p => p + 1);
+      this.fetchStudents();
+    }
+  }
+
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.pageNumber.set(page);
+      this.saveFilterState();
       this.fetchStudents();
     }
   }

@@ -39,9 +39,6 @@ public class AppMappingProfile : Profile
         CreateMap<Staffattendance, StaffAttendanceResponseDTO>()
             .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.User != null ? src.User.Username : string.Empty));
 
-        
-        CreateMap<User, AuthResponseDTO>()
-            .ConstructUsing(src => new AuthResponseDTO(src.Id, src.Username, src.Email, src.Roleid, src.Role != null ? src.Role.Rolename : string.Empty, ""));
 
         
         CreateMap<Class, ClassResponseDTO>()
@@ -132,10 +129,12 @@ public class AppMappingProfile : Profile
                 src.Userid, 
                 src.Regno, 
                 src.Name, 
-                null, 
+                src.Studentparents != null && src.Studentparents.Any() 
+                    ? src.Studentparents.First().Parentid 
+                    : null, 
                 null,
                 src.Studentenrollments != null && src.Studentenrollments.Any()
-                    ? src.Studentenrollments.OrderByDescending(e => e.Id).First().Classid
+                    ? src.Studentenrollments.OrderByDescending(e => e.Academicyearid).First().Classid
                     : null,
                 src.Studentdocuments != null && src.Studentdocuments.Any(d => d.Documentname == "Photo")
                     ? src.Studentdocuments.First(d => d.Documentname == "Photo").Bloburl

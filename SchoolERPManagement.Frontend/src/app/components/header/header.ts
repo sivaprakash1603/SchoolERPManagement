@@ -1,16 +1,16 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ThemeService } from '../../services/theme';
 import { LayoutService } from '../../services/layout.service';
 import { StudentService } from '../../services/student.service';
 import { TeacherService } from '../../services/teacher.service';
 import { ParentService } from '../../services/parent.service';
-import { CommonModule } from '@angular/common';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [RouterLink],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -23,7 +23,9 @@ export class Header implements OnInit {
 
   displayName = signal<string>('Loading...');
   displayPhotoUrl = signal<string | null>(null);
-  
+
+  notificationService = inject(NotificationService);
+
   constructor(private router: Router) {}
 
   ngOnInit() {
@@ -32,6 +34,17 @@ export class Header implements OnInit {
     const userId = userIdStr ? parseInt(userIdStr, 10) : null;
     const username = sessionStorage.getItem('username') || '';
 
+    // Connect SignalR and load initial notifications count
+    if (userId) {
+      this.notificationService.startConnection();
+      this.notificationService.getUserNotifications(userId).subscribe({
+        next: (notifs) => {
+          const unread = notifs.filter(n => !n.isRead).length;
+          this.notificationService.unreadCount.set(unread);
+        }
+      });
+    }
+
     if (role === 'Admin') {
       this.displayName.set('Administrator');
       this.displayPhotoUrl.set(null);
@@ -39,17 +52,21 @@ export class Header implements OnInit {
       this.studentService.getStudentByUserId(userId).subscribe({
         next: (res) => {
           this.displayName.set(res.name);
-          this.displayPhotoUrl.set(res.profilePhotoUrl ? 'http://localhost:5203' + res.profilePhotoUrl : null);
+          this.displayPhotoUrl.set(
+            res.profilePhotoUrl ? 'http://localhost:5203' + res.profilePhotoUrl : null,
+          );
         },
-        error: () => this.displayName.set(username || 'Student')
+        error: () => this.displayName.set(username || 'Student'),
       });
     } else if (role === 'Teacher' && username) {
       this.teacherService.getTeacherByUsername(username).subscribe({
         next: (res) => {
           this.displayName.set(res.name);
-          this.displayPhotoUrl.set(res.profilePhotoUrl ? 'http://localhost:5203' + res.profilePhotoUrl : null);
+          this.displayPhotoUrl.set(
+            res.profilePhotoUrl ? 'http://localhost:5203' + res.profilePhotoUrl : null,
+          );
         },
-        error: () => this.displayName.set(username || 'Teacher')
+        error: () => this.displayName.set(username || 'Teacher'),
       });
     } else if (role === 'Parent' && userId) {
       this.parentService.getParentByUserId(userId).subscribe({
@@ -57,7 +74,7 @@ export class Header implements OnInit {
           this.displayName.set(res.name);
           this.displayPhotoUrl.set(null);
         },
-        error: () => this.displayName.set(username || 'Parent')
+        error: () => this.displayName.set(username || 'Parent'),
       });
     } else {
       this.displayName.set(username || 'User');

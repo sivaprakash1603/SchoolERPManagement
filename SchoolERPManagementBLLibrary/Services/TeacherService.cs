@@ -257,6 +257,14 @@ public sealed class TeacherService : ITeacherService
 
         if (existing is null)
         {
+            var assignedToOther = await _teacherSubjectRepository.Query(false)
+                .Include(x => x.Teacher)
+                .FirstOrDefaultAsync(x => x.Subjectid == dto.SubjectId && x.Classid == dto.ClassId && x.Teacherid != dto.TeacherId, cancellationToken);
+
+            if (assignedToOther != null)
+            {
+                throw new BusinessRuleException($"This subject is already assigned to another teacher ({assignedToOther.Teacher.Name}) for this class.");
+            }
             existing = new Teachersubject
             {
                 Teacherid = dto.TeacherId,
@@ -269,6 +277,35 @@ public sealed class TeacherService : ITeacherService
 
         return new TeacherSubjectResponseDTO(existing.Id, existing.Teacherid, existing.Subjectid, existing.Classid);
     }
+
+    public async Task<IEnumerable<TeacherAssignmentDTO>> GetTeacherAssignmentsAsync(int teacherId, CancellationToken cancellationToken)
+    {
+        var assignments = await _teacherSubjectRepository.Query(false)
+            .Include(ts => ts.Class)
+            .Include(ts => ts.Subject)
+            .Where(ts => ts.Teacherid == teacherId)
+            .Select(ts => new TeacherAssignmentDTO(
+                ts.Classid, 
+                ts.Class != null ? ts.Class.Classname : "Unknown", 
+                ts.Class != null ? (ts.Class.Section ?? "") : "", 
+                ts.Subjectid, 
+                ts.Subject != null ? ts.Subject.Subjectname : "Unknown"))
+            .ToListAsync(cancellationToken);
+            
+        return assignments;
+    }
+
+    public async Task DeleteTeacherAssignmentAsync(int teacherId, int classId, int subjectId, CancellationToken cancellationToken)
+    {
+        var assignment = await _teacherSubjectRepository.Query(true)
+            .FirstOrDefaultAsync(ts => ts.Teacherid == teacherId && ts.Classid == classId && ts.Subjectid == subjectId, cancellationToken);
+            
+        if (assignment != null)
+        {
+            await _teacherSubjectRepository.DeleteAsync(assignment, save: true, ct: cancellationToken);
+        }
+    }
+
     public async Task<bool> VerifyTeacherAssignmentAsync(int userId, int teacherId, int classId, int subjectId, CancellationToken cancellationToken)
     {
         var teacher = await _teacherRepository.GetByIdAsync(teacherId);

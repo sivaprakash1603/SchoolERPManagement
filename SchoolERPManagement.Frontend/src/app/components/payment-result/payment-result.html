@@ -1,0 +1,108 @@
+@if (loading()) {
+  <div
+    class="d-flex justify-content-center align-items-center"
+    style="min-height: calc(100vh - 100px)"
+  >
+    <img src="/Book.svg" alt="Loading..." style="width: 100px; height: 100px" />
+  </div>
+} @else {
+  <div
+    class="container py-5 d-flex justify-content-center align-items-center"
+    style="min-height: calc(100vh - 80px)"
+  >
+    <!-- Loading State -->
+    <!-- Success State -->
+    @if (!loading() && status() === 'success') {
+      <div
+        class="card border-0 shadow-lg"
+        style="max-width: 500px; width: 100%; border-radius: 20px; overflow: hidden"
+      >
+        <div class="bg-success text-white text-center py-5 position-relative">
+          <div class="success-icon-bg">
+            <i class="bi bi-check-circle-fill" style="font-size: 4rem"></i>
+          </div>
+          <h3 class="fw-bold mt-3 mb-1">Payment Successful!</h3>
+          <p class="mb-0 text-white-50">Thank you for your payment.</p>
+        </div>
+        <div class="card-body p-4 p-md-5">
+          <div class="transaction-details mb-4">
+            <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+              <span class="text-muted">Transaction ID</span>
+              <span class="fw-bold text-end">{{ sessionDetails()?.transactionId || 'N/A' }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+              <span class="text-muted">Date</span>
+              <span class="fw-bold">{{ (sessionDetails()?.date | date: 'medium') || 'N/A' }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+              <span class="text-muted">Student Name</span>
+              <span class="fw-bold">{{ sessionDetails()?.studentName || 'N/A' }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+              <span class="text-muted">Fee Component</span>
+              <span class="fw-bold">{{ sessionDetails()?.feeName || 'N/A' }}</span>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+              <span class="text-muted fw-bold">Amount Paid</span>
+              <span class="fw-bold fs-4 text-success">{{
+                (sessionDetails()?.amountPaid | currency: 'INR' : 'symbol' : '1.0-0') || 'N/A'
+              }}</span>
+            </div>
+          </div>
+          <div class="d-grid gap-3">
+            <button
+              (click)="downloadReceipt()"
+              class="btn btn-outline-primary btn-lg rounded-pill fw-bold"
+              [disabled]="downloading()"
+            >
+              @if (!downloading()) {
+                <span><i class="bi bi-download me-2"></i> Download Receipt</span>
+              }
+              @if (downloading()) {
+                <span
+                  ><span
+                    class="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Generating...</span
+                >
+              }
+            </button>
+            <button (click)="goToFees()" class="btn btn-light btn-lg rounded-pill fw-bold">
+              Back to Fees
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+    <!-- Failed/Cancelled State -->
+    @if (!loading() && status() !== 'success') {
+      <div
+        class="card border-0 shadow-lg"
+        style="max-width: 500px; width: 100%; border-radius: 20px; overflow: hidden"
+      >
+        <div class="bg-danger text-white text-center py-5 position-relative">
+          <div class="error-icon-bg">
+            <i class="bi bi-x-circle-fill" style="font-size: 4rem"></i>
+          </div>
+          <h3 class="fw-bold mt-3 mb-1">Payment Failed</h3>
+          <p class="mb-0 text-white-50">The transaction was cancelled or declined.</p>
+        </div>
+        <div class="card-body p-4 p-md-5 text-center">
+          <p class="text-muted mb-4">
+            No charges were made. You can try again using a different payment method.
+          </p>
+          <div class="d-grid gap-3">
+            <button (click)="goToFees()" class="btn btn-primary btn-lg rounded-pill fw-bold">
+              <i class="bi bi-arrow-clockwise me-2"></i> Retry Payment
+            </button>
+            <button (click)="goToFees()" class="btn btn-light btn-lg rounded-pill fw-bold">
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

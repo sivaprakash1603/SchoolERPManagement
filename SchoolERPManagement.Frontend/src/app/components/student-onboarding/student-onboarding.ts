@@ -172,7 +172,7 @@ export class StudentOnboarding implements OnInit {
     // No need to call .set() — we mutate in place to avoid re-render
   }
 
-  trackByIndex(index: number): number {
+  trackByIndex(index: number, item?: any): number {
     return index;
   }
 

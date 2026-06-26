@@ -25,6 +25,7 @@ export interface StudentQueryResponseDTO {
   bloodgroup?: string;
   dateofbirth?: string;
   parents?: ParentSelection[];
+  classId?: number;
 }
 
 export interface ParentSelection {

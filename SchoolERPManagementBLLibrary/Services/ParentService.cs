@@ -147,7 +147,11 @@ public sealed class ParentService : IParentService
 
         return children.Select(child =>
         {
-            var enrollment = enrollments.FirstOrDefault(item => item.Studentid == child.Id);
+            var enrollment = enrollments
+                .Where(item => item.Studentid == child.Id)
+                .OrderByDescending(e => e.Academicyearid)
+                .FirstOrDefault();
+                
             return new ChildResponseDTO(
                 child.Id,
                 child.Userid,
@@ -161,7 +165,11 @@ public sealed class ParentService : IParentService
 
     public async Task<ParentResponseDTO> AddParentAsync(CreateParentDTO dto, CancellationToken cancellationToken)
     {
-        string generatedUsername = $"P{dto.Phonenumber}";
+        int totalParentsCount = await _parentRepository.Query(false).CountAsync(cancellationToken);
+        int parentIndex = totalParentsCount + 1;
+        int joiningYear = DateTime.UtcNow.Year;
+
+        string generatedUsername = $"PT{joiningYear}{parentIndex:D4}";
 
         if (await _userRepository.Query(true).AnyAsync(x => x.Email == dto.Email || x.Username == generatedUsername, cancellationToken))
         {

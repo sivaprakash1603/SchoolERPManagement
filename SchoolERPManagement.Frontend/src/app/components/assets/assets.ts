@@ -5,6 +5,8 @@ import { AssetService, AssetResponseDTO, AssetTypeResponseDTO, CreateAssetDTO, A
 import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { StudentService } from '../../services/student.service';
 import { ToastService } from '../../services/toast.service';
+import { TeacherService } from '../../services/teacher.service';
+import { TimetableService } from '../../services/timetable.service';
 
 @Component({
   selector: 'app-assets',
@@ -18,10 +20,13 @@ export class Assets implements OnInit {
   private classService = inject(ClassService);
   private studentService = inject(StudentService);
   private toastService = inject(ToastService);
+  private teacherService = inject(TeacherService);
+  private timetableService = inject(TimetableService);
 
   // Auth Info
   userRole = signal<string>('Student');
   studentClassId = signal<number | null>(null);
+  teacherClassIds = signal<number[]>([]);
 
   // Lists
   assets = signal<AssetResponseDTO[]>([]);
@@ -95,6 +100,28 @@ export class Assets implements OnInit {
           this.loadInitialData();
         }
       });
+    } else if (role === 'Teacher') {
+      this.isLoading.set(true);
+      const username = sessionStorage.getItem('username') || '';
+      this.teacherService.getTeacherByUsername(username).subscribe({
+        next: (teacher) => {
+          this.timetableService.getTeacherTimetable(teacher.id).subscribe({
+            next: (slots) => {
+              const classIds = Array.from(new Set<number>(slots.map(s => s.classId)));
+              this.teacherClassIds.set(classIds);
+              this.loadInitialData();
+            },
+            error: (err) => {
+              console.error('Failed to load teacher timetable', err);
+              this.loadInitialData();
+            }
+          });
+        },
+        error: (err) => {
+          console.error('Failed to load teacher profile', err);
+          this.loadInitialData();
+        }
+      });
     } else {
       this.loadInitialData();
     }
@@ -109,6 +136,9 @@ export class Assets implements OnInit {
         // If student, filter assets by class
         if (this.userRole() === 'Student' && this.studentClassId()) {
           const classAssets = assetsData.filter(a => a.assignedClassId === this.studentClassId());
+          this.assets.set(classAssets);
+        } else if (this.userRole() === 'Teacher') {
+          const classAssets = assetsData.filter(a => a.assignedClassId && this.teacherClassIds().includes(a.assignedClassId));
           this.assets.set(classAssets);
         } else {
           this.assets.set(assetsData);

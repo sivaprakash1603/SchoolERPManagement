@@ -1,260 +1,505 @@
-<!-- Page Header -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
-  <div>
-    <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent);">Parent Directory</h2>
-    <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
-      <i class="bi bi-people"></i>
-      Academic Session 2024-2025 &bull; {{ totalCount() }} Registered Parents
-    </p>
+@if (loading()) {
+  <div
+    class="d-flex justify-content-center align-items-center"
+    style="min-height: calc(100vh - 100px)"
+  >
+    <img src="/Book.svg" alt="Loading..." style="width: 100px; height: 100px" />
   </div>
-  <button class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
-    <i class="bi bi-person-plus-fill"></i>
-    Add Parent
-  </button>
-</div>
-
-<!-- Filter Bar -->
-<div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
-  <div class="flex-grow-1" style="min-width: 200px;">
-    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Search Parent</label>
-    <div class="position-relative">
-      <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted-custom"></i>
-      <input type="text" class="form-control ps-5" placeholder="Search by name, ID or email..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onSearchChange()">
+} @else {
+  <!-- Page Header -->
+  <div
+    class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4"
+  >
+    <div>
+      <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent)">Parent Directory</h2>
+      <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-people"></i>
+        Academic Session 2024-2025 &bull; {{ totalCount() }} Registered Parents
+      </p>
     </div>
-  </div>
-
-  <div style="width: 150px;">
-    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Status</label>
-    <select class="form-select" [ngModel]="status()" (ngModelChange)="status.set($event); onFilterChange()">
-      <option value="All">All Statuses</option>
-      <option value="Active">Active</option>
-      <option value="Inactive">Inactive</option>
-    </select>
-  </div>
-
-  <div class="d-flex gap-2">
-    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2" title="Refresh" (click)="fetchParents()">
-      <i class="bi bi-arrow-clockwise"></i>
-    </button>
-    <button class="btn btn-danger d-flex align-items-center justify-content-center p-2 gap-2 fw-bold" (click)="exportPdf()" title="Export PDF">
-      <i class="bi bi-file-earmark-pdf-fill"></i> Export
+    <button
+      class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold"
+      style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+    >
+      <i class="bi bi-person-plus-fill"></i>
+      Add Parent
     </button>
   </div>
-</div>
-
-<!-- Data Table Area -->
-<div class="minimal-card mb-4 overflow-hidden">
-  @if (loading()) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary mb-3" role="status"></div>
-      <p class="text-muted-custom">Loading parents data...</p>
+  <!-- Filter Bar -->
+  <div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
+    <div class="flex-grow-1" style="min-width: 200px">
+      <label
+        class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+        style="font-size: 0.7rem; letter-spacing: 0.05em"
+        >Search Parent</label
+      >
+      <div class="position-relative">
+        <i
+          class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted-custom"
+        ></i>
+        <input
+          type="text"
+          class="form-control ps-5"
+          placeholder="Search by name, ID or email..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); onSearchChange()"
+        />
+      </div>
     </div>
-  } 
-  
-  @if (error()) {
-    <div class="text-center py-5">
-      <i class="bi bi-exclamation-triangle text-warning fs-1 mb-3"></i>
-      <p class="text-warning">{{ error() }}</p>
-      <button class="btn btn-outline-primary mt-2" (click)="fetchParents()">Try Again</button>
+    <div style="width: 150px">
+      <label
+        class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+        style="font-size: 0.7rem; letter-spacing: 0.05em"
+        >Status</label
+      >
+      <select
+        class="form-select"
+        [ngModel]="status()"
+        (ngModelChange)="status.set($event); onFilterChange()"
+      >
+        <option value="All">All Statuses</option>
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+      </select>
     </div>
-  }
-
-  @if (!loading() && !error() && parents().length === 0) {
-    <div class="text-center py-5 text-muted-custom">
-      <i class="bi bi-person-x fs-1 mb-2 d-block"></i>
-      No parents found matching the criteria
+    <div class="d-flex gap-2">
+      <button
+        class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2"
+        title="Refresh"
+        (click)="fetchParents()"
+      >
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+      <button
+        class="btn btn-danger d-flex align-items-center justify-content-center p-2 gap-2 fw-bold"
+        (click)="exportPdf()"
+        title="Export PDF"
+      >
+        <i class="bi bi-file-earmark-pdf-fill"></i> Export
+      </button>
     </div>
-  }
-
-  @if (!loading() && !error() && parents().length > 0) {
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead style="background-color: var(--bg-sidebar);">
-          <tr>
-            <th class="ps-4 py-3 border-bottom" style="width: 40px;">
-              <input class="form-check-input" type="checkbox" (change)="toggleSelectAll($event)">
-            </th>
-            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Parent Details</th>
-            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Parent ID</th>
-            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Contact</th>
-            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Children</th>
-            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom text-end" style="font-size: 0.75rem; letter-spacing: 0.05em;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (parent of parents(); track parent.id) {
+  </div>
+  <!-- Data Table Area -->
+  <div class="minimal-card mb-4 overflow-hidden">
+    @if (loading()) {
+      <div class="text-center py-5">
+        <img src="/Book.svg" alt="Loading..." style="width: 80px; height: 80px" />
+        <p class="text-muted-custom">Loading parents data...</p>
+      </div>
+    }
+    @if (error()) {
+      <div class="text-center py-5">
+        <i class="bi bi-exclamation-triangle text-warning fs-1 mb-3"></i>
+        <p class="text-warning">{{ error() }}</p>
+        <button class="btn btn-outline-primary mt-2" (click)="fetchParents()">Try Again</button>
+      </div>
+    }
+    @if (!loading() && !error() && parents().length === 0) {
+      <div class="text-center py-5 text-muted-custom">
+        <i class="bi bi-person-x fs-1 mb-2 d-block"></i>
+        No parents found matching the criteria
+      </div>
+    }
+    @if (!loading() && !error() && parents().length > 0) {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead style="background-color: var(--bg-sidebar)">
             <tr>
-              <td class="ps-4 py-3">
-                <input class="form-check-input" type="checkbox" [checked]="isParentSelected(parent.id)" (change)="toggleSelectParent(parent.id)">
-              </td>
-              <td class="px-4 py-3">
-                <div class="d-flex align-items-center gap-3">
-                  <img [src]="parent.avatarUrl" class="rounded-circle" width="40" height="40" alt="Avatar">
-                  <div>
-                    <div class="fw-bold" style="color: var(--primary-accent);">{{ parent.name }}</div>
-                    <div class="small text-muted-custom">{{ parent.email }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-4 py-3 font-monospace" style="font-size: 0.875rem;">
-                {{ parent.username }}
-              </td>
-              <td class="px-4 py-3">
-                <span>{{ parent.phonenumber }}</span>
-              </td>
-              <td class="px-4 py-3 text-muted-custom" style="font-size: 0.875rem;">
-                {{ parent.relation || 'No linked children' }}
-              </td>
-              <td class="px-4 py-3 text-end">
-                <div class="d-flex justify-content-end gap-1">
-                  <button class="btn btn-sm btn-light text-warning" title="Send Notification" (click)="openNotificationModal(parent.name, [parent.userId]); $event.stopPropagation();"><i class="bi bi-bell"></i></button>
-                  <button class="btn btn-sm btn-light text-muted-custom" title="Edit" (click)="openEditModal(parent); $event.stopPropagation();"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-light text-danger" title="Deactivate" (click)="openDeleteModal(parent); $event.stopPropagation();"><i class="bi bi-trash"></i></button>
-                </div>
-              </td>
+              <th class="ps-4 py-3 border-bottom" style="width: 40px">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  (change)="toggleSelectAll($event)"
+                />
+              </th>
+              <th
+                class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom"
+                style="font-size: 0.75rem; letter-spacing: 0.05em"
+              >
+                Parent Details
+              </th>
+              <th
+                class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom"
+                style="font-size: 0.75rem; letter-spacing: 0.05em"
+              >
+                Parent ID
+              </th>
+              <th
+                class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom"
+                style="font-size: 0.75rem; letter-spacing: 0.05em"
+              >
+                Contact
+              </th>
+              <th
+                class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom"
+                style="font-size: 0.75rem; letter-spacing: 0.05em"
+              >
+                Children
+              </th>
+              <th
+                class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom text-end"
+                style="font-size: 0.75rem; letter-spacing: 0.05em"
+              >
+                Actions
+              </th>
             </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination Footer -->
-    <div class="px-4 py-3 border-top d-flex flex-column flex-md-row align-items-center justify-content-between gap-3" style="background-color: var(--bg-sidebar);">
-      <div class="text-muted-custom small">
-        Showing <span class="fw-bold" style="color: var(--text-primary);">{{ (pageNumber() - 1) * pageSize() + 1 }}</span> to 
-        <span class="fw-bold" style="color: var(--text-primary);">{{ Math.min(pageNumber() * pageSize(), totalCount()) }}</span> of 
-        <span class="fw-bold" style="color: var(--text-primary);">{{ totalCount() }}</span> entries
+          </thead>
+          <tbody>
+            @for (parent of parents(); track parent.id) {
+              <tr>
+                <td class="ps-4 py-3">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    [checked]="isParentSelected(parent.id)"
+                    (change)="toggleSelectParent(parent.id)"
+                  />
+                </td>
+                <td class="px-4 py-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <img
+                      [src]="parent.avatarUrl"
+                      class="rounded-circle"
+                      width="40"
+                      height="40"
+                      alt="Avatar"
+                    />
+                    <div>
+                      <div class="fw-bold" style="color: var(--primary-accent)">
+                        {{ parent.name }}
+                      </div>
+                      <div class="small text-muted-custom">{{ parent.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3 font-monospace" style="font-size: 0.875rem">
+                  {{ parent.username }}
+                </td>
+                <td class="px-4 py-3">
+                  <span>{{ parent.phonenumber }}</span>
+                </td>
+                <td class="px-4 py-3 text-muted-custom" style="font-size: 0.875rem">
+                  {{ parent.relation || 'No linked children' }}
+                </td>
+                <td class="px-4 py-3 text-end">
+                  <div class="d-flex justify-content-end gap-1">
+                    <button
+                      class="btn btn-sm btn-light text-warning"
+                      title="Send Notification"
+                      (click)="
+                        openNotificationModal(parent.name, [parent.userId]);
+                        $event.stopPropagation()
+                      "
+                    >
+                      <i class="bi bi-bell"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-light text-muted-custom"
+                      title="Edit"
+                      (click)="openEditModal(parent); $event.stopPropagation()"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-light text-danger"
+                      title="Deactivate"
+                      (click)="openDeleteModal(parent); $event.stopPropagation()"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
-      
-      <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-sm btn-outline-secondary border-muted px-3" style="color: var(--text-primary);" [disabled]="pageNumber() === 1" (click)="previousPage()">
-          Previous
-        </button>
-        
-        <div class="d-flex gap-1 d-none d-sm-flex">
-          <button class="btn btn-sm btn-primary px-3 rounded-2" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">{{ pageNumber() }}</button>
-          <span class="px-2 text-muted-custom align-self-center">of {{ totalPages() }}</span>
+      <!-- Pagination Footer -->
+      <div
+        class="px-4 py-3 border-top d-flex flex-column flex-md-row align-items-center justify-content-between gap-3"
+        style="background-color: var(--bg-sidebar)"
+      >
+        <div class="text-muted-custom small">
+          Showing
+          <span class="fw-bold" style="color: var(--text-primary)">{{
+            (pageNumber() - 1) * pageSize() + 1
+          }}</span>
+          to
+          <span class="fw-bold" style="color: var(--text-primary)">{{
+            Math.min(pageNumber() * pageSize(), totalCount())
+          }}</span>
+          of
+          <span class="fw-bold" style="color: var(--text-primary)">{{ totalCount() }}</span> entries
         </div>
-        
-        <button class="btn btn-sm btn-outline-secondary border-muted px-3" style="color: var(--text-primary);" [disabled]="pageNumber() >= totalPages()" (click)="nextPage()">
-          Next
-        </button>
+        <div class="d-flex align-items-center gap-2">
+          <button
+            class="btn btn-sm btn-outline-secondary border-muted px-3"
+            style="color: var(--text-primary)"
+            [disabled]="pageNumber() === 1"
+            (click)="previousPage()"
+          >
+            Previous
+          </button>
+          <div class="d-flex gap-1 d-none d-sm-flex">
+            <button
+              class="btn btn-sm btn-primary px-3 rounded-2"
+              style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+            >
+              {{ pageNumber() }}
+            </button>
+            <span class="px-2 text-muted-custom align-self-center">of {{ totalPages() }}</span>
+          </div>
+          <button
+            class="btn btn-sm btn-outline-secondary border-muted px-3"
+            style="color: var(--text-primary)"
+            [disabled]="pageNumber() >= totalPages()"
+            (click)="nextPage()"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+  <!-- Send Notification Modal -->
+  @if (showNotificationModal()) {
+    <div class="modal-overlay" (click)="closeNotificationModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header-custom">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-bell-fill fs-4" style="color: var(--primary-accent)"></i>
+            <h5 class="fw-bold mb-0" style="color: var(--text-primary)">Send Notification</h5>
+          </div>
+          <button class="btn-close" (click)="closeNotificationModal()"></button>
+        </div>
+        <div class="modal-body-custom">
+          <div
+            class="mb-3 p-3 rounded-3"
+            style="background-color: var(--bg-canvas); border: 1px solid var(--border-color)"
+          >
+            <span
+              class="text-muted-custom small d-block text-uppercase fw-bold mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+              >Recipient(s)</span
+            >
+            <strong style="color: var(--text-primary)">{{ notificationTargetNames() }}</strong>
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="modal-form-label"><i class="bi bi-type me-1"></i> Title</label>
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="notificationTitle()"
+                (ngModelChange)="notificationTitle.set($event)"
+                placeholder="Notification Title"
+              />
+            </div>
+            <div class="col-12">
+              <label class="modal-form-label"><i class="bi bi-chat-text me-1"></i> Message</label>
+              <textarea
+                class="form-control"
+                [ngModel]="notificationMessage()"
+                (ngModelChange)="notificationMessage.set($event)"
+                placeholder="Type notification message here..."
+                rows="4"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button
+            class="btn btn-light px-4 rounded-3"
+            (click)="closeNotificationModal()"
+            [disabled]="isSendingNotification()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-warning px-4 rounded-3 text-white fw-bold d-flex align-items-center gap-2"
+            (click)="sendNotification()"
+            [disabled]="isSendingNotification() || !notificationTitle() || !notificationMessage()"
+          >
+            @if (isSendingNotification()) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            @if (!isSendingNotification()) {
+              <i class="bi bi-send-fill"></i>
+            }
+            {{ isSendingNotification() ? 'Sending...' : 'Send Notification' }}
+          </button>
+        </div>
       </div>
     </div>
   }
-</div>
-
-<!-- Send Notification Modal -->
-<div class="modal-overlay" *ngIf="showNotificationModal()" (click)="closeNotificationModal()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-bell-fill fs-4" style="color: var(--primary-accent);"></i>
-        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Send Notification</h5>
-      </div>
-      <button class="btn-close" (click)="closeNotificationModal()"></button>
-    </div>
-    <div class="modal-body-custom">
-      <div class="mb-3 p-3 rounded-3" style="background-color: var(--bg-canvas); border: 1px solid var(--border-color);">
-        <span class="text-muted-custom small d-block text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Recipient(s)</span>
-        <strong style="color: var(--text-primary);">{{ notificationTargetNames() }}</strong>
-      </div>
-      <div class="row g-3">
-        <div class="col-12">
-          <label class="modal-form-label"><i class="bi bi-type me-1"></i> Title</label>
-          <input type="text" class="form-control" [ngModel]="notificationTitle()" (ngModelChange)="notificationTitle.set($event)" placeholder="Notification Title">
+  <!-- Floating Bulk Action Bar -->
+  @if (selectedParentIds().length > 0) {
+    <div class="bulk-action-bar-container">
+      <div
+        class="bulk-action-bar d-flex align-items-center justify-content-between p-3 rounded-4 shadow-lg border"
+      >
+        <div class="d-flex align-items-center gap-3">
+          <span
+            class="badge bg-primary fs-6 rounded-pill px-3 py-2"
+            style="background-color: var(--primary-accent) !important"
+            >{{ selectedParentIds().length }}</span
+          >
+          <span class="fw-bold mb-0 select-label" style="color: var(--text-primary)"
+            >Parents Selected</span
+          >
         </div>
-        <div class="col-12">
-          <label class="modal-form-label"><i class="bi bi-chat-text me-1"></i> Message</label>
-          <textarea class="form-control" [ngModel]="notificationMessage()" (ngModelChange)="notificationMessage.set($event)" placeholder="Type notification message here..." rows="4"></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer-custom">
-      <button class="btn btn-light px-4 rounded-3" (click)="closeNotificationModal()" [disabled]="isSendingNotification()">Cancel</button>
-      <button class="btn btn-warning px-4 rounded-3 text-white fw-bold d-flex align-items-center gap-2" (click)="sendNotification()" [disabled]="isSendingNotification() || !notificationTitle() || !notificationMessage()">
-        <span *ngIf="isSendingNotification()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        <i class="bi bi-send-fill" *ngIf="!isSendingNotification()"></i>
-        {{ isSendingNotification() ? 'Sending...' : 'Send Notification' }}
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Floating Bulk Action Bar -->
-<div class="bulk-action-bar-container" *ngIf="selectedParentIds().length > 0">
-  <div class="bulk-action-bar d-flex align-items-center justify-content-between p-3 rounded-4 shadow-lg border">
-    <div class="d-flex align-items-center gap-3">
-      <span class="badge bg-primary fs-6 rounded-pill px-3 py-2" style="background-color: var(--primary-accent) !important;">{{ selectedParentIds().length }}</span>
-      <span class="fw-bold mb-0 select-label" style="color: var(--text-primary);">Parents Selected</span>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-outline-secondary rounded-3 fw-bold px-3 py-2" (click)="clearSelection()">Cancel</button>
-      <button class="btn btn-warning rounded-3 fw-bold px-4 py-2 border-0 text-white" (click)="openBulkNotificationModal()">
-        <i class="bi bi-bell-fill me-1"></i> Send Notification
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Parent Modal -->
-<div class="modal-overlay" *ngIf="showEditModal()" (click)="closeEditModal()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-pencil-square fs-4" style="color: var(--primary-accent);"></i>
-        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Edit Parent Details</h5>
-      </div>
-      <button class="btn-close" (click)="closeEditModal()"></button>
-    </div>
-    <div class="modal-body-custom">
-      <div class="row g-3">
-        <div class="col-12">
-          <label class="modal-form-label"><i class="bi bi-person me-1"></i> Full Name</label>
-          <input type="text" class="form-control" [ngModel]="editForm().name" (ngModelChange)="editForm.set({...editForm(), name: $event})" placeholder="Parent Name">
-        </div>
-        <div class="col-12">
-          <label class="modal-form-label"><i class="bi bi-envelope me-1"></i> Email Address</label>
-          <input type="email" class="form-control" [ngModel]="editForm().email" (ngModelChange)="editForm.set({...editForm(), email: $event})" placeholder="Email Address">
-        </div>
-        <div class="col-12">
-          <label class="modal-form-label"><i class="bi bi-telephone me-1"></i> Phone Number</label>
-          <input type="text" class="form-control" [ngModel]="editForm().phonenumber" (ngModelChange)="editForm.set({...editForm(), phonenumber: $event})" placeholder="Phone Number">
+        <div class="d-flex align-items-center gap-2">
+          <button
+            class="btn btn-outline-secondary rounded-3 fw-bold px-3 py-2"
+            (click)="clearSelection()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-warning rounded-3 fw-bold px-4 py-2 border-0 text-white"
+            (click)="openBulkNotificationModal()"
+          >
+            <i class="bi bi-bell-fill me-1"></i> Send Notification
+          </button>
         </div>
       </div>
     </div>
-    <div class="modal-footer-custom">
-      <button class="btn btn-light px-4 rounded-3" (click)="closeEditModal()" [disabled]="isUpdating()">Cancel</button>
-      <button class="btn btn-primary px-4 rounded-3 fw-bold d-flex align-items-center gap-2" (click)="saveEdit()" [disabled]="isUpdating() || !editForm().name || !editForm().email || !editForm().phonenumber" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
-        <span *ngIf="isUpdating()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        <i class="bi bi-save-fill" *ngIf="!isUpdating()"></i>
-        {{ isUpdating() ? 'Saving...' : 'Save Changes' }}
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Delete Parent Modal -->
-<div class="modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-exclamation-triangle-fill fs-4 text-danger"></i>
-        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Deactivate Parent Account</h5>
+  }
+  <!-- Edit Parent Modal -->
+  @if (showEditModal()) {
+    <div class="modal-overlay" (click)="closeEditModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header-custom">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-pencil-square fs-4" style="color: var(--primary-accent)"></i>
+            <h5 class="fw-bold mb-0" style="color: var(--text-primary)">Edit Parent Details</h5>
+          </div>
+          <button class="btn-close" (click)="closeEditModal()"></button>
+        </div>
+        <div class="modal-body-custom">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="modal-form-label"><i class="bi bi-person me-1"></i> Full Name</label>
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="editForm().name"
+                (ngModelChange)="editForm.set({ ...editForm(), name: $event })"
+                placeholder="Parent Name"
+              />
+            </div>
+            <div class="col-12">
+              <label class="modal-form-label"
+                ><i class="bi bi-envelope me-1"></i> Email Address</label
+              >
+              <input
+                type="email"
+                class="form-control"
+                [ngModel]="editForm().email"
+                (ngModelChange)="editForm.set({ ...editForm(), email: $event })"
+                placeholder="Email Address"
+              />
+            </div>
+            <div class="col-12">
+              <label class="modal-form-label"
+                ><i class="bi bi-telephone me-1"></i> Phone Number</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="editForm().phonenumber"
+                (ngModelChange)="editForm.set({ ...editForm(), phonenumber: $event })"
+                placeholder="Phone Number"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button
+            class="btn btn-light px-4 rounded-3"
+            (click)="closeEditModal()"
+            [disabled]="isUpdating()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary px-4 rounded-3 fw-bold d-flex align-items-center gap-2"
+            (click)="saveEdit()"
+            [disabled]="
+              isUpdating() || !editForm().name || !editForm().email || !editForm().phonenumber
+            "
+            style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+          >
+            @if (isUpdating()) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            @if (!isUpdating()) {
+              <i class="bi bi-save-fill"></i>
+            }
+            {{ isUpdating() ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
       </div>
-      <button class="btn-close" (click)="closeDeleteModal()"></button>
     </div>
-    <div class="modal-body-custom text-center py-4">
-      <p class="mb-2" style="color: var(--text-primary);">Are you sure you want to deactivate the account of <strong class="text-danger">{{ deletingParent()?.name }}</strong>?</p>
-      <p class="text-muted-custom small mb-0">This parent will no longer be able to log in to the system.</p>
+  }
+  <!-- Delete Parent Modal -->
+  @if (showDeleteModal()) {
+    <div class="modal-overlay" (click)="closeDeleteModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header-custom">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill fs-4 text-danger"></i>
+            <h5 class="fw-bold mb-0" style="color: var(--text-primary)">
+              Deactivate Parent Account
+            </h5>
+          </div>
+          <button class="btn-close" (click)="closeDeleteModal()"></button>
+        </div>
+        <div class="modal-body-custom text-center py-4">
+          <p class="mb-2" style="color: var(--text-primary)">
+            Are you sure you want to deactivate the account of
+            <strong class="text-danger">{{ deletingParent()?.name }}</strong
+            >?
+          </p>
+          <p class="text-muted-custom small mb-0">
+            This parent will no longer be able to log in to the system.
+          </p>
+        </div>
+        <div class="modal-footer-custom">
+          <button
+            class="btn btn-light px-4 rounded-3"
+            (click)="closeDeleteModal()"
+            [disabled]="isDeleting()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-danger px-4 rounded-3 fw-bold d-flex align-items-center gap-2"
+            (click)="confirmDelete()"
+            [disabled]="isDeleting()"
+          >
+            @if (isDeleting()) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            @if (!isDeleting()) {
+              <i class="bi bi-trash-fill"></i>
+            }
+            {{ isDeleting() ? 'Deactivating...' : 'Deactivate Account' }}
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="modal-footer-custom">
-      <button class="btn btn-light px-4 rounded-3" (click)="closeDeleteModal()" [disabled]="isDeleting()">Cancel</button>
-      <button class="btn btn-danger px-4 rounded-3 fw-bold d-flex align-items-center gap-2" (click)="confirmDelete()" [disabled]="isDeleting()">
-        <span *ngIf="isDeleting()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        <i class="bi bi-trash-fill" *ngIf="!isDeleting()"></i>
-        {{ isDeleting() ? 'Deactivating...' : 'Deactivate Account' }}
-      </button>
-    </div>
-  </div>
-</div>
+  }
+}

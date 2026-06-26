@@ -14,7 +14,7 @@ public class SignalRNotificationPusher : INotificationPusher
         _hubContext = hubContext;
     }
 
-    public async Task PushNotificationAsync(int userId, NotificationResponseDTO notification, CancellationToken cancellationToken)
+    public async Task PushNotificationAsync(int userId, UserNotificationResponseDTO notification, CancellationToken cancellationToken)
     {
         await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", notification, cancellationToken);
     }

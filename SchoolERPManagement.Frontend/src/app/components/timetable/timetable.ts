@@ -1,5 +1,5 @@
 import { Component, signal, OnInit, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { TimetableService, TimetableResponseDTO } from '../../services/timetable.service';
 import { ClassService, ClassResponseDTO } from '../../services/class.service';
@@ -8,11 +8,12 @@ import { TeacherService, TeacherResponseDTO } from '../../services/teacher.servi
 import { AcademicYearService, AcademicYearResponseDTO } from '../../services/academic-year.service';
 import { StudentService } from '../../services/student.service';
 import { ToastService } from '../../services/toast.service';
+import { ParentService } from '../../services/parent.service';
 
 @Component({
   selector: 'app-timetable',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './timetable.html',
   styleUrl: './timetable.css',
 })
@@ -24,6 +25,7 @@ export class Timetable implements OnInit {
   private academicYearService = inject(AcademicYearService);
   private studentService = inject(StudentService);
   private toastService = inject(ToastService);
+  private parentService = inject(ParentService);
 
   // Data signals
   classes = signal<ClassResponseDTO[]>([]);
@@ -36,8 +38,12 @@ export class Timetable implements OnInit {
   selectedAcademicYearId = signal<number | null>(null);
   selectedClassId = signal<number | null>(null);
 
+  // Parent specific
+  parentChildren = signal<any[]>([]);
+  selectedChildId = signal<number | null>(null);
+
   // States
-  loading = signal(false);
+  loading = signal(true);
   error = signal<string | null>(null);
   showCreateModal = signal(false);
   isSaving = signal(false);
@@ -46,6 +52,25 @@ export class Timetable implements OnInit {
   viewMode = signal<'personal' | 'class'>('personal');
   teacherId = signal<number | null>(null);
 
+  // View UI Helpers
+  get pageTitle(): string {
+    if (this.viewMode() === 'personal') {
+      if (this.userRole() === 'Teacher') return 'My Schedule';
+      if (this.userRole() === 'Parent') return 'Child Timetable';
+      return 'My Timetable';
+    }
+    return 'Class Timetable';
+  }
+
+  get pageDescription(): string {
+    if (this.viewMode() === 'personal') {
+      if (this.userRole() === 'Teacher') return 'View your personalized weekly teaching schedule.';
+      if (this.userRole() === 'Parent') return "View your child's classroom schedule.";
+      return 'View your classroom schedule.';
+    }
+    return 'View and configure weekly schedules for institutional classes.';
+  }
+
   // Form signal
   createForm = signal({
     dayOfWeek: 'monday',
@@ -53,7 +78,7 @@ export class Timetable implements OnInit {
     teacherId: null as number | null,
     startTime: '',
     endTime: '',
-    roomNo: ''
+    roomNo: '',
   });
 
   // Timetable days
@@ -63,12 +88,12 @@ export class Timetable implements OnInit {
   selectedClassName = computed(() => {
     const classId = this.selectedClassId();
     if (!classId) return '';
-    const cls = this.classes().find(c => c.id === classId);
+    const cls = this.classes().find((c) => c.id === classId);
     return cls ? `${cls.classname} ${cls.section ? '- ' + cls.section : ''}` : '';
   });
 
   getClassNameForSlot(classId: number): string {
-    const cls = this.classes().find(c => c.id === classId);
+    const cls = this.classes().find((c) => c.id === classId);
     return cls ? `${cls.classname} ${cls.section ? '- ' + cls.section : ''}` : `Class #${classId}`;
   }
 
@@ -76,11 +101,11 @@ export class Timetable implements OnInit {
     const role = sessionStorage.getItem('role') || 'Student';
     this.userRole.set(role);
     this.isAdmin.set(role === 'Admin');
-    
+
     if (role === 'Teacher') {
       this.viewMode.set('personal');
     } else {
-      this.viewMode.set(role === 'Student' ? 'personal' : 'class');
+      this.viewMode.set(role === 'Student' || role === 'Parent' ? 'personal' : 'class');
     }
 
     this.fetchSubjects();
@@ -97,12 +122,44 @@ export class Timetable implements OnInit {
               this.fetchTimetable();
             } else {
               this.toastService.warning('You are not currently enrolled in any class.');
+              this.loading.set(false);
             }
           },
           error: (err) => {
             console.error('Failed to resolve student profile', err);
             this.toastService.error('Failed to resolve student profile.');
-          }
+            this.loading.set(false);
+          },
+        });
+      }
+    } else if (role === 'Parent') {
+      const uidStr = sessionStorage.getItem('userId');
+      const uid = uidStr ? parseInt(uidStr, 10) : null;
+      if (uid) {
+        this.parentService.getParentByUserId(uid).subscribe({
+          next: (parent) => {
+            this.parentService.getParentChildren(parent.id).subscribe({
+              next: (children) => {
+                this.parentChildren.set(children);
+                if (children.length > 0) {
+                  const child = children[0];
+                  this.selectedChildId.set(child.studentId);
+                  if (child.classId) {
+                    this.selectedClassId.set(child.classId);
+                    this.fetchTimetable();
+                  } else {
+                    this.toastService.warning('Selected child is not enrolled in a class.');
+                  }
+                }
+              },
+              error: (err) => console.error('Failed to load parent children', err),
+            });
+          },
+          error: (err) => {
+            console.error('Failed to resolve parent profile', err);
+            this.toastService.error('Failed to resolve parent profile.');
+            this.loading.set(false);
+          },
         });
       }
     } else if (role === 'Teacher') {
@@ -116,7 +173,8 @@ export class Timetable implements OnInit {
         error: (err) => {
           console.error('Failed to load teacher profile', err);
           this.toastService.error('Failed to resolve teacher profile.');
-        }
+          this.loading.set(false);
+        },
       });
     } else {
       this.fetchAcademicYears();
@@ -127,7 +185,7 @@ export class Timetable implements OnInit {
     this.academicYearService.getAllAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
-        const currentYear = years.find(y => y.isCurrent);
+        const currentYear = years.find((y) => y.isCurrent);
         if (currentYear) {
           this.selectedAcademicYearId.set(currentYear.id);
         } else if (years.length > 0) {
@@ -138,13 +196,32 @@ export class Timetable implements OnInit {
       error: (err) => {
         console.error('Failed to load academic sessions', err);
         this.toastService.error('Failed to load academic sessions.');
-      }
+        this.loading.set(false);
+      },
     });
+  }
+
+  onChildChange(studentId: number) {
+    this.selectedChildId.set(studentId);
+
+    const child = this.parentChildren().find((c) => c.studentId === studentId);
+    if (child && child.classId) {
+      this.selectedClassId.set(child.classId);
+      this.fetchTimetable();
+    } else {
+      this.selectedClassId.set(null);
+      this.slots.set([]);
+      this.loading.set(false);
+      this.toastService.warning('Selected child is not enrolled in a class.');
+    }
   }
 
   fetchClasses() {
     const yearId = this.selectedAcademicYearId();
-    if (!yearId) return;
+    if (!yearId) {
+      this.loading.set(false);
+      return;
+    }
 
     this.classService.getAllClasses(yearId).subscribe({
       next: (res) => {
@@ -153,32 +230,36 @@ export class Timetable implements OnInit {
           this.selectedClassId.set(res[0].id);
           if (this.viewMode() === 'class') {
             this.fetchTimetable();
+          } else {
+            this.loading.set(false);
           }
         } else {
           this.selectedClassId.set(null);
           if (this.viewMode() === 'class') {
             this.slots.set([]);
+            this.loading.set(false);
           }
         }
       },
       error: (err) => {
         console.error('Failed to load classes', err);
         this.toastService.error('Failed to load classes.');
-      }
+        this.loading.set(false);
+      },
     });
   }
 
   fetchSubjects() {
     this.subjectService.getAllSubjects().subscribe({
       next: (res) => this.subjects.set(res),
-      error: (err) => console.error('Failed to load subjects', err)
+      error: (err) => console.error('Failed to load subjects', err),
     });
   }
 
   fetchTeachers() {
     this.teacherService.getAllTeachers({ pageSize: 1000 }).subscribe({
       next: (res) => this.teachers.set(res.items),
-      error: (err) => console.error('Failed to load teachers', err)
+      error: (err) => console.error('Failed to load teachers', err),
     });
   }
 
@@ -186,6 +267,7 @@ export class Timetable implements OnInit {
     const classId = this.selectedClassId();
     if (!classId) {
       this.slots.set([]);
+      this.loading.set(false);
       return;
     }
 
@@ -200,7 +282,7 @@ export class Timetable implements OnInit {
         console.error('Failed to load timetable', err);
         this.error.set('Failed to load class timetable.');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -216,7 +298,7 @@ export class Timetable implements OnInit {
         console.error('Failed to load teacher timetable', err);
         this.error.set('Failed to load teaching timetable.');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -241,16 +323,16 @@ export class Timetable implements OnInit {
   }
 
   getSlotsForDay(day: string): TimetableResponseDTO[] {
-    return this.slots().filter(s => s.dayOfWeek.toLowerCase() === day.toLowerCase());
+    return this.slots().filter((s) => s.dayOfWeek.toLowerCase() === day.toLowerCase());
   }
 
   getSubjectName(subjectId: number): string {
-    const sub = this.subjects().find(s => s.id === subjectId);
+    const sub = this.subjects().find((s) => s.id === subjectId);
     return sub ? sub.subjectName : 'Unknown';
   }
 
   getTeacherName(teacherId: number): string {
-    const teach = this.teachers().find(t => t.id === teacherId);
+    const teach = this.teachers().find((t) => t.id === teacherId);
     return teach ? teach.name : 'Unknown';
   }
 
@@ -272,7 +354,7 @@ export class Timetable implements OnInit {
       teacherId: this.teachers().length > 0 ? this.teachers()[0].id : null,
       startTime: '09:00',
       endTime: '10:00',
-      roomNo: ''
+      roomNo: '',
     });
     this.showCreateModal.set(true);
   }
@@ -300,7 +382,7 @@ export class Timetable implements OnInit {
       dayOfWeek: form.dayOfWeek,
       startTime: form.startTime,
       endTime: form.endTime,
-      roomNo: form.roomNo || undefined
+      roomNo: form.roomNo || undefined,
     };
 
     this.timetableService.createTimetable(dto).subscribe({
@@ -314,7 +396,7 @@ export class Timetable implements OnInit {
         console.error('Failed to create slot', err);
         this.isSaving.set(false);
         this.toastService.error(err.error?.message || 'Failed to add timetable slot.');
-      }
+      },
     });
   }
 }

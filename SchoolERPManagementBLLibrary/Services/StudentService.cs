@@ -144,7 +144,8 @@ public sealed class StudentService : IStudentService
                 photoDoc?.Bloburl,
                 s.Bloodgroup,
                 s.Dateofbirth,
-                parentsInfo
+                parentsInfo,
+                enrollment?.Classid
             );
         }).ToList();
 
@@ -163,6 +164,7 @@ public sealed class StudentService : IStudentService
         var student = await _studentRepository.Query(true)
             .Include(x => x.Studentenrollments)
             .Include(x => x.Studentdocuments)
+            .Include(x => x.Studentparents)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         return student is null
             ? throw new EntityNotFoundException("Student", id.ToString())
@@ -205,13 +207,11 @@ public sealed class StudentService : IStudentService
             }
         }
 
-        int currentEnrollmentCount = await _studentEnrollmentRepository.Query(false)
-            .CountAsync(e => e.Classid == dto.ClassId && e.Academicyearid == dto.AcademicYearId, cancellationToken);
-        int rollNo = currentEnrollmentCount + 1;
+        int totalStudentsCount = await _studentRepository.Query(false).CountAsync(cancellationToken);
+        int studentIndex = totalStudentsCount + 1;
+        int admissionYear = dto.Admissiondate?.Year ?? DateTime.UtcNow.Year;
 
-        string cleanClassName = classEntity.Classname.Replace(" ", "");
-        string cleanSection = classEntity.Section?.Replace(" ", "") ?? "";
-        string generatedUsername = $"ST{rollNo:D3}{cleanClassName}{cleanSection}";
+        string generatedUsername = $"ST{admissionYear}{studentIndex:D4}";
         string generatedPassword = Guid.NewGuid().ToString().Substring(0, 8); 
 
         var user = new User
@@ -246,6 +246,10 @@ public sealed class StudentService : IStudentService
         };
 
         await _studentRepository.AddAsync(student, save: true, ct: cancellationToken);
+
+        int currentEnrollmentCount = await _studentEnrollmentRepository.Query(false)
+            .CountAsync(e => e.Classid == dto.ClassId && e.Academicyearid == dto.AcademicYearId, cancellationToken);
+        int rollNo = currentEnrollmentCount + 1;
 
         var enrollment = new Studentenrollment
         {

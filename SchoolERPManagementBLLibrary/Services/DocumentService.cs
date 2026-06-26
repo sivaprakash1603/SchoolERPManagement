@@ -168,6 +168,7 @@ public sealed class DocumentService : IDocumentService
     {
         var studentPendingDocs = await _studentDocumentRepository.Query(true)
             .Include(d => d.Student)
+                .ThenInclude(s => s.Studentenrollments)
             .Where(d => d.Status == "Pending")
             .ToListAsync(cancellationToken);
 
@@ -181,6 +182,7 @@ public sealed class DocumentService : IDocumentService
 
         foreach (var d in studentPendingDocs)
         {
+            var enrollment = d.Student?.Studentenrollments?.OrderByDescending(e => e.Academicyearid).FirstOrDefault();
             result.Add(new PendingDocumentDTO(
                 d.Id,
                 d.Documentname,
@@ -190,7 +192,8 @@ public sealed class DocumentService : IDocumentService
                 d.Studentid,
                 d.Student?.Name ?? "Unknown Student",
                 "Student",
-                d.Student?.Regno ?? "N/A"
+                d.Student?.Regno ?? "N/A",
+                enrollment?.Classid
             ));
         }
 

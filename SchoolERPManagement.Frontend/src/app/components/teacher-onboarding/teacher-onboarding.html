@@ -1,13 +1,16 @@
-<div class="container-fluid py-4 h-100 d-flex flex-column" style="max-width: 900px;">
+<div class="container-fluid py-4 h-100 d-flex flex-column" style="max-width: 900px">
   <!-- Header -->
   <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
-      <h2 class="fs-3 fw-bold mb-1" style="color: var(--primary-accent);">Teacher Onboarding</h2>
-      <p class="text-muted-custom mb-0" style="font-size: 0.85rem;">
+      <h2 class="fs-3 fw-bold mb-1" style="color: var(--primary-accent)">Teacher Onboarding</h2>
+      <p class="text-muted-custom mb-0" style="font-size: 0.85rem">
         Register new faculty members and configure credentials
       </p>
     </div>
-    <button class="btn btn-outline-secondary d-flex align-items-center gap-2 rounded-3" routerLink="/teachers">
+    <button
+      class="btn btn-outline-secondary d-flex align-items-center gap-2 rounded-3"
+      routerLink="/teachers"
+    >
       <i class="bi bi-x-lg"></i> Cancel
     </button>
   </div>
@@ -15,213 +18,440 @@
   <!-- Progress Tracker -->
   <div class="minimal-card p-4 mb-4">
     <div class="position-relative m-4">
-      <div class="progress" style="height: 4px;">
-        <div class="progress-bar bg-primary" role="progressbar" [style.width]="((currentStep() - 1) / 3 * 100) + '%'" style="background-color: var(--primary-accent) !important;"></div>
+      <div class="progress" style="height: 4px">
+        <div
+          class="progress-bar bg-primary"
+          role="progressbar"
+          [style.width]="((currentStep() - 1) / 3) * 100 + '%'"
+          style="background-color: var(--primary-accent) !important"
+        ></div>
       </div>
-      <div class="position-absolute top-0 start-0 translate-middle btn btn-sm rounded-pill" [ngClass]="currentStep() >= 1 ? 'btn-primary' : 'btn-light'" style="z-index: 2;">1</div>
-      <div class="position-absolute top-0 start-33 translate-middle btn btn-sm rounded-pill" style="left: 33%; z-index: 2;" [ngClass]="currentStep() >= 2 ? 'btn-primary' : 'btn-light'">2</div>
-      <div class="position-absolute top-0 start-66 translate-middle btn btn-sm rounded-pill" style="left: 66%; z-index: 2;" [ngClass]="currentStep() >= 3 ? 'btn-primary' : 'btn-light'">3</div>
-      <div class="position-absolute top-0 start-100 translate-middle btn btn-sm rounded-pill" style="z-index: 2;" [ngClass]="currentStep() >= 4 ? 'btn-primary' : 'btn-light'">4</div>
+      <div
+        class="position-absolute top-0 start-0 translate-middle btn btn-sm rounded-pill"
+        [ngClass]="currentStep() >= 1 ? 'btn-primary' : 'btn-light'"
+        style="z-index: 2"
+      >
+        1
+      </div>
+      <div
+        class="position-absolute top-0 start-33 translate-middle btn btn-sm rounded-pill"
+        style="left: 33%; z-index: 2"
+        [ngClass]="currentStep() >= 2 ? 'btn-primary' : 'btn-light'"
+      >
+        2
+      </div>
+      <div
+        class="position-absolute top-0 start-66 translate-middle btn btn-sm rounded-pill"
+        style="left: 66%; z-index: 2"
+        [ngClass]="currentStep() >= 3 ? 'btn-primary' : 'btn-light'"
+      >
+        3
+      </div>
+      <div
+        class="position-absolute top-0 start-100 translate-middle btn btn-sm rounded-pill"
+        style="z-index: 2"
+        [ngClass]="currentStep() >= 4 ? 'btn-primary' : 'btn-light'"
+      >
+        4
+      </div>
     </div>
-    <div class="d-flex justify-content-between text-muted-custom mt-2" style="font-size: 0.75rem; padding: 0 10px;">
-      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px;">Profile Details</span>
-      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px;">Assignments</span>
-      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px;">KYC Docs</span>
-      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px;">Complete</span>
+    <div
+      class="d-flex justify-content-between text-muted-custom mt-2"
+      style="font-size: 0.75rem; padding: 0 10px"
+    >
+      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px"
+        >Profile Details</span
+      >
+      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px">Assignments</span>
+      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px">KYC Docs</span>
+      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px">Complete</span>
     </div>
   </div>
 
   <!-- Wizard Content -->
   <div class="minimal-card p-4 flex-grow-1 d-flex flex-column">
-    
     <!-- Step 1: Teacher Details -->
-    <div *ngIf="currentStep() === 1" class="flex-grow-1">
-      <h4 class="fw-bold mb-4" style="color: var(--text-primary);">Faculty Profile</h4>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Full Name</label>
-          <input type="text" class="form-control" [(ngModel)]="teacherForm().name" placeholder="Enter full name">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Email Address</label>
-          <input type="email" class="form-control" [(ngModel)]="teacherForm().email" placeholder="teacher@school.edu">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Phone Number</label>
-          <input type="text" class="form-control" [(ngModel)]="teacherForm().phonenumber" placeholder="Enter contact number">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Educational Qualifications</label>
-          <input type="text" class="form-control" [(ngModel)]="teacherForm().qualifications" placeholder="e.g. M.Sc. B.Ed, PhD">
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 2: Subject & Class Assignment -->
-    <div *ngIf="currentStep() === 2" class="flex-grow-1">
-      <h4 class="fw-bold mb-4" style="color: var(--text-primary);">Class & Subject Assignments</h4>
-      <p class="text-muted-custom mb-3">Map the subjects and classes this teacher will manage. You can link multiple classes/subjects.</p>
-
-      <div class="card border-0 p-3 mb-4" style="background-color: var(--bg-sidebar); border: 1px solid var(--border-color) !important;">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-5">
-            <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class & Section</label>
-            <select class="form-select" [(ngModel)]="currentAssignment().classId">
-              <option [ngValue]="null">Select Class...</option>
-              <option *ngFor="let cls of classes()" [value]="cls.id">{{ cls.classname }} - {{ cls.section }}</option>
-            </select>
-          </div>
-          <div class="col-md-5">
-            <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Subject</label>
-            <select class="form-select" [(ngModel)]="currentAssignment().subjectId">
-              <option [ngValue]="null">Select Subject...</option>
-              <option *ngFor="let sub of subjects()" [value]="sub.id">{{ sub.subjectname }} ({{ sub.code }})</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-1" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="addAssignment()">
-              <i class="bi bi-plus-lg"></i> Add
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Current Assignments list -->
-      <label class="form-label text-muted-custom fw-bold text-uppercase mb-2" style="font-size: 0.7rem; letter-spacing: 0.05em;">Assigned Schedules</label>
-      <div class="list-group rounded-3 border-0">
-        <div *ngFor="let item of selectedAssignments(); let idx = index" class="list-group-item d-flex align-items-center justify-content-between p-3 border-muted bg-transparent">
-          <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: rgba(99, 102, 241, 0.1);">
-              <i class="bi bi-book-half" style="color: var(--primary-accent);"></i>
-            </div>
-            <div>
-              <span class="fw-bold" style="color: var(--text-primary);">{{ item.subjectName }}</span>
-              <span class="text-muted-custom ms-2">assigned to Class <strong>{{ item.className }}</strong></span>
-            </div>
-          </div>
-          <button class="btn btn-sm btn-outline-danger" (click)="removeAssignment(idx)">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-        <div *ngIf="selectedAssignments().length === 0" class="text-center py-4 text-muted-custom border rounded-3" style="border-color: var(--border-color) !important;">
-          <i class="bi bi-journal-x fs-3 d-block mb-1"></i>
-          No assignments mapped yet.
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 3: Documents -->
-    <div *ngIf="currentStep() === 3" class="flex-grow-1">
-      <h4 class="fw-bold mb-4" style="color: var(--text-primary);">Faculty KYC Documents</h4>
-      <p class="text-muted-custom mb-4">Upload verified credentials and identification documents. These can also be managed later.</p>
-
-      <div class="row g-4">
-        <!-- Aadhaar -->
-        <div class="col-md-6">
-          <div class="card border-1 shadow-sm rounded-3 p-3" style="background-color: var(--bg-main); border-color: var(--border-color) !important;">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <h6 class="mb-0 fw-bold" style="color: var(--text-primary);">Aadhaar Card Identification</h6>
-              <i class="bi bi-check-circle-fill text-success" *ngIf="getFileName('Aadhaar')"></i>
-            </div>
-            <p class="text-success small mb-3" *ngIf="getFileName('Aadhaar')"><i class="bi bi-file-earmark-arrow-up"></i> {{ getFileName('Aadhaar') }}</p>
-            <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Aadhaar')">
-          </div>
-        </div>
-
-        <!-- Degree -->
-        <div class="col-md-6">
-          <div class="card border-1 shadow-sm rounded-3 p-3" style="background-color: var(--bg-main); border-color: var(--border-color) !important;">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <h6 class="mb-0 fw-bold" style="color: var(--text-primary);">Highest Degree / Certificate</h6>
-              <i class="bi bi-check-circle-fill text-success" *ngIf="getFileName('Degree')"></i>
-            </div>
-            <p class="text-success small mb-3" *ngIf="getFileName('Degree')"><i class="bi bi-file-earmark-arrow-up"></i> {{ getFileName('Degree') }}</p>
-            <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Degree')">
-          </div>
-        </div>
-
-        <!-- Passport Photo -->
-        <div class="col-md-6">
-          <div class="card border-1 shadow-sm rounded-3 p-3" style="background-color: var(--bg-main); border-color: var(--border-color) !important;">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <h6 class="mb-0 fw-bold" style="color: var(--text-primary);">Passport Size Photo</h6>
-              <i class="bi bi-check-circle-fill text-success" *ngIf="getFileName('Photo')"></i>
-            </div>
-            <p class="text-success small mb-3" *ngIf="getFileName('Photo')"><i class="bi bi-image"></i> {{ getFileName('Photo') }}</p>
-            <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event, 'Photo')" accept="image/*">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 4: Summary -->
-    <div *ngIf="currentStep() === 4" class="flex-grow-1">
-      <h4 class="fw-bold mb-4" style="color: var(--text-primary);">Review & Confirm</h4>
-      <div class="card border-0 rounded-3 p-4 mb-4" style="background-color: var(--bg-sidebar); border: 1px solid var(--border-color) !important;">
+    @if (currentStep() === 1) {
+      <div class="flex-grow-1">
+        <h4 class="fw-bold mb-4" style="color: var(--text-primary)">Faculty Profile</h4>
         <div class="row g-3">
           <div class="col-md-6">
-            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Teacher Name</small>
-            <span class="fw-bold" style="color: var(--text-primary);">{{ teacherForm().name || 'N/A' }}</span>
+            <label
+              class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.7rem; letter-spacing: 0.05em"
+              >Full Name</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="teacherForm().name"
+              placeholder="Enter full name"
+            />
           </div>
           <div class="col-md-6">
-            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Email Address</small>
-            <span class="fw-bold" style="color: var(--text-primary);">{{ teacherForm().email || 'N/A' }}</span>
+            <label
+              class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.7rem; letter-spacing: 0.05em"
+              >Email Address</label
+            >
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="teacherForm().email"
+              placeholder="teacher@school.edu"
+            />
           </div>
           <div class="col-md-6">
-            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Contact Number</small>
-            <span class="fw-bold" style="color: var(--text-primary);">{{ teacherForm().phonenumber || 'N/A' }}</span>
+            <label
+              class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.7rem; letter-spacing: 0.05em"
+              >Phone Number</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="teacherForm().phonenumber"
+              placeholder="Enter contact number"
+            />
           </div>
           <div class="col-md-6">
-            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Qualifications</small>
-            <span class="fw-bold" style="color: var(--text-primary);">{{ teacherForm().qualifications || 'N/A' }}</span>
-          </div>
-          <div class="col-12 border-top pt-3 mt-3">
-            <small class="text-muted-custom fw-bold text-uppercase d-block mb-2" style="font-size: 0.7rem;">Class Assignments</small>
-            <div *ngIf="selectedAssignments().length === 0">
-              <span class="text-muted small">No class maps configured.</span>
-            </div>
-            <div *ngFor="let item of selectedAssignments()" class="mb-1 d-flex gap-2 align-items-center">
-              <i class="bi bi-tag-fill text-muted-custom" style="font-size: 0.85rem;"></i>
-              <span style="color: var(--text-primary);"><strong>{{ item.subjectName }}</strong> inside Class <strong>{{ item.className }}</strong></span>
-            </div>
-          </div>
-          <div class="col-12 border-top pt-3 mt-3">
-            <small class="text-muted-custom fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Documents Staged</small>
-            <span class="fw-bold" style="color: var(--text-primary);">{{ selectedDocuments().length }} files prepared</span>
+            <label
+              class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.7rem; letter-spacing: 0.05em"
+              >Educational Qualifications</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="teacherForm().qualifications"
+              placeholder="e.g. M.Sc. B.Ed, PhD"
+            />
           </div>
         </div>
       </div>
-      
-      <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3">
-        <i class="bi bi-info-circle-fill fs-4 text-info"></i>
-        <div>
-          <h6 class="mb-1 fw-bold">System Credentials</h6>
-          <p class="mb-0 small">Completing the onboarding will register the profile, generate a unique Teacher ID, and auto-dispatch credential emails to the user.</p>
+    }
+
+    <!-- Step 2: Subject & Class Assignment -->
+    @if (currentStep() === 2) {
+      <div class="flex-grow-1">
+        <h4 class="fw-bold mb-4" style="color: var(--text-primary)">Class & Subject Assignments</h4>
+        <p class="text-muted-custom mb-3">
+          Map the subjects and classes this teacher will manage. You can link multiple
+          classes/subjects.
+        </p>
+        <div
+          class="card border-0 p-3 mb-4"
+          style="
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color) !important;
+          "
+        >
+          <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+              <label
+                class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+                style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >Class & Section</label
+              >
+              <select class="form-select" [(ngModel)]="currentAssignment().classId">
+                <option [ngValue]="null">Select Class...</option>
+                @for (cls of classes(); track cls) {
+                  <option [value]="cls.id">{{ cls.classname }} - {{ cls.section }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label
+                class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+                style="font-size: 0.7rem; letter-spacing: 0.05em"
+                >Subject</label
+              >
+              <select class="form-select" [(ngModel)]="currentAssignment().subjectId">
+                <option [ngValue]="null">Select Subject...</option>
+                @for (sub of subjects(); track sub) {
+                  <option [value]="sub.id">{{ sub.subjectName || sub.subjectname }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button
+                class="btn btn-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+                style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+                (click)="addAssignment()"
+              >
+                <i class="bi bi-plus-lg"></i> Add
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Current Assignments list -->
+        <label
+          class="form-label text-muted-custom fw-bold text-uppercase mb-2"
+          style="font-size: 0.7rem; letter-spacing: 0.05em"
+          >Assigned Schedules</label
+        >
+        <div class="list-group rounded-3 border-0">
+          @for (item of selectedAssignments(); track item; let idx = $index) {
+            <div
+              class="list-group-item d-flex align-items-center justify-content-between p-3 border-muted bg-transparent"
+            >
+              <div class="d-flex align-items-center gap-3">
+                <div
+                  class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
+                  style="width: 36px; height: 36px; background-color: rgba(99, 102, 241, 0.1)"
+                >
+                  <i class="bi bi-book-half" style="color: var(--primary-accent)"></i>
+                </div>
+                <div>
+                  <span class="fw-bold" style="color: var(--text-primary)">{{
+                    item.subjectName
+                  }}</span>
+                  <span class="text-muted-custom ms-2"
+                    >assigned to Class <strong>{{ item.className }}</strong></span
+                  >
+                </div>
+              </div>
+              <button class="btn btn-sm btn-outline-danger" (click)="removeAssignment(idx)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          }
+          @if (selectedAssignments().length === 0) {
+            <div
+              class="text-center py-4 text-muted-custom border rounded-3"
+              style="border-color: var(--border-color) !important"
+            >
+              <i class="bi bi-journal-x fs-3 d-block mb-1"></i>
+              No assignments mapped yet.
+            </div>
+          }
         </div>
       </div>
-    </div>
+    }
+
+    <!-- Step 3: Documents -->
+    @if (currentStep() === 3) {
+      <div class="flex-grow-1">
+        <h4 class="fw-bold mb-4" style="color: var(--text-primary)">Faculty KYC Documents</h4>
+        <p class="text-muted-custom mb-4">
+          Upload verified credentials and identification documents. These can also be managed later.
+        </p>
+        <div class="row g-4">
+          <!-- Aadhaar -->
+          <div class="col-md-6">
+            <div
+              class="card border-1 shadow-sm rounded-3 p-3"
+              style="background-color: var(--bg-main); border-color: var(--border-color) !important"
+            >
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0 fw-bold" style="color: var(--text-primary)">
+                  Aadhaar Card Identification
+                </h6>
+                @if (getFileName('Aadhaar')) {
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                }
+              </div>
+              @if (getFileName('Aadhaar')) {
+                <p class="text-success small mb-3">
+                  <i class="bi bi-file-earmark-arrow-up"></i> {{ getFileName('Aadhaar') }}
+                </p>
+              }
+              <input
+                type="file"
+                class="form-control form-control-sm"
+                (change)="onFileSelected($event, 'Aadhaar')"
+              />
+            </div>
+          </div>
+          <!-- Degree -->
+          <div class="col-md-6">
+            <div
+              class="card border-1 shadow-sm rounded-3 p-3"
+              style="background-color: var(--bg-main); border-color: var(--border-color) !important"
+            >
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0 fw-bold" style="color: var(--text-primary)">
+                  Highest Degree / Certificate
+                </h6>
+                @if (getFileName('Degree')) {
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                }
+              </div>
+              @if (getFileName('Degree')) {
+                <p class="text-success small mb-3">
+                  <i class="bi bi-file-earmark-arrow-up"></i> {{ getFileName('Degree') }}
+                </p>
+              }
+              <input
+                type="file"
+                class="form-control form-control-sm"
+                (change)="onFileSelected($event, 'Degree')"
+              />
+            </div>
+          </div>
+          <!-- Passport Photo -->
+          <div class="col-md-6">
+            <div
+              class="card border-1 shadow-sm rounded-3 p-3"
+              style="background-color: var(--bg-main); border-color: var(--border-color) !important"
+            >
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0 fw-bold" style="color: var(--text-primary)">Passport Size Photo</h6>
+                @if (getFileName('Photo')) {
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                }
+              </div>
+              @if (getFileName('Photo')) {
+                <p class="text-success small mb-3">
+                  <i class="bi bi-image"></i> {{ getFileName('Photo') }}
+                </p>
+              }
+              <input
+                type="file"
+                class="form-control form-control-sm"
+                (change)="onFileSelected($event, 'Photo')"
+                accept="image/*"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Step 4: Summary -->
+    @if (currentStep() === 4) {
+      <div class="flex-grow-1">
+        <h4 class="fw-bold mb-4" style="color: var(--text-primary)">Review & Confirm</h4>
+        <div
+          class="card border-0 rounded-3 p-4 mb-4"
+          style="
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color) !important;
+          "
+        >
+          <div class="row g-3">
+            <div class="col-md-6">
+              <small
+                class="text-muted-custom fw-bold text-uppercase d-block mb-1"
+                style="font-size: 0.7rem"
+                >Teacher Name</small
+              >
+              <span class="fw-bold" style="color: var(--text-primary)">{{
+                teacherForm().name || 'N/A'
+              }}</span>
+            </div>
+            <div class="col-md-6">
+              <small
+                class="text-muted-custom fw-bold text-uppercase d-block mb-1"
+                style="font-size: 0.7rem"
+                >Email Address</small
+              >
+              <span class="fw-bold" style="color: var(--text-primary)">{{
+                teacherForm().email || 'N/A'
+              }}</span>
+            </div>
+            <div class="col-md-6">
+              <small
+                class="text-muted-custom fw-bold text-uppercase d-block mb-1"
+                style="font-size: 0.7rem"
+                >Contact Number</small
+              >
+              <span class="fw-bold" style="color: var(--text-primary)">{{
+                teacherForm().phonenumber || 'N/A'
+              }}</span>
+            </div>
+            <div class="col-md-6">
+              <small
+                class="text-muted-custom fw-bold text-uppercase d-block mb-1"
+                style="font-size: 0.7rem"
+                >Qualifications</small
+              >
+              <span class="fw-bold" style="color: var(--text-primary)">{{
+                teacherForm().qualifications || 'N/A'
+              }}</span>
+            </div>
+            <div class="col-12 border-top pt-3 mt-3">
+              <small
+                class="text-muted-custom fw-bold text-uppercase d-block mb-2"
+                style="font-size: 0.7rem"
+                >Class Assignments</small
+              >
+              @if (selectedAssignments().length === 0) {
+                <div>
+                  <span class="text-muted small">No class maps configured.</span>
+                </div>
+              }
+              @for (item of selectedAssignments(); track item) {
+                <div class="mb-1 d-flex gap-2 align-items-center">
+                  <i class="bi bi-tag-fill text-muted-custom" style="font-size: 0.85rem"></i>
+                  <span style="color: var(--text-primary)"
+                    ><strong>{{ item.subjectName }}</strong> inside Class
+                    <strong>{{ item.className }}</strong></span
+                  >
+                </div>
+              }
+            </div>
+            <div class="col-12 border-top pt-3 mt-3">
+              <small
+                class="text-muted-custom fw-bold text-uppercase d-block mb-1"
+                style="font-size: 0.7rem"
+                >Documents Staged</small
+              >
+              <span class="fw-bold" style="color: var(--text-primary)"
+                >{{ selectedDocuments().length }} files prepared</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3">
+          <i class="bi bi-info-circle-fill fs-4 text-info"></i>
+          <div>
+            <h6 class="mb-1 fw-bold">System Credentials</h6>
+            <p class="mb-0 small">
+              Completing the onboarding will register the profile, generate a unique Teacher ID, and
+              auto-dispatch credential emails to the user.
+            </p>
+          </div>
+        </div>
+      </div>
+    }
 
     <!-- Footer Controls -->
-    <div class="d-flex justify-content-between mt-4 pt-3 border-top" style="border-color: var(--border-color) !important;">
-      <button class="btn btn-light px-4 py-2 fw-bold" [disabled]="currentStep() === 1 || isSubmitting()" (click)="prevStep()">
+    <div
+      class="d-flex justify-content-between mt-4 pt-3 border-top"
+      style="border-color: var(--border-color) !important"
+    >
+      <button
+        class="btn btn-light px-4 py-2 fw-bold"
+        [disabled]="currentStep() === 1 || isSubmitting()"
+        (click)="prevStep()"
+      >
         Back
       </button>
-      
-      <button class="btn btn-primary px-4 py-2 fw-bold d-flex align-items-center gap-2" 
-              style="background-color: var(--primary-accent); border-color: var(--primary-accent);"
-              *ngIf="currentStep() < 4" 
-              (click)="nextStep()"
-              [disabled]="(currentStep() === 1 && (!teacherForm().name || !teacherForm().email))">
-        Next Step <i class="bi bi-arrow-right"></i>
-      </button>
 
-      <button class="btn btn-success px-4 py-2 fw-bold d-flex align-items-center gap-2" 
-              *ngIf="currentStep() === 4" 
-              (click)="completeOnboarding()"
-              [disabled]="isSubmitting()">
-        <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        {{ isSubmitting() ? 'Onboarding...' : 'Register Teacher' }}
-      </button>
+      @if (currentStep() < 4) {
+        <button
+          class="btn btn-primary px-4 py-2 fw-bold d-flex align-items-center gap-2"
+          style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+          (click)="nextStep()"
+          [disabled]="currentStep() === 1 && (!teacherForm().name || !teacherForm().email)"
+        >
+          Next Step <i class="bi bi-arrow-right"></i>
+        </button>
+      }
+
+      @if (currentStep() === 4) {
+        <button
+          class="btn btn-success px-4 py-2 fw-bold d-flex align-items-center gap-2"
+          (click)="completeOnboarding()"
+          [disabled]="isSubmitting()"
+        >
+          @if (isSubmitting()) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          {{ isSubmitting() ? 'Onboarding...' : 'Register Teacher' }}
+        </button>
+      }
     </div>
   </div>
 </div>

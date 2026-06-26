@@ -80,6 +80,14 @@ export class TeacherService {
     return this.http.get<any[]>('http://localhost:5203/api/Subjects');
   }
 
+  getTeacherAssignments(teacherId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/${teacherId}/assignments`);
+  }
+
+  unassignSubject(teacherId: number, classId: number, subjectId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${teacherId}/assignments/${classId}/${subjectId}`);
+  }
+
   updateTeacher(id: number, dto: { name: string, phonenumber?: string, qualifications?: string }): Observable<TeacherResponseDTO> {
     return this.http.put<TeacherResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }

@@ -24,6 +24,7 @@ export class AcademicCalendar implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   isAdmin = signal(false);
+  userRole = signal<string>('');
 
   // Date constraints
   minDate = signal<string>('');
@@ -45,7 +46,8 @@ export class AcademicCalendar implements OnInit {
   });
 
   ngOnInit() {
-    const role = sessionStorage.getItem('role');
+    const role = sessionStorage.getItem('role') || '';
+    this.userRole.set(role);
     this.isAdmin.set(role === 'Admin');
     this.fetchAcademicYears();
   }
@@ -75,6 +77,7 @@ export class AcademicCalendar implements OnInit {
     const yearId = this.selectedAcademicYearId();
     if (!yearId) {
       this.summary.set(null);
+      this.loading.set(false);
       return;
     }
 

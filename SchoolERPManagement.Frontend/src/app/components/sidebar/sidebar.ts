@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LayoutService } from '../../services/layout.service';
+import { NotificationService } from '../../services/notification.service';
 
 interface MenuItem {
   label: string;
@@ -18,6 +19,7 @@ interface MenuItem {
 })
 export class Sidebar implements OnInit {
   layoutService = inject(LayoutService);
+  notificationService = inject(NotificationService);
 
   private allMenuItems: MenuItem[] = [
     { label: 'Dashboard',         route: '/dashboard',         icon: 'bi-grid-fill',              roles: ['Admin', 'Teacher', 'Student', 'Parent'] },

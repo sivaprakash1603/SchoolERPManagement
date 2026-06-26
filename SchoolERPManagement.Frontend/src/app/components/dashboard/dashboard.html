@@ -1,453 +1,749 @@
-<div class="dashboard-wrapper">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-    <div>
-      <h2 class="fs-2 fw-bold mb-1" style="color: var(--text-primary);">
-        {{ salutation }}, <span style="color: var(--primary-accent);">{{ userName }}</span>! 👋
-      </h2>
-      <p class="text-muted-custom mb-0">
-        {{ userRole() === 'Student' ? 'Welcome back! Here is a summary of your academic progress.' : 'Here is your overview of institutional metrics across all departments.' }}
-      </p>
-    </div>
-    
-    <!-- Academic Year Selector (Only for Admin/Teacher) -->
-    <div class="d-flex align-items-center gap-2" style="min-width: 260px;" *ngIf="userRole() === 'Admin' || userRole() === 'Teacher'">
-      <label class="form-label text-muted-custom fw-bold text-uppercase mb-0 text-nowrap" style="font-size: 0.75rem; letter-spacing: 0.05em;"><i class="bi bi-calendar3"></i> Academic Year:</label>
-      <select class="form-select" (change)="onYearChange($event)" [value]="selectedAcademicYearId()">
-        @for (year of academicYears(); track year.id) {
-          <option [value]="year.id" [selected]="year.id === selectedAcademicYearId()">{{ year.yearName }} {{ year.isCurrent ? '(Active)' : '' }}</option>
-        }
-      </select>
-    </div>
+@if (loading()) {
+  <div
+    class="d-flex justify-content-center align-items-center"
+    style="min-height: calc(100vh - 100px)"
+  >
+    <img src="/Book.svg" alt="Loading..." style="width: 100px; height: 100px" />
   </div>
-
-  @if (loading()) {
-    <div class="d-flex justify-content-center py-5">
-      <div class="spinner-border text-primary" role="status"></div>
-    </div>
-  }
-
-  @if (error()) {
-    <div class="alert alert-danger">{{ error() }}</div>
-  }
-
-  <!-- STUDENT DASHBOARD -->
-  @if (userRole() === 'Student' && !loading() && !error()) {
-    <div class="row g-4 mb-4">
-      <!-- Attendance Stats Card -->
-      <div class="col-12 col-md-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca;">
-              <i class="bi bi-calendar-check-fill fs-5"></i>
-            </div>
-            <span class="badge text-success bg-transparent px-0"><i class="bi bi-check-circle me-1"></i>Tracked</span>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">ATTENDANCE RATE</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ studentAttendanceRate() }}%</h3>
-        </div>
+} @else {
+  <div class="dashboard-wrapper">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <h2 class="fs-2 fw-bold mb-1" style="color: var(--text-primary)">
+          {{ salutation }}, <span style="color: var(--primary-accent)">{{ userName }}</span
+          >! 👋
+        </h2>
+        <p class="text-muted-custom mb-0">
+          {{ welcomeMessage }}
+        </p>
       </div>
 
-      <!-- Pending Homework Card -->
-      <div class="col-12 col-md-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #ffedd5; color: #c2410c;">
-              <i class="bi bi-journal-album fs-5"></i>
-            </div>
-            <span class="badge" [class.text-danger]="pendingHomeworkCount() > 0" [class.text-success]="pendingHomeworkCount() === 0" class="bg-transparent px-0">
-              {{ pendingHomeworkCount() > 0 ? 'Needs Attention' : 'All Clear' }}
-            </span>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">PENDING HOMEWORK</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ pendingHomeworkCount() }}</h3>
+      <!-- Academic Year Selector (Only for Admin/Teacher) -->
+      @if (userRole() === 'Admin' || userRole() === 'Teacher') {
+        <div class="d-flex align-items-center gap-2" style="min-width: 260px">
+          <label
+            class="form-label text-muted-custom fw-bold text-uppercase mb-0 text-nowrap"
+            style="font-size: 0.75rem; letter-spacing: 0.05em"
+            ><i class="bi bi-calendar3"></i> Academic Year:</label
+          >
+          <select
+            class="form-select"
+            (change)="onYearChange($event)"
+            [value]="selectedAcademicYearId()"
+          >
+            @for (year of academicYears(); track year.id) {
+              <option [value]="year.id" [selected]="year.id === selectedAcademicYearId()">
+                {{ year.yearName }} {{ year.isCurrent ? '(Active)' : '' }}
+              </option>
+            }
+          </select>
         </div>
-      </div>
+      }
 
-      <!-- Fee Status Card -->
-      <div class="col-12 col-md-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #d1fae5; color: #047857;">
-              <i class="bi bi-credit-card-fill fs-5"></i>
-            </div>
-            <span class="badge" [class.text-danger]="feeSummary() && feeSummary()!.pendingAmount > 0" [class.text-success]="!feeSummary() || feeSummary()!.pendingAmount === 0" class="bg-transparent px-0">
-              {{ feeSummary() && feeSummary()!.pendingAmount > 0 ? 'Pending Payment' : 'Paid' }}
-            </span>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">PENDING FEES</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">
-            ₹{{ (feeSummary() ? feeSummary()!.pendingAmount : 0) | number:'1.2-2' }}
-          </h3>
+      <!-- Child Selector (Only for Parent) -->
+      @if (userRole() === 'Parent' && parentChildren().length > 0) {
+        <div class="d-flex align-items-center gap-2" style="min-width: 260px">
+          <label
+            class="form-label text-muted-custom fw-bold text-uppercase mb-0 text-nowrap"
+            style="font-size: 0.75rem; letter-spacing: 0.05em"
+            ><i class="bi bi-person-badge"></i> Select Child:</label
+          >
+          <select
+            class="form-select"
+            [ngModel]="selectedChildId()"
+            (ngModelChange)="onChildChange($event)"
+          >
+            @for (child of parentChildren(); track child.studentId) {
+              <option [value]="child.studentId">{{ child.name }} ({{ child.className }})</option>
+            }
+          </select>
         </div>
-      </div>
+      }
     </div>
 
-    <!-- Student Detail Widgets -->
-    <div class="row g-4">
-      <!-- Left: Upcoming Homework -->
-      <div class="col-lg-7">
-        <div class="minimal-card p-4 h-100">
-          <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
-            <i class="bi bi-clock-history"></i> Upcoming Assignments & Homework
-          </h5>
-          <div class="table-responsive">
-            <table class="table table-borderless align-middle mb-0 text-muted-custom">
-              <thead>
-                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Subject</th>
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Title</th>
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Due Date</th>
-                  <th class="fw-medium text-uppercase pb-3 text-end" style="font-size: 0.7rem; letter-spacing: 0.05em;">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (hw of upcomingHomework(); track hw.id) {
-                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                    <td class="py-3 text-body fw-bold">
-                      <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">{{ hw.subjectName }}</span>
-                    </td>
-                    <td class="py-3 text-body">{{ hw.title }}</td>
-                    <td class="py-3 text-danger fw-medium">{{ hw.dueDate | date:'mediumDate' }}</td>
-                    <td class="py-3 text-end">
-                      <span class="badge rounded-pill px-2 py-1" 
-                            [class.bg-success-subtle]="hw.submission" [class.text-success]="hw.submission"
-                            [class.bg-warning-subtle]="!hw.submission" [class.text-warning]="!hw.submission">
-                        {{ hw.submission ? 'Submitted' : 'Pending' }}
-                      </span>
-                    </td>
+    @if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
+    }
+
+    <!-- STUDENT DASHBOARD (Also used for Parent) -->
+    @if ((userRole() === 'Student' || userRole() === 'Parent') && !loading() && !error()) {
+      <div class="row g-4 mb-4">
+        <!-- Attendance Stats Card -->
+        <div class="col-12 col-md-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca"
+              >
+                <i class="bi bi-calendar-check-fill fs-5"></i>
+              </div>
+              <span class="badge text-success bg-transparent px-0"
+                ><i class="bi bi-check-circle me-1"></i>Tracked</span
+              >
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              ATTENDANCE RATE
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ studentAttendanceRate() }}%
+            </h3>
+          </div>
+        </div>
+
+        <!-- Pending Homework Card -->
+        <div class="col-12 col-md-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #ffedd5; color: #c2410c"
+              >
+                <i class="bi bi-journal-album fs-5"></i>
+              </div>
+              <span
+                class="badge"
+                [class.text-danger]="pendingHomeworkCount() > 0"
+                [class.text-success]="pendingHomeworkCount() === 0"
+                class="bg-transparent px-0"
+              >
+                {{ pendingHomeworkCount() > 0 ? 'Needs Attention' : 'All Clear' }}
+              </span>
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              PENDING HOMEWORK
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ pendingHomeworkCount() }}
+            </h3>
+          </div>
+        </div>
+
+        <!-- Fee Status Card -->
+        <div class="col-12 col-md-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #d1fae5; color: #047857"
+              >
+                <i class="bi bi-credit-card-fill fs-5"></i>
+              </div>
+              <span
+                class="badge"
+                [class.text-danger]="feeSummary() && feeSummary()!.pendingAmount > 0"
+                [class.text-success]="!feeSummary() || feeSummary()!.pendingAmount === 0"
+                class="bg-transparent px-0"
+              >
+                {{ feeSummary() && feeSummary()!.pendingAmount > 0 ? 'Pending Payment' : 'Paid' }}
+              </span>
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              PENDING FEES
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              ₹{{ (feeSummary() ? feeSummary()!.pendingAmount : 0) | number: '1.2-2' }}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Detail Widgets -->
+      <div class="row g-4">
+        <!-- Left: Upcoming Homework -->
+        <div class="col-lg-7">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
+              <i class="bi bi-clock-history"></i> Upcoming Assignments & Homework
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-borderless align-middle mb-0 text-muted-custom">
+                <thead>
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Subject
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Title
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Due Date
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3 text-end"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Status
+                    </th>
                   </tr>
-                }
-                @if (upcomingHomework().length === 0) {
-                  <tr>
-                    <td colspan="4" class="text-center py-5 text-muted">
-                      <i class="bi bi-journal-check fs-1 d-block mb-2 text-success"></i>
-                      No upcoming homework assignments found!
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right: Recent Exam Results -->
-      <div class="col-lg-5">
-        <div class="minimal-card p-4 h-100">
-          <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
-            <i class="bi bi-award"></i> Recent Exam Marks
-          </h5>
-          <div class="table-responsive">
-            <table class="table table-borderless align-middle mb-0 text-muted-custom">
-              <thead>
-                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Exam / Subject</th>
-                  <th class="fw-medium text-uppercase pb-3 text-end" style="font-size: 0.7rem; letter-spacing: 0.05em;">Marks</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (res of recentResults(); track res.id) {
-                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                    <td class="py-3 text-body">
-                      <div class="fw-bold">{{ res.subjectName }}</div>
-                      <small class="text-muted-custom">{{ res.examName }}</small>
-                    </td>
-                    <td class="py-3 text-end text-body fw-bold fs-6">{{ res.marks }}</td>
-                  </tr>
-                }
-                @if (recentResults().length === 0) {
-                  <tr>
-                    <td colspan="2" class="text-center py-5 text-muted">
-                      <i class="bi bi-file-earmark-bar-graph fs-1 d-block mb-2 text-warning"></i>
-                      No exam results published yet.
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- ADMIN DASHBOARD -->
-  @if (userRole() === 'Admin' && metrics() && !loading() && !error()) {
-    <div class="row g-4 mb-4">
-      <div class="col-12 col-sm-6 col-xl-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca;">
-              <i class="bi bi-people-fill fs-5"></i>
-            </div>
-            <span class="badge text-success bg-transparent px-0"><i class="bi bi-graph-up-arrow me-1"></i>{{ metrics()!.studentAttendanceRate }}% Present</span>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">TOTAL STUDENTS</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ metrics()!.totalStudents }}</h3>
-        </div>
-      </div>
-
-      <div class="col-12 col-sm-6 col-xl-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #ffedd5; color: #c2410c;">
-              <i class="bi bi-person-badge-fill fs-5"></i>
-            </div>
-            <span class="badge text-success bg-transparent px-0"><i class="bi bi-graph-up-arrow me-1"></i>{{ metrics()!.staffAttendanceRate }}% Present</span>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">TOTAL TEACHERS</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ metrics()!.totalTeachers }}</h3>
-        </div>
-      </div>
-
-      <div class="col-12 col-sm-6 col-xl-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #d1fae5; color: #047857;">
-              <i class="bi bi-currency-rupee fs-5"></i>
-            </div>
-            <span class="badge text-success bg-transparent px-0"><i class="bi bi-check-circle me-1"></i>YTD</span>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">TOTAL REVENUE</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">₹{{ metrics()!.totalRevenue | number:'1.2-2' }}</h3>
-        </div>
-      </div>
-
-      <div class="col-12 col-sm-6 col-xl-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #fee2e2; color: #b91c1c;">
-              <i class="bi bi-building fs-5"></i>
-            </div>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">ACTIVE CLASSES</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ metrics()!.totalClasses }}</h3>
-        </div>
-      </div>
-      
-      <div class="col-12 col-sm-6 col-xl-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #f3f4f6; color: #4b5563;">
-              <i class="bi bi-person-hearts fs-5"></i>
-            </div>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">TOTAL PARENTS</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ metrics()!.totalParents }}</h3>
-        </div>
-      </div>
-
-      <div class="col-12 col-sm-6 col-xl-4">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #fce7f3; color: #be185d;">
-              <i class="bi bi-pc-display fs-5"></i>
-            </div>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">SCHOOL ASSETS</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ metrics()!.totalAssets }}</h3>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-4">
-      <div class="col-lg-5">
-        <div class="minimal-card p-4 h-100">
-          <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary);">Demographics</h5>
-          <div class="chart-container position-relative" style="height: 250px;">
-            <canvas #demographicsChart></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-7">
-        <div class="minimal-card p-4 h-100">
-          <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary);">Revenue Trends</h5>
-          <div class="chart-container position-relative" style="height: 250px;">
-            <canvas #revenueChart></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row mt-4">
-      <div class="col-12">
-        <div class="minimal-card p-4">
-          <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary);">Recent Transactions</h5>
-          <div class="table-responsive">
-            <table class="table table-borderless align-middle mb-0 text-muted-custom">
-              <thead>
-                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Student Name</th>
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Date</th>
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Status</th>
-                  <th class="text-end fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (tx of metrics()!.recentTransactions; track tx.date) {
-                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                    <td class="py-3 text-body fw-medium">{{ tx.studentName }}</td>
-                    <td class="py-3">{{ tx.date | date:'mediumDate' }}</td>
-                    <td class="py-3"><span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">{{ tx.status }}</span></td>
-                    <td class="py-3 text-end fw-bold text-body">₹{{ tx.amount | number:'1.2-2' }}</td>
-                  </tr>
-                }
-                @if (metrics()!.recentTransactions.length === 0) {
-                  <tr>
-                    <td colspan="4" class="text-center py-4 text-muted">No recent transactions found.</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- TEACHER DASHBOARD -->
-  @if (userRole() === 'Teacher' && teacherMetrics() && !loading() && !error()) {
-    <div class="row g-4 mb-4">
-      <!-- Total Students Card -->
-      <div class="col-12 col-sm-6 col-md-3">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca;">
-              <i class="bi bi-people-fill fs-5"></i>
-            </div>
-            <span class="badge text-success bg-transparent px-0"><i class="bi bi-graph-up-arrow me-1"></i>{{ teacherMetrics()!.studentAttendanceRate }}% Present</span>
-          </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">MY STUDENTS</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ teacherMetrics()!.totalStudents }}</h3>
-        </div>
-      </div>
-
-      <!-- Total Classes Card -->
-      <div class="col-12 col-sm-6 col-md-3">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #fee2e2; color: #b91c1c;">
-              <i class="bi bi-building fs-5"></i>
+                </thead>
+                <tbody>
+                  @for (hw of upcomingHomework(); track hw.id) {
+                    <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                      <td class="py-3 text-body fw-bold">
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">{{
+                          hw.subjectName
+                        }}</span>
+                      </td>
+                      <td class="py-3 text-body">{{ hw.title }}</td>
+                      <td class="py-3 text-danger fw-medium">
+                        {{ hw.dueDate | date: 'mediumDate' }}
+                      </td>
+                      <td class="py-3 text-end">
+                        <span
+                          class="badge rounded-pill px-2 py-1"
+                          [class.bg-success-subtle]="hw.submission"
+                          [class.text-success]="hw.submission"
+                          [class.bg-warning-subtle]="!hw.submission"
+                          [class.text-warning]="!hw.submission"
+                        >
+                          {{ hw.submission ? 'Submitted' : 'Pending' }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                  @if (upcomingHomework().length === 0) {
+                    <tr>
+                      <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="bi bi-journal-check fs-1 d-block mb-2 text-success"></i>
+                        No upcoming homework assignments found!
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
           </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">MY CLASSES</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ teacherMetrics()!.totalClasses }}</h3>
         </div>
-      </div>
 
-      <!-- Total Subjects Card -->
-      <div class="col-12 col-sm-6 col-md-3">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #ffedd5; color: #c2410c;">
-              <i class="bi bi-book-half fs-5"></i>
+        <!-- Right: Recent Exam Results -->
+        <div class="col-lg-5">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
+              <i class="bi bi-award"></i> Recent Exam Marks
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-borderless align-middle mb-0 text-muted-custom">
+                <thead>
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Exam / Subject
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3 text-end"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Marks
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (res of recentResults(); track res.id) {
+                    <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                      <td class="py-3 text-body">
+                        <div class="fw-bold">{{ res.subjectName }}</div>
+                        <small class="text-muted-custom">{{ res.examName }}</small>
+                      </td>
+                      <td class="py-3 text-end text-body fw-bold fs-6">{{ res.marks }}</td>
+                    </tr>
+                  }
+                  @if (recentResults().length === 0) {
+                    <tr>
+                      <td colspan="2" class="text-center py-5 text-muted">
+                        <i class="bi bi-file-earmark-bar-graph fs-1 d-block mb-2 text-warning"></i>
+                        No exam results published yet.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
           </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">MY SUBJECTS</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ teacherMetrics()!.totalSubjects }}</h3>
         </div>
       </div>
+    }
 
-      <!-- Active Homework Card -->
-      <div class="col-12 col-sm-6 col-md-3">
-        <div class="minimal-card p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #d1fae5; color: #047857;">
-              <i class="bi bi-journal-text fs-5"></i>
+    <!-- ADMIN DASHBOARD -->
+    @if (userRole() === 'Admin' && metrics() && !loading() && !error()) {
+      <div class="row g-4 mb-4">
+        <div class="col-12 col-sm-6 col-xl-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca"
+              >
+                <i class="bi bi-people-fill fs-5"></i>
+              </div>
+              <span class="badge text-success bg-transparent px-0"
+                ><i class="bi bi-graph-up-arrow me-1"></i>{{ metrics()!.studentAttendanceRate }}%
+                Present</span
+              >
             </div>
-            <span class="badge text-success bg-transparent px-0"><i class="bi bi-check-circle me-1"></i>Active</span>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              TOTAL STUDENTS
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ metrics()!.totalStudents }}
+            </h3>
           </div>
-          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">PENDING HOMEWORK</p>
-          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary);">{{ teacherMetrics()!.pendingHomeworkCount }}</h3>
         </div>
-      </div>
-    </div>
 
-    <!-- Teacher Detail Widgets -->
-    <div class="row g-4">
-      <!-- Left: Today's Schedule -->
-      <div class="col-lg-6">
-        <div class="minimal-card p-4 h-100">
-          <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
-            <i class="bi bi-calendar3"></i> Today's Teaching Schedule
-          </h5>
-          <div class="table-responsive">
-            <table class="table table-borderless align-middle mb-0 text-muted-custom">
-              <thead>
-                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Time</th>
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class</th>
-                  <th class="fw-medium text-uppercase pb-3 text-end" style="font-size: 0.7rem; letter-spacing: 0.05em;">Subject</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (slot of teacherMetrics()!.todaySchedule; track slot.id) {
-                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                    <td class="py-3 text-body fw-bold">
-                      <span class="badge bg-primary-subtle text-primary rounded px-2 py-1">{{ slot.startTime }} - {{ slot.endTime }}</span>
-                    </td>
-                    <td class="py-3 text-body">{{ slot.className }} - {{ slot.section }}</td>
-                    <td class="py-3 text-end text-body fw-bold">{{ slot.subjectName }}</td>
-                  </tr>
-                }
-                @if (teacherMetrics()!.todaySchedule.length === 0) {
-                  <tr>
-                    <td colspan="3" class="text-center py-5 text-muted">
-                      <i class="bi bi-emoji-smile fs-1 d-block mb-2 text-success"></i>
-                      No classes scheduled for today!
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+        <div class="col-12 col-sm-6 col-xl-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #ffedd5; color: #c2410c"
+              >
+                <i class="bi bi-person-badge-fill fs-5"></i>
+              </div>
+              <span class="badge text-success bg-transparent px-0"
+                ><i class="bi bi-graph-up-arrow me-1"></i>{{ metrics()!.staffAttendanceRate }}%
+                Present</span
+              >
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              TOTAL TEACHERS
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ metrics()!.totalTeachers }}
+            </h3>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #d1fae5; color: #047857"
+              >
+                <i class="bi bi-currency-rupee fs-5"></i>
+              </div>
+              <span class="badge text-success bg-transparent px-0"
+                ><i class="bi bi-check-circle me-1"></i>YTD</span
+              >
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              TOTAL REVENUE
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              ₹{{ metrics()!.totalRevenue | number: '1.2-2' }}
+            </h3>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #fee2e2; color: #b91c1c"
+              >
+                <i class="bi bi-building fs-5"></i>
+              </div>
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              ACTIVE CLASSES
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ metrics()!.totalClasses }}
+            </h3>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #f3f4f6; color: #4b5563"
+              >
+                <i class="bi bi-person-hearts fs-5"></i>
+              </div>
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              TOTAL PARENTS
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ metrics()!.totalParents }}
+            </h3>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-4">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #fce7f3; color: #be185d"
+              >
+                <i class="bi bi-pc-display fs-5"></i>
+              </div>
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              SCHOOL ASSETS
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ metrics()!.totalAssets }}
+            </h3>
           </div>
         </div>
       </div>
 
-      <!-- Right: Recent Homework & Submissions -->
-      <div class="col-lg-6">
-        <div class="minimal-card p-4 h-100">
-          <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
-            <i class="bi bi-file-earmark-text"></i> Recent Homework Submissions
-          </h5>
-          <div class="table-responsive">
-            <table class="table table-borderless align-middle mb-0 text-muted-custom">
-              <thead>
-                <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Title / Subject</th>
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class</th>
-                  <th class="fw-medium text-uppercase pb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;">Due Date</th>
-                  <th class="fw-medium text-uppercase pb-3 text-end" style="font-size: 0.7rem; letter-spacing: 0.05em;">Submissions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (hw of teacherMetrics()!.recentHomework; track hw.id) {
-                  <tr class="border-bottom" style="border-color: var(--border-color) !important;">
-                    <td class="py-3 text-body">
-                      <div class="fw-bold">{{ hw.title }}</div>
-                      <small class="text-muted-custom">{{ hw.subjectName }}</small>
-                    </td>
-                    <td class="py-3 text-body">{{ hw.className }} - {{ hw.section }}</td>
-                    <td class="py-3 text-danger fw-medium">{{ hw.dueDate | date:'mediumDate' }}</td>
-                    <td class="py-3 text-end text-body fw-bold">
-                      {{ hw.submissionsCount }} / {{ hw.totalStudentsCount }}
-                    </td>
-                  </tr>
-                }
-                @if (teacherMetrics()!.recentHomework.length === 0) {
-                  <tr>
-                    <td colspan="4" class="text-center py-5 text-muted">
-                      <i class="bi bi-journal-x fs-1 d-block mb-2 text-warning"></i>
-                      No homework assignments posted yet.
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary)">Demographics</h5>
+            <div class="chart-container position-relative" style="height: 250px">
+              <canvas #demographicsChart></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary)">Revenue Trends</h5>
+            <div class="chart-container position-relative" style="height: 250px">
+              <canvas #revenueChart></canvas>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  }
-</div>
+
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="minimal-card p-4">
+            <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary)">
+              Recent Transactions
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-borderless align-middle mb-0 text-muted-custom">
+                <thead>
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Student Name
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Date
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Status
+                    </th>
+                    <th
+                      class="text-end fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (tx of metrics()!.recentTransactions; track tx.date) {
+                    <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                      <td class="py-3 text-body fw-medium">{{ tx.studentName }}</td>
+                      <td class="py-3">{{ tx.date | date: 'mediumDate' }}</td>
+                      <td class="py-3">
+                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">{{
+                          tx.status
+                        }}</span>
+                      </td>
+                      <td class="py-3 text-end fw-bold text-body">
+                        ₹{{ tx.amount | number: '1.2-2' }}
+                      </td>
+                    </tr>
+                  }
+                  @if (metrics()!.recentTransactions.length === 0) {
+                    <tr>
+                      <td colspan="4" class="text-center py-4 text-muted">
+                        No recent transactions found.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TEACHER DASHBOARD -->
+    @if (userRole() === 'Teacher' && teacherMetrics() && !loading() && !error()) {
+      <div class="row g-4 mb-4">
+        <!-- Total Students Card -->
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca"
+              >
+                <i class="bi bi-people-fill fs-5"></i>
+              </div>
+              <span class="badge text-success bg-transparent px-0"
+                ><i class="bi bi-graph-up-arrow me-1"></i
+                >{{ teacherMetrics()!.studentAttendanceRate }}% Present</span
+              >
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              MY STUDENTS
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ teacherMetrics()!.totalStudents }}
+            </h3>
+          </div>
+        </div>
+
+        <!-- Total Classes Card -->
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #fee2e2; color: #b91c1c"
+              >
+                <i class="bi bi-building fs-5"></i>
+              </div>
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              MY CLASSES
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ teacherMetrics()!.totalClasses }}
+            </h3>
+          </div>
+        </div>
+
+        <!-- Total Subjects Card -->
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #ffedd5; color: #c2410c"
+              >
+                <i class="bi bi-book-half fs-5"></i>
+              </div>
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              MY SUBJECTS
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ teacherMetrics()!.totalSubjects }}
+            </h3>
+          </div>
+        </div>
+
+        <!-- Active Homework Card -->
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="minimal-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div
+                class="d-flex align-items-center justify-content-center rounded"
+                style="width: 40px; height: 40px; background-color: #d1fae5; color: #047857"
+              >
+                <i class="bi bi-journal-text fs-5"></i>
+              </div>
+              <span class="badge text-success bg-transparent px-0"
+                ><i class="bi bi-check-circle me-1"></i>Active</span
+              >
+            </div>
+            <p
+              class="text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.65rem; letter-spacing: 0.05em"
+            >
+              PENDING HOMEWORK
+            </p>
+            <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">
+              {{ teacherMetrics()!.pendingHomeworkCount }}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teacher Detail Widgets -->
+      <div class="row g-4">
+        <!-- Left: Today's Schedule -->
+        <div class="col-lg-6">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
+              <i class="bi bi-calendar3"></i> Today's Teaching Schedule
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-borderless align-middle mb-0 text-muted-custom">
+                <thead>
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Time
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Class
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3 text-end"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Subject
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (slot of teacherMetrics()!.todaySchedule; track slot.id) {
+                    <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                      <td class="py-3 text-body fw-bold">
+                        <span class="badge bg-primary-subtle text-primary rounded px-2 py-1"
+                          >{{ slot.startTime }} - {{ slot.endTime }}</span
+                        >
+                      </td>
+                      <td class="py-3 text-body">{{ slot.className }} - {{ slot.section }}</td>
+                      <td class="py-3 text-end text-body fw-bold">{{ slot.subjectName }}</td>
+                    </tr>
+                  }
+                  @if (teacherMetrics()!.todaySchedule.length === 0) {
+                    <tr>
+                      <td colspan="3" class="text-center py-5 text-muted">
+                        <i class="bi bi-emoji-smile fs-1 d-block mb-2 text-success"></i>
+                        No classes scheduled for today!
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Recent Homework & Submissions -->
+        <div class="col-lg-6">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-4 text-primary d-flex align-items-center gap-2">
+              <i class="bi bi-file-earmark-text"></i> Recent Homework Submissions
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-borderless align-middle mb-0 text-muted-custom">
+                <thead>
+                  <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Title / Subject
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Class
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Due Date
+                    </th>
+                    <th
+                      class="fw-medium text-uppercase pb-3 text-end"
+                      style="font-size: 0.7rem; letter-spacing: 0.05em"
+                    >
+                      Submissions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (hw of teacherMetrics()!.recentHomework; track hw.id) {
+                    <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                      <td class="py-3 text-body">
+                        <div class="fw-bold">{{ hw.title }}</div>
+                        <small class="text-muted-custom">{{ hw.subjectName }}</small>
+                      </td>
+                      <td class="py-3 text-body">{{ hw.className }} - {{ hw.section }}</td>
+                      <td class="py-3 text-danger fw-medium">
+                        {{ hw.dueDate | date: 'mediumDate' }}
+                      </td>
+                      <td class="py-3 text-end text-body fw-bold">
+                        {{ hw.submissionsCount }} / {{ hw.totalStudentsCount }}
+                      </td>
+                    </tr>
+                  }
+                  @if (teacherMetrics()!.recentHomework.length === 0) {
+                    <tr>
+                      <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="bi bi-journal-x fs-1 d-block mb-2 text-warning"></i>
+                        No homework assignments posted yet.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

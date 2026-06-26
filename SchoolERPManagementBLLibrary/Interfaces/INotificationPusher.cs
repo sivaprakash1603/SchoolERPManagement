@@ -4,5 +4,5 @@ namespace SchoolERPManagementBLLibrary.Interfaces;
 
 public interface INotificationPusher
 {
-    Task PushNotificationAsync(int userId, NotificationResponseDTO notification, CancellationToken cancellationToken);
+    Task PushNotificationAsync(int userId, UserNotificationResponseDTO notification, CancellationToken cancellationToken);
 }

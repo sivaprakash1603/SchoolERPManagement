@@ -11,6 +11,8 @@ import { TeacherService, TeacherResponseDTO } from '../../services/teacher.servi
 import { TimetableService } from '../../services/timetable.service';
 
 
+import { ParentService } from '../../services/parent.service';
+
 interface StudentAttendanceUI extends StudentQueryResponseDTO {
   status: string; // 'present' | 'absent' | 'late' | 'unmarked'
   remarks: string;
@@ -41,6 +43,7 @@ export class Attendance implements OnInit {
   private calendarService = inject(AcademicCalendarService);
   private toastService = inject(ToastService);
   private timetableService = inject(TimetableService);
+  private parentService = inject(ParentService);
   
   // Date constraints
   minDate = signal<string>('');
@@ -53,11 +56,33 @@ export class Attendance implements OnInit {
   currentUserId = signal<number | null>(null);
   resolvedStudentId = signal<number | null>(null);
   resolvedTeacherId = signal<number | null>(null);
+  
+  // Parent specific
+  parentChildren = signal<any[]>([]);
+  selectedChildId = signal<number | null>(null);
+
   studentAttendanceRecords = signal<any[]>([]);
   studentAttendanceStats = signal({ present: 0, absent: 0, leave: 0, late: 0, total: 0, rate: 0 });
   teacherAttendanceStats = signal({ present: 0, absent: 0, leave: 0, late: 0, total: 0, rate: 0 });
   teacherHistoryFilterMonth = signal<string>('all');
   filteredTeacherAttendanceRecords = signal<any[]>([]);
+
+  // View UI Helpers
+  get pageTitle(): string {
+    if (this.userRole() === 'Student') return 'My Attendance Dashboard';
+    if (this.userRole() === 'Parent') return 'Child Attendance Dashboard';
+    if (this.activeTab() === 'students') return 'Daily Student Attendance';
+    if (this.userRole() === 'Teacher') return 'My Attendance Logs';
+    return 'Teacher & Staff Attendance';
+  }
+
+  get pageDescription(): string {
+    if (this.userRole() === 'Student') return 'Overview of your personal attendance performance.';
+    if (this.userRole() === 'Parent') return "Overview of your child's attendance performance.";
+    if (this.activeTab() === 'students') return 'Record and review student attendance.';
+    if (this.userRole() === 'Teacher') return 'Overview of your personal staff attendance logs.';
+    return 'Record, review, and manage teacher/staff daily attendance.';
+  }
 
   // Student Calendar
   calendarMonth = signal<number>(new Date().getMonth()); // 0-indexed
@@ -91,7 +116,7 @@ export class Attendance implements OnInit {
   personalStaffAttendance = signal<any[]>([]);
 
   // States
-  loading = signal(false);
+  loading = signal(true);
   error = signal<string | null>(null);
   isAdminOrTeacher = signal(false);
 
@@ -115,6 +140,26 @@ export class Attendance implements OnInit {
           this.error.set('Failed to resolve student profile.');
         }
       });
+    } else if (role === 'Parent' && uid) {
+      this.parentService.getParentByUserId(uid).subscribe({
+        next: (parent) => {
+          this.parentService.getParentChildren(parent.id).subscribe({
+            next: (children) => {
+              this.parentChildren.set(children);
+              if (children.length > 0) {
+                this.selectedChildId.set(children[0].studentId);
+                this.resolvedStudentId.set(children[0].studentId);
+                this.fetchStudentAttendance(children[0].studentId);
+              }
+            },
+            error: (err) => console.error('Failed to load parent children', err)
+          });
+        },
+        error: (err) => {
+          console.error('Failed to resolve parent profile', err);
+          this.error.set('Failed to resolve parent profile.');
+        }
+      });
     } else {
       // Default to today's date
       const today = new Date().toISOString().split('T')[0];
@@ -131,13 +176,24 @@ export class Attendance implements OnInit {
         if (currentYear) {
           this.selectedAcademicYearId.set(currentYear.id);
           this.loadYearDetails(currentYear);
+        } else {
+          this.loading.set(false);
         }
       },
       error: (err) => {
         console.error('Failed to load academic sessions', err);
         this.toastService.error('Failed to load academic sessions.');
+        this.loading.set(false);
       }
     });
+  }
+
+  onChildChange(studentId: number) {
+    this.selectedChildId.set(studentId);
+    this.resolvedStudentId.set(studentId);
+    
+    const child = this.parentChildren().find(c => c.studentId === studentId);
+    this.fetchStudentAttendance(studentId);
   }
 
   loadYearDetails(year: AcademicYearResponseDTO) {
@@ -213,14 +269,23 @@ export class Attendance implements OnInit {
         return validationErrors.join(' ');
       }
     }
-    return err.error?.message || fallback;
+    if (err.error?.Errors) {
+      const validationErrors = Object.values(err.error.Errors).flat();
+      if (validationErrors.length > 0) {
+        return validationErrors.join(' ');
+      }
+    }
+    return err.error?.message || err.error?.Message || fallback;
   }
 
 
 
   fetchClasses() {
     const yearId = this.selectedAcademicYearId();
-    if (!yearId) return;
+    if (!yearId) {
+      this.loading.set(false);
+      return;
+    }
 
     this.classService.getAllClasses(yearId).subscribe({
       next: (res) => {
@@ -303,6 +368,7 @@ export class Attendance implements OnInit {
     const date = this.selectedDate();
     if (!classId || !date) {
       this.students.set([]);
+      this.loading.set(false);
       return;
     }
 
@@ -421,7 +487,7 @@ export class Attendance implements OnInit {
 
   fetchPersonalStaffAttendance() {
     const userId = this.currentUserId();
-    if (!userId) return;
+    if (!userId) { this.loading.set(false); return; }
 
     this.loading.set(true);
     this.error.set(null);

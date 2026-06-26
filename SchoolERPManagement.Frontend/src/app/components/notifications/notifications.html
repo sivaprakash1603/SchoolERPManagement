@@ -1,0 +1,84 @@
+<div class="notifications-container fade-in">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1 text-primary-custom fw-bold">
+        <i class="bi bi-bell-fill me-2 text-gradient"></i>Notifications
+      </h2>
+      <p class="text-muted-custom mb-0">Stay updated with your latest alerts and messages.</p>
+    </div>
+    @if (!loading() && notifications().length > 0) {
+      <button class="btn btn-outline-primary-custom rounded-pill btn-sm d-flex align-items-center gap-2" 
+              (click)="markAllAsRead()">
+        <i class="bi bi-check2-all"></i> Mark All as Read
+      </button>
+    }
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="d-flex justify-content-center py-5">
+      <div class="spinner-border text-primary-custom" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="alert alert-danger rounded-4 border-0 shadow-sm d-flex align-items-center" role="alert">
+      <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+      <div>{{ error() }}</div>
+    </div>
+  }
+
+  <!-- Notifications List -->
+  @if (!loading() && !error()) {
+    @if (notifications().length === 0) {
+      <div class="empty-state text-center py-5 rounded-4 shadow-sm bg-white">
+        <div class="empty-icon-wrapper mx-auto mb-3">
+          <i class="bi bi-bell-slash text-muted" style="font-size: 2.5rem;"></i>
+        </div>
+        <h4 class="fw-bold text-dark">All caught up!</h4>
+        <p class="text-muted">You have no new notifications.</p>
+      </div>
+    } @else {
+      <div class="notification-list d-flex flex-column gap-3">
+        @for (notif of notifications(); track notif.notificationId) {
+          <div class="notification-card p-4 rounded-4 shadow-sm bg-white position-relative" 
+               [class.unread]="!notif.isRead">
+               
+            <!-- Unread Dot -->
+            @if (!notif.isRead) {
+              <div class="unread-indicator"></div>
+            }
+
+            <div class="d-flex align-items-start gap-3">
+              <div class="icon-circle" [class.bg-primary-subtle]="!notif.isRead" [class.bg-light]="notif.isRead">
+                <i class="bi bi-chat-text-fill" [class.text-primary-custom]="!notif.isRead" [class.text-secondary]="notif.isRead"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <h5 class="mb-0 fw-bold" [class.text-dark]="!notif.isRead" [class.text-muted]="notif.isRead">
+                    {{ notif.title }}
+                  </h5>
+                  <span class="text-muted small">
+                    <i class="bi bi-clock me-1"></i>{{ notif.createdAt | date:'MMM d, y, h:mm a' }}
+                  </span>
+                </div>
+                <p class="mb-2 text-secondary">{{ notif.message }}</p>
+                
+                @if (!notif.isRead) {
+                  <button class="btn btn-sm btn-light rounded-pill border action-btn mt-2" 
+                          (click)="markAsRead(notif)">
+                    <i class="bi bi-check-circle me-1"></i> Mark as Read
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

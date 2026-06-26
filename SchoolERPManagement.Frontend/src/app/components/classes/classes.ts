@@ -1,5 +1,5 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { TeacherService, TeacherResponseDTO } from '../../services/teacher.service';
@@ -9,9 +9,9 @@ import { ToastService } from '../../services/toast.service';
 @Component({
   selector: 'app-classes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './classes.html',
-  styleUrl: './classes.css'
+  styleUrl: './classes.css',
 })
 export class Classes implements OnInit {
   private classService = inject(ClassService);
@@ -37,7 +37,7 @@ export class Classes implements OnInit {
     classname: '',
     section: '',
     classteacherId: null as number | null,
-    academicyearId: null as number | null
+    academicyearId: null as number | null,
   });
   isUpdating = signal(false);
   isDeleting = signal(false);
@@ -48,15 +48,37 @@ export class Classes implements OnInit {
     classname: '',
     section: '',
     classteacherId: null as number | null,
-    academicyearId: null as number | null
+    academicyearId: null as number | null,
   });
 
   ngOnInit() {
     const role = sessionStorage.getItem('role') || 'Student';
     this.userRole.set(role);
     this.isAdmin.set(role === 'Admin');
+    this.loadFilterState();
     this.fetchAcademicYears();
     this.fetchTeachers();
+  }
+
+  loadFilterState() {
+    const savedState = sessionStorage.getItem('classes_filter_state');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        if (state.selectedAcademicYearId !== undefined && state.selectedAcademicYearId !== null) {
+          this.selectedAcademicYearId.set(state.selectedAcademicYearId);
+        }
+      } catch (e) {
+        console.error('Failed to parse saved filter state', e);
+      }
+    }
+  }
+
+  saveFilterState() {
+    const state = {
+      selectedAcademicYearId: this.selectedAcademicYearId()
+    };
+    sessionStorage.setItem('classes_filter_state', JSON.stringify(state));
   }
 
   fetchAcademicYears() {
@@ -64,13 +86,18 @@ export class Classes implements OnInit {
     this.academicYearService.getAllAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
-        const currentYear = years.find(y => y.isCurrent);
-        if (currentYear) {
-          this.selectedAcademicYearId.set(currentYear.id);
-          this.createForm.update(form => ({ ...form, academicyearId: currentYear.id }));
-        } else if (years.length > 0) {
-          this.selectedAcademicYearId.set(years[0].id);
-          this.createForm.update(form => ({ ...form, academicyearId: years[0].id }));
+        if (this.selectedAcademicYearId() === null) {
+          const currentYear = years.find((y) => y.isCurrent);
+          if (currentYear) {
+            this.selectedAcademicYearId.set(currentYear.id);
+            this.createForm.update((form) => ({ ...form, academicyearId: currentYear.id }));
+          } else if (years.length > 0) {
+            this.selectedAcademicYearId.set(years[0].id);
+            this.createForm.update((form) => ({ ...form, academicyearId: years[0].id }));
+          }
+        } else {
+          // Sync form with saved id
+          this.createForm.update((form) => ({ ...form, academicyearId: this.selectedAcademicYearId() }));
         }
         this.fetchClasses();
       },
@@ -78,13 +105,16 @@ export class Classes implements OnInit {
         console.error('Failed to load academic sessions', err);
         this.error.set('Failed to load academic sessions.');
         this.loading.set(false);
-      }
+      },
     });
   }
 
   fetchClasses() {
     const yearId = this.selectedAcademicYearId();
-    if (!yearId) return;
+    if (!yearId) {
+      this.loading.set(false);
+      return;
+    }
 
     this.loading.set(true);
     this.error.set(null);
@@ -97,7 +127,7 @@ export class Classes implements OnInit {
         console.error('Failed to load classes', err);
         this.error.set('Failed to load classes.');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -108,41 +138,40 @@ export class Classes implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load teachers', err);
-      }
+      },
     });
   }
 
   getTeacherName(teacherId?: number): string {
     if (!teacherId) return 'Not Assigned';
-    const teacher = this.teachers().find(t => t.id === teacherId);
+    const teacher = this.teachers().find((t) => t.id === teacherId);
     return teacher ? teacher.name : 'Unknown';
   }
 
   getAvailableTeachersForCreate(): TeacherResponseDTO[] {
     const assignedTeacherIds = this.classes()
-      .map(c => c.classteacherId)
+      .map((c) => c.classteacherId)
       .filter((id): id is number => !!id);
-    return this.teachers().filter(t => !assignedTeacherIds.includes(t.id));
+    return this.teachers().filter((t) => !assignedTeacherIds.includes(t.id));
   }
 
   getAvailableTeachersForEdit(currentClassteacherId?: number): TeacherResponseDTO[] {
     const assignedTeacherIds = this.classes()
-      .map(c => c.classteacherId)
+      .map((c) => c.classteacherId)
       .filter((id): id is number => !!id && id !== currentClassteacherId);
-    return this.teachers().filter(t => !assignedTeacherIds.includes(t.id));
+    return this.teachers().filter((t) => !assignedTeacherIds.includes(t.id));
   }
 
   getYearName(yearId?: number): string {
     if (!yearId) return 'N/A';
-    const year = this.academicYears().find(y => y.id === yearId);
+    const year = this.academicYears().find((y) => y.id === yearId);
     return year ? year.yearName : 'N/A';
   }
 
   onYearChange(event: Event) {
     const select = event.target as HTMLSelectElement;
-    const val = select.value ? parseInt(select.value, 10) : null;
-    this.selectedAcademicYearId.set(val);
-    this.createForm.update(form => ({ ...form, academicyearId: val }));
+    this.selectedAcademicYearId.set(parseInt(select.value, 10));
+    this.saveFilterState();
     this.fetchClasses();
   }
 
@@ -151,7 +180,7 @@ export class Classes implements OnInit {
       classname: '',
       section: '',
       classteacherId: null,
-      academicyearId: this.selectedAcademicYearId()
+      academicyearId: this.selectedAcademicYearId(),
     });
     this.showCreateModal.set(true);
   }
@@ -172,7 +201,7 @@ export class Classes implements OnInit {
       classname: form.classname,
       section: form.section,
       classteacherId: form.classteacherId || undefined,
-      academicyearId: form.academicyearId || undefined
+      academicyearId: form.academicyearId || undefined,
     };
 
     this.classService.createClass(dto).subscribe({
@@ -185,8 +214,11 @@ export class Classes implements OnInit {
       error: (err) => {
         console.error('Failed to save class', err);
         this.isSaving.set(false);
-        this.toastService.error(err.error?.message || 'Failed to save class. A teacher might already be assigned to another class.');
-      }
+        this.toastService.error(
+          err.error?.message ||
+            'Failed to save class. A teacher might already be assigned to another class.',
+        );
+      },
     });
   }
 
@@ -196,7 +228,7 @@ export class Classes implements OnInit {
       classname: cls.classname,
       section: cls.section || '',
       classteacherId: cls.classteacherId || null,
-      academicyearId: cls.academicyearId || null
+      academicyearId: cls.academicyearId || null,
     });
     this.showEditModal.set(true);
   }
@@ -221,7 +253,7 @@ export class Classes implements OnInit {
       classname: form.classname,
       section: form.section,
       classteacherId: form.classteacherId || undefined,
-      academicyearId: form.academicyearId || undefined
+      academicyearId: form.academicyearId || undefined,
     };
 
     this.classService.updateClass(cls.id, dto).subscribe({
@@ -235,7 +267,7 @@ export class Classes implements OnInit {
         console.error('Failed to update class', err);
         this.isUpdating.set(false);
         this.toastService.error(err.error?.message || 'Failed to update class.');
-      }
+      },
     });
   }
 
@@ -265,7 +297,7 @@ export class Classes implements OnInit {
         console.error('Failed to delete class', err);
         this.isDeleting.set(false);
         this.toastService.error(err.error?.message || 'Failed to delete class.');
-      }
+      },
     });
   }
 }

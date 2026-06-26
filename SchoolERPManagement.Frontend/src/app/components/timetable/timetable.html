@@ -1,193 +1,321 @@
-<!-- Page Header -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
-  <div>
-    <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent);">
-      {{ viewMode() === 'personal' ? (userRole() === 'Teacher' ? 'My Schedule' : 'My Timetable') : 'Class Timetable' }}
-    </h2>
-    <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
-      <i class="bi bi-calendar-week"></i>
-      {{ viewMode() === 'personal' ? (userRole() === 'Teacher' ? 'View your personalized weekly teaching schedule.' : 'View your classroom schedule.') : 'View and configure weekly schedules for institutional classes.' }}
-    </p>
-  </div>
-  <button *ngIf="isAdmin() && selectedClassId()" (click)="openCreateModal()" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
-    <i class="bi bi-plus-circle"></i>
-    Add Timetable Entry
-  </button>
-</div>
-
-<!-- View Mode Switcher (Only for Teachers) -->
-<div class="d-flex mb-4 gap-2" *ngIf="userRole() === 'Teacher'">
-  <button class="btn px-4 py-2 rounded-3 fw-bold transition-all border"
-          [style.background-color]="viewMode() === 'personal' ? 'var(--primary-accent)' : 'transparent'"
-          [style.border-color]="viewMode() === 'personal' ? 'var(--primary-accent)' : 'var(--border-color)'"
-          [style.color]="viewMode() === 'personal' ? '#fff' : 'var(--text-muted)'"
-          (click)="switchViewMode('personal')">
-    <i class="bi bi-person-workspace me-1"></i> My Schedule
-  </button>
-  <button class="btn px-4 py-2 rounded-3 fw-bold transition-all border"
-          [style.background-color]="viewMode() === 'class' ? 'var(--primary-accent)' : 'transparent'"
-          [style.border-color]="viewMode() === 'class' ? 'var(--primary-accent)' : 'var(--border-color)'"
-          [style.color]="viewMode() === 'class' ? '#fff' : 'var(--text-muted)'"
-          (click)="switchViewMode('class')">
-    <i class="bi bi-buildings me-1"></i> Class Timetables
-  </button>
-</div>
-
-<!-- Selector Bar -->
-<div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end" *ngIf="viewMode() === 'class'">
-  <div style="width: 200px;">
-    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Academic Session</label>
-    <select class="form-select" [ngModel]="selectedAcademicYearId()" (ngModelChange)="onYearSelect($event)">
-      @for (year of academicYears(); track year.id) {
-        <option [value]="year.id">{{ year.yearName }}</option>
-      }
-    </select>
-  </div>
-  <div style="width: 250px;">
-    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Standard / Class</label>
-    <select class="form-select" [(ngModel)]="selectedClassId" (ngModelChange)="onClassChange()">
-      <option [ngValue]="null" disabled>Select Class...</option>
-      @for (c of classes(); track c.id) {
-        <option [ngValue]="c.id">{{ c.classname }} {{ c.section ? '- ' + c.section : '' }}</option>
-      }
-    </select>
-  </div>
-  <div>
-    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2" title="Refresh" (click)="fetchTimetable()">
-      <i class="bi bi-arrow-clockwise"></i>
-    </button>
-  </div>
-</div>
-
-<!-- Loading state -->
 @if (loading()) {
-  <div class="d-flex justify-content-center py-5">
-    <div class="spinner-border text-primary" role="status"></div>
+  <div
+    class="d-flex justify-content-center align-items-center"
+    style="min-height: calc(100vh - 100px)"
+  >
+    <img src="/Book.svg" alt="Loading..." style="width: 100px; height: 100px" />
   </div>
-}
-
-@if (error()) {
-  <div class="alert alert-danger">{{ error() }}</div>
-}
-
-<!-- Grid Visualizer -->
-@if (!loading() && !error()) {
-  @if (viewMode() === 'class' && !selectedClassId()) {
-    <div class="minimal-card p-5 text-center text-muted-custom">
-      <i class="bi bi-building-exclamation fs-1 mb-2 d-block"></i>
-      Please select a class to view its timetable.
+} @else {
+  <!-- Page Header -->
+  <div
+    class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4"
+  >
+    <div>
+      <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent)">
+        {{ pageTitle }}
+      </h2>
+      <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-calendar-week"></i>
+        {{ pageDescription }}
+      </p>
     </div>
-  } @else {
-    <div class="minimal-card mb-4 overflow-hidden border">
-      <div class="d-flex flex-column">
-        @for (day of days; track day) {
-          <div class="day-row">
-            <div class="day-header-col text-capitalize">
-              {{ day }}
-            </div>
-            <div class="slots-col">
-              @for (slot of getSlotsForDay(day); track slot.id) {
-                <div class="time-slot-card">
-                  <div class="slot-room" *ngIf="slot.roomNo">Rm {{ slot.roomNo }}</div>
-                  <span class="slot-subject">{{ getSubjectName(slot.subjectId) }}</span>
-                  <span class="slot-teacher">
-                    @if (viewMode() === 'personal' && userRole() === 'Teacher') {
-                      <i class="bi bi-building text-muted-custom"></i>
-                      {{ getClassNameForSlot(slot.classId) }}
-                    } @else {
-                      <i class="bi bi-person-badge text-muted-custom"></i>
-                      {{ getTeacherName(slot.teacherId) }}
+
+    <!-- Parent Child Selector -->
+    @if (userRole() === 'Parent' && parentChildren().length > 0) {
+      <div class="d-flex align-items-center gap-2" style="min-width: 260px">
+        <label
+          class="form-label text-muted-custom fw-bold text-uppercase mb-0 text-nowrap"
+          style="font-size: 0.75rem; letter-spacing: 0.05em"
+          ><i class="bi bi-person-badge"></i> Select Child:</label
+        >
+        <select
+          class="form-select"
+          [ngModel]="selectedChildId()"
+          (ngModelChange)="onChildChange($event)"
+        >
+          @for (child of parentChildren(); track child) {
+            <option [value]="child.studentId" [selected]="child.studentId === selectedChildId()">
+              {{ child.name }} ({{ child.className }})
+            </option>
+          }
+        </select>
+      </div>
+    }
+    @if (isAdmin() && selectedClassId()) {
+      <button
+        (click)="openCreateModal()"
+        class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold"
+        style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+      >
+        <i class="bi bi-plus-circle"></i>
+        Add Timetable Entry
+      </button>
+    }
+  </div>
+
+  <!-- View Mode Switcher (Only for Teachers) -->
+  @if (userRole() === 'Teacher') {
+    <div class="d-flex mb-4 gap-2">
+      <button
+        class="btn px-4 py-2 rounded-3 fw-bold transition-all border"
+        [style.background-color]="
+          viewMode() === 'personal' ? 'var(--primary-accent)' : 'transparent'
+        "
+        [style.border-color]="
+          viewMode() === 'personal' ? 'var(--primary-accent)' : 'var(--border-color)'
+        "
+        [style.color]="viewMode() === 'personal' ? '#fff' : 'var(--text-muted)'"
+        (click)="switchViewMode('personal')"
+      >
+        <i class="bi bi-person-workspace me-1"></i> My Schedule
+      </button>
+      <button
+        class="btn px-4 py-2 rounded-3 fw-bold transition-all border"
+        [style.background-color]="viewMode() === 'class' ? 'var(--primary-accent)' : 'transparent'"
+        [style.border-color]="
+          viewMode() === 'class' ? 'var(--primary-accent)' : 'var(--border-color)'
+        "
+        [style.color]="viewMode() === 'class' ? '#fff' : 'var(--text-muted)'"
+        (click)="switchViewMode('class')"
+      >
+        <i class="bi bi-buildings me-1"></i> Class Timetables
+      </button>
+    </div>
+  }
+
+  <!-- Selector Bar -->
+  @if (viewMode() === 'class') {
+    <div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
+      @if (userRole() !== 'Parent' && userRole() !== 'Student') {
+        <div style="width: 200px">
+          <label
+            class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+            style="font-size: 0.7rem; letter-spacing: 0.05em"
+            >Academic Session</label
+          >
+          <select
+            class="form-select"
+            [ngModel]="selectedAcademicYearId()"
+            (ngModelChange)="onYearSelect($event)"
+          >
+            @for (year of academicYears(); track year.id) {
+              <option [value]="year.id">{{ year.yearName }}</option>
+            }
+          </select>
+        </div>
+      }
+      @if (userRole() !== 'Parent' && userRole() !== 'Student') {
+        <div style="width: 250px">
+          <label
+            class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+            style="font-size: 0.7rem; letter-spacing: 0.05em"
+            >Standard / Class</label
+          >
+          <select
+            class="form-select"
+            [(ngModel)]="selectedClassId"
+            (ngModelChange)="onClassChange()"
+          >
+            <option [ngValue]="null" disabled>Select Class...</option>
+            @for (c of classes(); track c.id) {
+              <option [ngValue]="c.id">
+                {{ c.classname }} {{ c.section ? '- ' + c.section : '' }}
+              </option>
+            }
+          </select>
+        </div>
+      }
+      <div>
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2"
+          title="Refresh"
+          (click)="fetchTimetable()"
+        >
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Loading state -->
+
+  @if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  }
+
+  <!-- Grid Visualizer -->
+  @if (!loading() && !error()) {
+    @if (viewMode() === 'class' && !selectedClassId()) {
+      <div class="minimal-card p-5 text-center text-muted-custom">
+        <i class="bi bi-building-exclamation fs-1 mb-2 d-block"></i>
+        Please select a class to view its timetable.
+      </div>
+    } @else {
+      <div class="minimal-card mb-4 overflow-hidden border">
+        <div class="d-flex flex-column">
+          @for (day of days; track day) {
+            <div class="day-row">
+              <div class="day-header-col text-capitalize">
+                {{ day }}
+              </div>
+              <div class="slots-col">
+                @for (slot of getSlotsForDay(day); track slot.id) {
+                  <div class="time-slot-card">
+                    @if (slot.roomNo) {
+                      <div class="slot-room">Rm {{ slot.roomNo }}</div>
                     }
-                  </span>
-                  <span class="slot-time">
-                    <i class="bi bi-clock"></i>
-                    {{ formatTime(slot.startTime) }} - {{ formatTime(slot.endTime) }}
-                  </span>
-                </div>
-              }
-              @if (getSlotsForDay(day).length === 0) {
-                <span class="empty-day-text">No classes scheduled</span>
-              }
+                    <span class="slot-subject">{{ getSubjectName(slot.subjectId) }}</span>
+                    <span class="slot-teacher">
+                      @if (viewMode() === 'personal' && userRole() === 'Teacher') {
+                        <i class="bi bi-building text-muted-custom"></i>
+                        {{ getClassNameForSlot(slot.classId) }}
+                      } @else {
+                        <i class="bi bi-person-badge text-muted-custom"></i>
+                        {{ getTeacherName(slot.teacherId) }}
+                      }
+                    </span>
+                    <span class="slot-time">
+                      <i class="bi bi-clock"></i>
+                      {{ formatTime(slot.startTime) }} - {{ formatTime(slot.endTime) }}
+                    </span>
+                  </div>
+                }
+                @if (getSlotsForDay(day).length === 0) {
+                  <span class="empty-day-text">No classes scheduled</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Create Timetable Modal -->
+  @if (showCreateModal()) {
+    <div class="modal-overlay" (click)="closeCreateModal()">
+      <div class="modal-card" style="max-width: 500px" (click)="$event.stopPropagation()">
+        <div class="modal-header-custom">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-plus-circle-fill fs-4" style="color: var(--primary-accent)"></i>
+            <h5 class="fw-bold mb-0" style="color: var(--text-primary)">
+              Add Timetable Slot for {{ selectedClassName() }}
+            </h5>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()"></button>
+        </div>
+        <div class="modal-body-custom">
+          <div class="row g-3">
+            <!-- Day of Week -->
+            <div class="col-12">
+              <label class="modal-form-label">Day of Week</label>
+              <select
+                class="form-select"
+                [ngModel]="createForm().dayOfWeek"
+                (ngModelChange)="createForm.set({ ...createForm(), dayOfWeek: $event })"
+              >
+                <option value="monday">Monday</option>
+                <option value="tuesday">Tuesday</option>
+                <option value="wednesday">Wednesday</option>
+                <option value="thursday">Thursday</option>
+                <option value="friday">Friday</option>
+                <option value="saturday">Saturday</option>
+              </select>
+            </div>
+            <!-- Subject -->
+            <div class="col-12">
+              <label class="modal-form-label">Subject</label>
+              <select
+                class="form-select"
+                [ngModel]="createForm().subjectId"
+                (ngModelChange)="createForm.set({ ...createForm(), subjectId: $event })"
+              >
+                <option [ngValue]="null" disabled>Select Subject...</option>
+                @for (sub of subjects(); track sub.id) {
+                  <option [ngValue]="sub.id">{{ sub.subjectName }}</option>
+                }
+              </select>
+            </div>
+            <!-- Teacher -->
+            <div class="col-12">
+              <label class="modal-form-label">Teacher</label>
+              <select
+                class="form-select"
+                [ngModel]="createForm().teacherId"
+                (ngModelChange)="createForm.set({ ...createForm(), teacherId: $event })"
+              >
+                <option [ngValue]="null" disabled>Select Teacher...</option>
+                @for (t of teachers(); track t.id) {
+                  <option [ngValue]="t.id">{{ t.name }}</option>
+                }
+              </select>
+            </div>
+            <!-- Start Time -->
+            <div class="col-md-6">
+              <label class="modal-form-label">Start Time</label>
+              <input
+                type="time"
+                class="form-control"
+                [ngModel]="createForm().startTime"
+                (ngModelChange)="createForm.set({ ...createForm(), startTime: $event })"
+                required
+              />
+            </div>
+            <!-- End Time -->
+            <div class="col-md-6">
+              <label class="modal-form-label">End Time</label>
+              <input
+                type="time"
+                class="form-control"
+                [ngModel]="createForm().endTime"
+                (ngModelChange)="createForm.set({ ...createForm(), endTime: $event })"
+                required
+              />
+            </div>
+            <!-- Room No -->
+            <div class="col-12">
+              <label class="modal-form-label">Room Number</label>
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="createForm().roomNo"
+                (ngModelChange)="createForm.set({ ...createForm(), roomNo: $event })"
+                placeholder="e.g. 101, Lab B"
+              />
             </div>
           </div>
-        }
+        </div>
+        <div class="modal-footer-custom">
+          <button
+            class="btn btn-light px-4 rounded-3"
+            (click)="closeCreateModal()"
+            [disabled]="isSaving()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary px-4 rounded-3 fw-bold"
+            style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+            (click)="saveTimetableEntry()"
+            [disabled]="
+              isSaving() ||
+              !createForm().subjectId ||
+              !createForm().teacherId ||
+              !createForm().startTime ||
+              !createForm().endTime
+            "
+          >
+            @if (isSaving()) {
+              <span
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            {{ isSaving() ? 'Saving...' : 'Add Slot' }}
+          </button>
+        </div>
       </div>
     </div>
   }
 }
-
-<!-- Create Timetable Modal -->
-<div class="modal-overlay" *ngIf="showCreateModal()" (click)="closeCreateModal()">
-  <div class="modal-card" style="max-width: 500px;" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-plus-circle-fill fs-4" style="color: var(--primary-accent);"></i>
-        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Add Timetable Slot for {{ selectedClassName() }}</h5>
-      </div>
-      <button class="btn-close" (click)="closeCreateModal()"></button>
-    </div>
-    <div class="modal-body-custom">
-      <div class="row g-3">
-        <!-- Day of Week -->
-        <div class="col-12">
-          <label class="modal-form-label">Day of Week</label>
-          <select class="form-select" [ngModel]="createForm().dayOfWeek" (ngModelChange)="createForm.set({ ...createForm(), dayOfWeek: $event })">
-            <option value="monday">Monday</option>
-            <option value="tuesday">Tuesday</option>
-            <option value="wednesday">Wednesday</option>
-            <option value="thursday">Thursday</option>
-            <option value="friday">Friday</option>
-            <option value="saturday">Saturday</option>
-          </select>
-        </div>
-
-        <!-- Subject -->
-        <div class="col-12">
-          <label class="modal-form-label">Subject</label>
-          <select class="form-select" [ngModel]="createForm().subjectId" (ngModelChange)="createForm.set({ ...createForm(), subjectId: $event })">
-            <option [ngValue]="null" disabled>Select Subject...</option>
-            @for (sub of subjects(); track sub.id) {
-              <option [ngValue]="sub.id">{{ sub.subjectName }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- Teacher -->
-        <div class="col-12">
-          <label class="modal-form-label">Teacher</label>
-          <select class="form-select" [ngModel]="createForm().teacherId" (ngModelChange)="createForm.set({ ...createForm(), teacherId: $event })">
-            <option [ngValue]="null" disabled>Select Teacher...</option>
-            @for (t of teachers(); track t.id) {
-              <option [ngValue]="t.id">{{ t.name }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- Start Time -->
-        <div class="col-md-6">
-          <label class="modal-form-label">Start Time</label>
-          <input type="time" class="form-control" [ngModel]="createForm().startTime" (ngModelChange)="createForm.set({ ...createForm(), startTime: $event })" required>
-        </div>
-
-        <!-- End Time -->
-        <div class="col-md-6">
-          <label class="modal-form-label">End Time</label>
-          <input type="time" class="form-control" [ngModel]="createForm().endTime" (ngModelChange)="createForm.set({ ...createForm(), endTime: $event })" required>
-        </div>
-
-        <!-- Room No -->
-        <div class="col-12">
-          <label class="modal-form-label">Room Number</label>
-          <input type="text" class="form-control" [ngModel]="createForm().roomNo" (ngModelChange)="createForm.set({ ...createForm(), roomNo: $event })" placeholder="e.g. 101, Lab B">
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer-custom">
-      <button class="btn btn-light px-4 rounded-3" (click)="closeCreateModal()" [disabled]="isSaving()">Cancel</button>
-      <button class="btn btn-primary px-4 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="saveTimetableEntry()" [disabled]="isSaving() || !createForm().subjectId || !createForm().teacherId || !createForm().startTime || !createForm().endTime">
-        <span *ngIf="isSaving()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-        {{ isSaving() ? 'Saving...' : 'Add Slot' }}
-      </button>
-    </div>
-  </div>
-</div>

@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, inject, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../services/dashboard.service';
 import { AcademicYearService, AcademicYearResponseDTO } from '../../services/academic-year.service';
 import { StudentService } from '../../services/student.service';
@@ -9,13 +10,14 @@ import { FeeService, FeeSummaryDTO } from '../../services/fee.service';
 import { ExamService, ExamResultResponseDTO, ExamResponseDTO } from '../../services/exam.service';
 import { SubjectService } from '../../services/subject.service';
 import { TeacherService } from '../../services/teacher.service';
+import { ParentService } from '../../services/parent.service';
 import { AdminDashboardDTO, TeacherDashboardDTO } from '../../models/dashboard.model';
 import Chart from 'chart.js/auto';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, DecimalPipe],
+  imports: [CommonModule, DecimalPipe, FormsModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
@@ -29,6 +31,7 @@ export class Dashboard implements OnInit {
   private examService = inject(ExamService);
   private subjectService = inject(SubjectService);
   private teacherService = inject(TeacherService);
+  private parentService = inject(ParentService);
 
   @ViewChild('demographicsChart') demographicsChartRef!: ElementRef;
   @ViewChild('revenueChart') revenueChartRef!: ElementRef;
@@ -56,11 +59,29 @@ export class Dashboard implements OnInit {
   feeSummary = signal<FeeSummaryDTO | null>(null);
   recentResults = signal<any[]>([]);
 
+  // Parent specific
+  parentData = signal<any>(null);
+  parentChildren = signal<any[]>([]);
+  selectedChildId = signal<number | null>(null);
+
   get userName() {
+    if (this.userRole() === 'Parent' && this.parentData()) {
+      return this.parentData().name;
+    }
     if (this.userRole() === 'Student' && this.studentData()) {
       return this.studentData().name;
     }
-    return sessionStorage.getItem('username') || sessionStorage.getItem('name') || 'User';
+    return sessionStorage.getItem('name') || sessionStorage.getItem('username') || 'User';
+  }
+
+  get welcomeMessage() {
+    if (this.userRole() === 'Student') {
+      return 'Welcome back! Here is a summary of your academic progress.';
+    }
+    if (this.userRole() === 'Parent') {
+      return "Welcome back! Here is a summary of your child's academic progress.";
+    }
+    return 'Here is your overview of institutional metrics across all departments.';
   }
 
   get salutation() {
@@ -113,6 +134,14 @@ export class Dashboard implements OnInit {
       } else {
         this.loading.set(false);
       }
+    } else if (role === 'Parent') {
+      const uidStr = sessionStorage.getItem('userId');
+      const uid = uidStr ? parseInt(uidStr, 10) : null;
+      if (uid) {
+        this.loadParentDashboard(uid);
+      } else {
+        this.loading.set(false);
+      }
     } else {
       this.loading.set(false);
     }
@@ -153,123 +182,54 @@ export class Dashboard implements OnInit {
     });
   }
 
+  loadParentDashboard(userId: number) {
+    this.loading.set(true);
+    this.error.set(null);
+    this.parentService.getParentByUserId(userId).subscribe({
+      next: (parent) => {
+        this.parentData.set(parent);
+        this.parentService.getParentChildren(parent.id).subscribe({
+          next: (kids) => {
+            this.parentChildren.set(kids);
+            if (kids.length > 0) {
+              this.selectedChildId.set(kids[0].studentId);
+              // We can load the student dashboard by passing the student's User ID,
+              // but loadStudentDashboard takes a userId. 
+              // Wait, kids[0] only gives studentId, name, className, regNo.
+              // Let's modify loadStudentDashboard to take studentId directly or use the studentId.
+              // I will use a separate method for Parent since loadStudentDashboard assumes userId.
+              this.loadStudentDashboardById(kids[0].studentId);
+            } else {
+              this.loading.set(false);
+            }
+          },
+          error: (err) => {
+            console.error('Failed to load children', err);
+            this.error.set('Failed to load your children details.');
+            this.loading.set(false);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to load parent profile', err);
+        this.error.set('Failed to load parent profile.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  onChildChange(studentId: number) {
+    this.selectedChildId.set(studentId);
+    this.loadStudentDashboardById(studentId);
+  }
+
   loadStudentDashboard(userId: number) {
     this.loading.set(true);
     this.error.set(null);
     
     this.studentService.getStudentByUserId(userId).subscribe({
       next: (student) => {
-        this.studentData.set(student);
-        const studentId = student.id;
-
-        let completedRequests = 0;
-        const totalRequests = 4;
-        const checkLoading = () => {
-          completedRequests++;
-          if (completedRequests >= totalRequests) {
-            this.loading.set(false);
-          }
-        };
-
-        // 1. Fetch attendance stats
-        this.attendanceService.getAttendanceByStudent(studentId).subscribe({
-          next: (attendance) => {
-            const total = attendance.length;
-            if (total > 0) {
-              const present = attendance.filter(r => r.status.toLowerCase() === 'present' || r.status.toLowerCase() === 'late').length;
-              this.studentAttendanceRate.set(Math.round((present / total) * 100));
-            }
-            checkLoading();
-          },
-          error: (err) => {
-            console.error('Failed to load attendance', err);
-            checkLoading();
-          }
-        });
-
-        // 2. Fetch homework
-        this.homeworkService.getHomeworksByStudentId(studentId).subscribe({
-          next: (homeworkList) => {
-            const today = new Date().toISOString().split('T')[0];
-            
-            // Map subject names to homework list
-            this.subjectService.getAllSubjects().subscribe({
-              next: (subList) => {
-                const mapped = homeworkList.map(h => {
-                  const sub = subList.find(s => s.id === h.subjectId);
-                  return {
-                    ...h,
-                    subjectName: sub ? sub.subjectName : `Subject #${h.subjectId}`
-                  };
-                });
-                this.upcomingHomework.set(mapped.filter(h => !(h as any).submission || h.dueDate >= today));
-              }
-            });
-            
-            const pendingCount = homeworkList.filter(h => {
-              const hasSubmitted = !!(h as any).submission;
-              return !hasSubmitted;
-            }).length;
-            this.pendingHomeworkCount.set(pendingCount);
-            checkLoading();
-          },
-          error: (err) => {
-            console.error('Failed to load homework', err);
-            checkLoading();
-          }
-        });
-
-        // 3. Fetch fees summary
-        this.feeService.getFeeDetails(studentId).subscribe({
-          next: (summary) => {
-            this.feeSummary.set(summary);
-            checkLoading();
-          },
-          error: (err) => {
-            console.error('Failed to load fees', err);
-            checkLoading();
-          }
-        });
-
-        // 4. Fetch exam results
-        this.examService.getStudentResults(studentId).subscribe({
-          next: (results) => {
-            this.recentResults.set(results.slice(0, 5));
-            
-            // Map names asynchronously
-            this.examService.getAllExams().subscribe({
-              next: (examList) => {
-                const resultsWithNames = this.recentResults().map(r => {
-                  const exam = examList.find(e => e.id === r.examId);
-                  return {
-                    ...r,
-                    examName: exam ? exam.examname : `Exam #${r.examId}`
-                  };
-                });
-                this.recentResults.set(resultsWithNames);
-              }
-            });
-
-            this.subjectService.getAllSubjects().subscribe({
-              next: (subList) => {
-                const resultsWithSubjects = this.recentResults().map(r => {
-                  const sub = subList.find(s => s.id === r.subjectId);
-                  return {
-                    ...r,
-                    subjectName: sub ? sub.subjectName : `Subject #${r.subjectId}`
-                  };
-                });
-                this.recentResults.set(resultsWithSubjects);
-                checkLoading();
-              },
-              error: () => checkLoading()
-            });
-          },
-          error: (err) => {
-            console.error('Failed to load exam results', err);
-            checkLoading();
-          }
-        });
+        this.loadStudentDashboardById(student.id, student);
       },
       error: (err) => {
         console.error('Failed to load student profile', err);
@@ -278,6 +238,136 @@ export class Dashboard implements OnInit {
       }
     });
   }
+
+  loadStudentDashboardById(studentId: number, preloadedStudentData?: any) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    const loadData = (student: any) => {
+      this.studentData.set(student);
+
+      let completedRequests = 0;
+      const totalRequests = 4;
+      const checkLoading = () => {
+        completedRequests++;
+        if (completedRequests >= totalRequests) {
+          this.loading.set(false);
+        }
+      };
+
+      // 1. Fetch attendance stats
+      this.attendanceService.getAttendanceByStudent(studentId).subscribe({
+        next: (attendance) => {
+          const total = attendance.length;
+          if (total > 0) {
+            const present = attendance.filter(r => r.status.toLowerCase() === 'present' || r.status.toLowerCase() === 'late').length;
+            this.studentAttendanceRate.set(Math.round((present / total) * 100));
+          } else {
+            this.studentAttendanceRate.set(0);
+          }
+          checkLoading();
+        },
+        error: (err) => {
+          console.error('Failed to load attendance', err);
+          checkLoading();
+        }
+      });
+
+      // 2. Fetch homework
+      this.homeworkService.getHomeworksByStudentId(studentId).subscribe({
+        next: (homeworkList) => {
+          const today = new Date().toISOString().split('T')[0];
+          
+          this.subjectService.getAllSubjects().subscribe({
+            next: (subList) => {
+              const mapped = homeworkList.map(h => {
+                const sub = subList.find(s => s.id === h.subjectId);
+                return {
+                  ...h,
+                  subjectName: sub ? sub.subjectName : `Subject #${h.subjectId}`
+                };
+              });
+              this.upcomingHomework.set(mapped.filter(h => !(h as any).submission || h.dueDate >= today));
+            }
+          });
+          
+          const pendingCount = homeworkList.filter(h => {
+            const hasSubmitted = !!(h as any).submission;
+            return !hasSubmitted;
+          }).length;
+          this.pendingHomeworkCount.set(pendingCount);
+          checkLoading();
+        },
+        error: (err) => {
+          console.error('Failed to load homework', err);
+          checkLoading();
+        }
+      });
+
+      // 3. Fetch fees summary
+      this.feeService.getFeeDetails(studentId).subscribe({
+        next: (summary) => {
+          this.feeSummary.set(summary);
+          checkLoading();
+        },
+        error: (err) => {
+          console.error('Failed to load fees', err);
+          checkLoading();
+        }
+      });
+
+      // 4. Fetch exam results
+      this.examService.getStudentResults(studentId).subscribe({
+        next: (results) => {
+          this.recentResults.set(results.slice(0, 5));
+          
+          this.examService.getAllExams().subscribe({
+            next: (examList) => {
+              const resultsWithNames = this.recentResults().map(r => {
+                const exam = examList.find(e => e.id === r.examId);
+                return {
+                  ...r,
+                  examName: exam ? exam.examname : `Exam #${r.examId}`
+                };
+              });
+              this.recentResults.set(resultsWithNames);
+            }
+          });
+
+          this.subjectService.getAllSubjects().subscribe({
+            next: (subList) => {
+              const resultsWithSubjects = this.recentResults().map(r => {
+                const sub = subList.find(s => s.id === r.subjectId);
+                return {
+                  ...r,
+                  subjectName: sub ? sub.subjectName : `Subject #${r.subjectId}`
+                };
+              });
+              this.recentResults.set(resultsWithSubjects);
+              checkLoading();
+            },
+            error: () => checkLoading()
+          });
+        },
+        error: (err) => {
+          console.error('Failed to load exam results', err);
+          checkLoading();
+        }
+      });
+    };
+
+    if (preloadedStudentData) {
+      loadData(preloadedStudentData);
+    } else {
+      const childInfo = this.parentChildren().find(c => c.studentId === studentId);
+      if (childInfo) {
+        loadData({ id: studentId, name: childInfo.name, regno: childInfo.regNo });
+      } else {
+        loadData({ id: studentId, name: 'Student' });
+      }
+    }
+  }
+
 
   onYearChange(event: Event): void {
     const selectEl = event.target as HTMLSelectElement;

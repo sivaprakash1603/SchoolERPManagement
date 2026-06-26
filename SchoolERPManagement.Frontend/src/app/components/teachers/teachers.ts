@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { TeacherService, TeacherResponseDTO, TeacherQueryRequest, PagedResponse } from '../../services/teacher.service';
 import { ToastService } from '../../services/toast.service';
 import { NotificationService } from '../../services/notification.service';
+import { ClassService } from '../../services/class.service';
 
 interface TeacherUI extends TeacherResponseDTO {
   email: string;
@@ -22,6 +23,7 @@ export class Teachers implements OnInit {
   private teacherService = inject(TeacherService);
   private toastService = inject(ToastService);
   private notificationService = inject(NotificationService);
+  private classService = inject(ClassService);
   
   teachers = signal<TeacherUI[]>([]);
   loading = signal(true);
@@ -30,8 +32,17 @@ export class Teachers implements OnInit {
   showViewModal = signal(false);
   showEditModal = signal(false);
   showDeleteModal = signal(false);
+  showAssignmentsModal = signal(false);
   selectedTeacher = signal<TeacherUI | null>(null);
   selectedTeacherIds = signal<number[]>([]);
+  selectedTeacherAssignments = signal<any[]>([]);
+  availableClasses = signal<any[]>([]);
+  availableSubjects = signal<any[]>([]);
+  assignmentForm = signal({
+    classId: null as number | null,
+    subjectId: null as number | null
+  });
+  isAssigning = signal(false);
   
   isSaving = signal(false);
   isDeleting = signal(false);
@@ -65,7 +76,31 @@ export class Teachers implements OnInit {
   private searchTimeout: any;
 
   ngOnInit() {
+    this.loadFilterState();
     this.fetchTeachers();
+  }
+
+  loadFilterState() {
+    const savedState = sessionStorage.getItem('teachers_filter_state');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        this.searchQuery.set(state.searchQuery || '');
+        this.status.set(state.status || 'All');
+        this.pageNumber.set(state.pageNumber || 1);
+      } catch (e) {
+        console.error('Failed to parse saved filter state', e);
+      }
+    }
+  }
+
+  saveFilterState() {
+    const state = {
+      searchQuery: this.searchQuery(),
+      status: this.status(),
+      pageNumber: this.pageNumber()
+    };
+    sessionStorage.setItem('teachers_filter_state', JSON.stringify(state));
   }
 
   fetchTeachers() {
@@ -104,6 +139,7 @@ export class Teachers implements OnInit {
 
   onFilterChange() {
     this.pageNumber.set(1);
+    this.saveFilterState();
     this.fetchTeachers();
   }
 
@@ -150,6 +186,14 @@ export class Teachers implements OnInit {
   nextPage() {
     if (this.pageNumber() < this.totalPages()) {
       this.pageNumber.update(p => p + 1);
+      this.fetchTeachers();
+    }
+  }
+
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.pageNumber.set(page);
+      this.saveFilterState();
       this.fetchTeachers();
     }
   }
@@ -212,6 +256,73 @@ export class Teachers implements OnInit {
   closeDeleteModal() {
     this.showDeleteModal.set(false);
     this.selectedTeacher.set(null);
+  }
+
+  openAssignmentsModal(teacher: TeacherUI) {
+    this.selectedTeacher.set(teacher);
+    this.showAssignmentsModal.set(true);
+    this.selectedTeacherAssignments.set([]);
+    this.assignmentForm.set({ classId: null, subjectId: null });
+    
+    // Load available classes and subjects
+    this.classService.getAllClasses().subscribe({
+      next: (classes) => this.availableClasses.set(classes),
+      error: () => this.toastService.error('Failed to load classes')
+    });
+    
+    this.teacherService.getAllSubjects().subscribe({
+      next: (subjects) => this.availableSubjects.set(subjects),
+      error: () => this.toastService.error('Failed to load subjects')
+    });
+
+    this.loadTeacherAssignments(teacher.id);
+  }
+
+  closeAssignmentsModal() {
+    this.showAssignmentsModal.set(false);
+    this.selectedTeacher.set(null);
+  }
+
+  loadTeacherAssignments(teacherId: number) {
+    this.teacherService.getTeacherAssignments(teacherId).subscribe({
+      next: (assignments) => this.selectedTeacherAssignments.set(assignments),
+      error: () => this.toastService.error('Failed to load assignments')
+    });
+  }
+
+  addAssignment() {
+    const teacher = this.selectedTeacher();
+    const form = this.assignmentForm();
+    if (!teacher || !form.classId || !form.subjectId) return;
+
+    this.isAssigning.set(true);
+    this.teacherService.assignSubject({ teacherId: teacher.id, classId: form.classId, subjectId: form.subjectId }).subscribe({
+      next: () => {
+        this.toastService.success('Subject assigned successfully');
+        this.loadTeacherAssignments(teacher.id);
+        this.assignmentForm.set({ classId: null, subjectId: null });
+        this.isAssigning.set(false);
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.Message || err.error?.message || 'Failed to assign subject');
+        this.isAssigning.set(false);
+      }
+    });
+  }
+
+  removeAssignment(classId: number, subjectId: number) {
+    const teacher = this.selectedTeacher();
+    if (!teacher) return;
+    
+    if (confirm('Are you sure you want to remove this assignment?')) {
+      this.teacherService.unassignSubject(teacher.id, classId, subjectId).subscribe({
+        next: () => {
+          this.toastService.success('Assignment removed successfully');
+          this.loadTeacherAssignments(teacher.id);
+        },
+        error: () => this.toastService.error('Failed to remove assignment')
+      });
+    }
   }
 
   confirmDelete() {

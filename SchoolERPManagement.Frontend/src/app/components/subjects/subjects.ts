@@ -1,5 +1,5 @@
 import { Component, signal, OnInit, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { SubjectService, SubjectResponseDTO } from '../../services/subject.service';
 import { ToastService } from '../../services/toast.service';
@@ -7,7 +7,7 @@ import { ToastService } from '../../services/toast.service';
 @Component({
   selector: 'app-subjects',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './subjects.html',
   styleUrl: './subjects.css',
 })
@@ -37,17 +37,17 @@ export class Subjects implements OnInit {
 
   // Form states
   createForm = signal({
-    subjectName: ''
+    subjectName: '',
   });
   editForm = signal({
-    subjectName: ''
+    subjectName: '',
   });
 
   // Computed signal for filtered subjects list
   filteredSubjects = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     if (!query) return this.subjects();
-    return this.subjects().filter(s => s.subjectName.toLowerCase().includes(query));
+    return this.subjects().filter((s) => s.subjectName.toLowerCase().includes(query));
   });
 
   ngOnInit() {
@@ -68,7 +68,7 @@ export class Subjects implements OnInit {
         console.error('Failed to load subjects', err);
         this.error.set('Failed to load subjects. Please try again later.');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -100,7 +100,7 @@ export class Subjects implements OnInit {
         console.error('Failed to create subject', err);
         this.isSaving.set(false);
         this.toastService.error(err.error?.message || 'Failed to create subject.');
-      }
+      },
     });
   }
 
@@ -137,7 +137,7 @@ export class Subjects implements OnInit {
         console.error('Failed to update subject', err);
         this.isSaving.set(false);
         this.toastService.error(err.error?.message || 'Failed to update subject.');
-      }
+      },
     });
   }
 
@@ -166,8 +166,11 @@ export class Subjects implements OnInit {
       error: (err) => {
         console.error('Failed to delete subject', err);
         this.isDeleting.set(false);
-        this.toastService.error(err.error?.message || 'Failed to delete subject. It might be assigned to a teacher or timetable.');
-      }
+        this.toastService.error(
+          err.error?.message ||
+            'Failed to delete subject. It might be assigned to a teacher or timetable.',
+        );
+      },
     });
   }
 }

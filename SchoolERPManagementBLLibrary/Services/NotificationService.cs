@@ -58,7 +58,17 @@ public sealed class NotificationService : INotificationService
             };
 
             await _userNotificationRepository.AddAsync(userNotification, save: true, ct: cancellationToken);
-            await _notificationPusher.PushNotificationAsync(userId, responseDto, cancellationToken);
+
+            var userNotificationDto = new UserNotificationResponseDTO(
+                userNotification.Id,
+                notification.Id,
+                notification.Title,
+                notification.Message,
+                notification.Createdat,
+                false
+            );
+
+            await _notificationPusher.PushNotificationAsync(userId, userNotificationDto, cancellationToken);
         }
 
         return responseDto;
@@ -72,5 +82,37 @@ public sealed class NotificationService : INotificationService
             .OrderByDescending(userNotification => userNotification.Notification.Createdat)
             .ToListAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<UserNotificationResponseDTO>>(items);
+    }
+
+    public async Task<bool> MarkAsReadAsync(int userId, int notificationId, CancellationToken cancellationToken)
+    {
+        var userNotification = await _userNotificationRepository.Query(true)
+            .FirstOrDefaultAsync(un => un.Userid == userId && un.Notificationid == notificationId, cancellationToken);
+            
+        if (userNotification is null)
+            return false;
+
+        userNotification.Isread = true;
+        await _userNotificationRepository.UpdateAsync(userNotification, save: true, ct: cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> MarkAllAsReadAsync(int userId, CancellationToken cancellationToken)
+    {
+        var unreadNotifications = await _userNotificationRepository.Query(true)
+            .Where(un => un.Userid == userId && un.Isread != true)
+            .ToListAsync(cancellationToken);
+
+        if (!unreadNotifications.Any())
+            return true;
+
+        foreach (var un in unreadNotifications)
+        {
+            un.Isread = true;
+            await _userNotificationRepository.UpdateAsync(un, save: false, ct: cancellationToken);
+        }
+        
+        await _userNotificationRepository.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

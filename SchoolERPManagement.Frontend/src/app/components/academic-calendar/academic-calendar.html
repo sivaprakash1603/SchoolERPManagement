@@ -1,189 +1,342 @@
-<!-- Page Header -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
-  <div>
-    <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent);">Academic Calendar & Holidays</h2>
-    <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
-      <i class="bi bi-calendar3"></i>
-      <span *ngIf="isAdmin()">Manage school session events and calculate net working days.</span>
-      <span *ngIf="!isAdmin()">View academic session events, holidays, and total working days.</span>
-    </p>
-  </div>
-  <button *ngIf="isAdmin() && selectedAcademicYearId()" (click)="openCreateModal()" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
-    <i class="bi bi-plus-circle"></i>
-    Add Event / Holiday
-  </button>
-</div>
-
-<!-- Selector Bar -->
-<div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
-  <div style="width: 250px;">
-    <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Academic Session</label>
-    <select class="form-select" (change)="onYearChange($event)" [value]="selectedAcademicYearId()">
-      @for (year of academicYears(); track year.id) {
-        <option [value]="year.id">{{ year.yearName }}</option>
-      }
-    </select>
-  </div>
-  <div>
-    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2" title="Refresh" (click)="fetchCalendar()">
-      <i class="bi bi-arrow-clockwise"></i>
-    </button>
-  </div>
-</div>
-
-<!-- Loading State -->
 @if (loading()) {
-  <div class="d-flex justify-content-center py-5">
-    <div class="spinner-border text-primary" role="status"></div>
+  <div
+    class="d-flex justify-content-center align-items-center"
+    style="min-height: calc(100vh - 100px)"
+  >
+    <img src="/Book.svg" alt="Loading..." style="width: 100px; height: 100px" />
   </div>
-}
-
-@if (error()) {
-  <div class="alert alert-danger">{{ error() }}</div>
-}
-
-@if (!loading() && !error() && summary()) {
-  <!-- Metrics Dashboard -->
-  <div class="row g-4 mb-4">
-    <div class="col-12 col-md-3">
-      <div class="metric-box">
-        <span class="metric-label">Session Range</span>
-        <h4 class="fw-bold mb-0 text-truncate" style="font-size: 1.1rem; color: var(--text-primary);">
-          {{ summary()?.startDate | date:'mediumDate' }} <br>
-          <span style="font-size: 0.8rem; color: var(--text-secondary);">to</span> <br>
-          {{ summary()?.endDate | date:'mediumDate' }}
-        </h4>
-      </div>
+} @else {
+  <!-- Page Header -->
+  <div
+    class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4"
+  >
+    <div>
+      <h2 class="fs-2 fw-bold mb-1" style="color: var(--primary-accent)">
+        Academic Calendar & Holidays
+      </h2>
+      <p class="text-muted-custom mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-calendar3"></i>
+        @if (isAdmin()) {
+          <span>Manage school session events and calculate net working days.</span>
+        }
+        @if (!isAdmin()) {
+          <span>View academic session events, holidays, and total working days.</span>
+        }
+      </p>
     </div>
-    <div class="col-6 col-md-2">
-      <div class="metric-box">
-        <span class="metric-label">Calendar Days</span>
-        <span class="metric-value">{{ summary()?.totalDays }}</span>
-      </div>
-    </div>
-    <div class="col-6 col-md-2">
-      <div class="metric-box">
-        <span class="metric-label">Weekend Days</span>
-        <span class="metric-value text-secondary">{{ summary()?.weekendDays }}</span>
-      </div>
-    </div>
-    <div class="col-6 col-md-2">
-      <div class="metric-box">
-        <span class="metric-label">Weekday Holidays</span>
-        <span class="metric-value text-danger">{{ summary()?.holidayDays }}</span>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="metric-box metric-highlight">
-        <span class="metric-label">Net Working Days</span>
-        <span class="metric-value">{{ summary()?.workingDays }}</span>
-      </div>
-    </div>
+    @if (isAdmin() && selectedAcademicYearId()) {
+      <button
+        (click)="openCreateModal()"
+        class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold"
+        style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+      >
+        <i class="bi bi-plus-circle"></i>
+        Add Event / Holiday
+      </button>
+    }
   </div>
 
-  <!-- Holidays & Events Table -->
-  <div class="minimal-card mb-4 overflow-hidden">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead style="background-color: var(--bg-sidebar);">
-          <tr>
-            <th class="ps-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 150px;">Date</th>
-            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 120px;">Day</th>
-            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em;">Description</th>
-            <th class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 150px;">Type</th>
-            <th *ngIf="isAdmin()" class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom text-end" style="font-size: 0.75rem; letter-spacing: 0.05em; width: 100px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (event of summary()?.events; track event.id) {
-            <tr>
-              <td class="ps-4 py-3 font-monospace" style="font-size: 0.875rem;">{{ event.date | date:'mediumDate' }}</td>
-              <td class="px-4 py-3 text-muted-custom" style="font-size: 0.875rem;">{{ event.date | date:'EEEE' }}</td>
-              <td class="px-4 py-3 fw-bold" style="color: var(--text-primary);">{{ event.description }}</td>
-              <td class="px-4 py-3">
-                <span class="badge rounded-pill px-2 py-1" [ngClass]="event.isHoliday ? 'bg-danger-subtle text-danger' : 'bg-primary-subtle text-primary'">
-                  {{ event.isHoliday ? 'Holiday' : 'Event' }}
-                </span>
-              </td>
-              <td *ngIf="isAdmin()" class="px-4 py-3 text-end">
-                <button class="btn btn-sm btn-light text-danger" title="Remove Entry" (click)="openDeleteModal(event)"><i class="bi bi-trash"></i></button>
-              </td>
-            </tr>
+  <!-- Selector Bar -->
+  @if (userRole() !== 'Parent') {
+    <div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
+      <div style="width: 250px">
+        <label
+          class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+          style="font-size: 0.7rem; letter-spacing: 0.05em"
+          >Academic Session</label
+        >
+        <select
+          class="form-select"
+          (change)="onYearChange($event)"
+          [value]="selectedAcademicYearId()"
+        >
+          @for (year of academicYears(); track year.id) {
+            <option [value]="year.id">{{ year.yearName }}</option>
           }
-          @if (summary()?.events?.length === 0) {
-            <tr>
-              <td [attr.colspan]="isAdmin() ? 5 : 4" class="text-center py-5 text-muted-custom">
-                <i class="bi bi-calendar-event fs-1 mb-2 d-block"></i>
-                No events or holidays registered for this academic session yet.
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-}
-
-<!-- Create Calendar Event Modal -->
-<div class="modal-overlay" *ngIf="showCreateModal()" (click)="closeCreateModal()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-plus-circle-fill fs-4" style="color: var(--primary-accent);"></i>
-        <h5 class="fw-bold mb-0" style="color: var(--text-primary);">Add Holiday / Event</h5>
+        </select>
       </div>
-      <button class="btn-close" (click)="closeCreateModal()"></button>
+      <div>
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center justify-content-center p-2"
+          title="Refresh"
+          (click)="fetchCalendar()"
+        >
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
     </div>
-    <div class="modal-body-custom">
-      <div class="row g-3">
-        <!-- Date -->
-        <div class="col-12">
-          <label class="modal-form-label">Date</label>
-          <input type="date" class="form-control" [ngModel]="createForm().date" (ngModelChange)="createForm.set({ ...createForm(), date: $event })" [min]="minDate()" [max]="maxDate()" required>
-        </div>
+  }
 
-        <!-- Description -->
-        <div class="col-12">
-          <label class="modal-form-label">Description / Event Name</label>
-          <input type="text" class="form-control" [ngModel]="createForm().description" (ngModelChange)="createForm.set({ ...createForm(), description: $event })" placeholder="e.g. Independence Day, Annual Sports Meet" required>
-        </div>
+  <!-- Loading State -->
 
-        <!-- Is Holiday Toggle -->
-        <div class="col-12">
-          <div class="form-check form-switch p-0 d-flex justify-content-between align-items-center">
-            <label class="modal-form-label mb-0" style="cursor: pointer;" for="isHolidaySwitch">Mark as Holiday (Non-working day)</label>
-            <input class="form-check-input ms-0" type="checkbox" role="switch" id="isHolidaySwitch" [ngModel]="createForm().isHoliday" (ngModelChange)="createForm.set({ ...createForm(), isHoliday: $event })" style="width: 2.5em; height: 1.25em;">
+  @if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  }
+
+  @if (!loading() && !error() && summary()) {
+    <!-- Metrics Dashboard -->
+    <div class="row g-4 mb-4">
+      <div class="col-12 col-md-3">
+        <div class="metric-box">
+          <span class="metric-label">Session Range</span>
+          <h4
+            class="fw-bold mb-0 text-truncate"
+            style="font-size: 1.1rem; color: var(--text-primary)"
+          >
+            {{ summary()?.startDate | date: 'mediumDate' }} <br />
+            <span style="font-size: 0.8rem; color: var(--text-secondary)">to</span> <br />
+            {{ summary()?.endDate | date: 'mediumDate' }}
+          </h4>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="metric-box">
+          <span class="metric-label">Calendar Days</span>
+          <span class="metric-value">{{ summary()?.totalDays }}</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="metric-box">
+          <span class="metric-label">Weekend Days</span>
+          <span class="metric-value text-secondary">{{ summary()?.weekendDays }}</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="metric-box">
+          <span class="metric-label">Weekday Holidays</span>
+          <span class="metric-value text-danger">{{ summary()?.holidayDays }}</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-box metric-highlight">
+          <span class="metric-label">Net Working Days</span>
+          <span class="metric-value">{{ summary()?.workingDays }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Holidays & Events Table -->
+    <div class="minimal-card mb-4 overflow-hidden">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead style="background-color: var(--bg-sidebar)">
+            <tr>
+              <th
+                class="ps-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom"
+                style="font-size: 0.75rem; letter-spacing: 0.05em; width: 150px"
+              >
+                Date
+              </th>
+              <th
+                class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom"
+                style="font-size: 0.75rem; letter-spacing: 0.05em; width: 120px"
+              >
+                Day
+              </th>
+              <th
+                class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom"
+                style="font-size: 0.75rem; letter-spacing: 0.05em"
+              >
+                Description
+              </th>
+              <th
+                class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom"
+                style="font-size: 0.75rem; letter-spacing: 0.05em; width: 150px"
+              >
+                Type
+              </th>
+              @if (isAdmin()) {
+                <th
+                  class="px-4 py-3 text-muted-custom fw-bold text-uppercase border-bottom text-end"
+                  style="font-size: 0.75rem; letter-spacing: 0.05em; width: 100px"
+                >
+                  Actions
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of summary()?.events; track event.id) {
+              <tr>
+                <td class="ps-4 py-3 font-monospace" style="font-size: 0.875rem">
+                  {{ event.date | date: 'mediumDate' }}
+                </td>
+                <td class="px-4 py-3 text-muted-custom" style="font-size: 0.875rem">
+                  {{ event.date | date: 'EEEE' }}
+                </td>
+                <td class="px-4 py-3 fw-bold" style="color: var(--text-primary)">
+                  {{ event.description }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="badge rounded-pill px-2 py-1"
+                    [ngClass]="
+                      event.isHoliday
+                        ? 'bg-danger-subtle text-danger'
+                        : 'bg-primary-subtle text-primary'
+                    "
+                  >
+                    {{ event.isHoliday ? 'Holiday' : 'Event' }}
+                  </span>
+                </td>
+                @if (isAdmin()) {
+                  <td class="px-4 py-3 text-end">
+                    <button
+                      class="btn btn-sm btn-light text-danger"
+                      title="Remove Entry"
+                      (click)="openDeleteModal(event)"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+            @if (summary()?.events?.length === 0) {
+              <tr>
+                <td [attr.colspan]="isAdmin() ? 5 : 4" class="text-center py-5 text-muted-custom">
+                  <i class="bi bi-calendar-event fs-1 mb-2 d-block"></i>
+                  No events or holidays registered for this academic session yet.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Create Calendar Event Modal -->
+  @if (showCreateModal()) {
+    <div class="modal-overlay" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header-custom">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-plus-circle-fill fs-4" style="color: var(--primary-accent)"></i>
+            <h5 class="fw-bold mb-0" style="color: var(--text-primary)">Add Holiday / Event</h5>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()"></button>
+        </div>
+        <div class="modal-body-custom">
+          <div class="row g-3">
+            <!-- Date -->
+            <div class="col-12">
+              <label class="modal-form-label">Date</label>
+              <input
+                type="date"
+                class="form-control"
+                [ngModel]="createForm().date"
+                (ngModelChange)="createForm.set({ ...createForm(), date: $event })"
+                [min]="minDate()"
+                [max]="maxDate()"
+                required
+              />
+            </div>
+            <!-- Description -->
+            <div class="col-12">
+              <label class="modal-form-label">Description / Event Name</label>
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="createForm().description"
+                (ngModelChange)="createForm.set({ ...createForm(), description: $event })"
+                placeholder="e.g. Independence Day, Annual Sports Meet"
+                required
+              />
+            </div>
+            <!-- Is Holiday Toggle -->
+            <div class="col-12">
+              <div
+                class="form-check form-switch p-0 d-flex justify-content-between align-items-center"
+              >
+                <label class="modal-form-label mb-0" style="cursor: pointer" for="isHolidaySwitch"
+                  >Mark as Holiday (Non-working day)</label
+                >
+                <input
+                  class="form-check-input ms-0"
+                  type="checkbox"
+                  role="switch"
+                  id="isHolidaySwitch"
+                  [ngModel]="createForm().isHoliday"
+                  (ngModelChange)="createForm.set({ ...createForm(), isHoliday: $event })"
+                  style="width: 2.5em; height: 1.25em"
+                />
+              </div>
+            </div>
           </div>
         </div>
+        <div class="modal-footer-custom">
+          <button
+            class="btn btn-light px-4 rounded-3"
+            (click)="closeCreateModal()"
+            [disabled]="isSaving()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary px-4 rounded-3 fw-bold"
+            style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+            (click)="saveCalendarEvent()"
+            [disabled]="isSaving() || !createForm().date || !createForm().description.trim()"
+          >
+            @if (isSaving()) {
+              <span
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            {{ isSaving() ? 'Saving...' : 'Add Entry' }}
+          </button>
+        </div>
       </div>
     </div>
-    <div class="modal-footer-custom">
-      <button class="btn btn-light px-4 rounded-3" (click)="closeCreateModal()" [disabled]="isSaving()">Cancel</button>
-      <button class="btn btn-primary px-4 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);" (click)="saveCalendarEvent()" [disabled]="isSaving() || !createForm().date || !createForm().description.trim()">
-        <span *ngIf="isSaving()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-        {{ isSaving() ? 'Saving...' : 'Add Entry' }}
-      </button>
-    </div>
-  </div>
-</div>
+  }
 
-<!-- Delete Confirmation Modal -->
-<div class="modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
-  <div class="modal-card modal-md" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom bg-danger-subtle text-danger">
-      <h5 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Calendar Entry</h5>
-      <button class="btn-close" (click)="closeDeleteModal()"></button>
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal()) {
+    <div class="modal-overlay" (click)="closeDeleteModal()">
+      <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+        <div class="modal-header-custom bg-danger-subtle text-danger">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Calendar Entry
+          </h5>
+          <button class="btn-close" (click)="closeDeleteModal()"></button>
+        </div>
+        <div class="modal-body-custom py-4">
+          <p class="mb-2">
+            Are you sure you want to delete the entry for
+            <strong>{{ deletingEvent()?.description }}</strong
+            >?
+          </p>
+          <p class="text-muted-custom small mb-0">
+            This day will revert back to its standard status (working day or weekend).
+          </p>
+        </div>
+        <div class="modal-footer-custom">
+          <button
+            class="btn btn-light px-4 rounded-3"
+            (click)="closeDeleteModal()"
+            [disabled]="isDeleting()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-danger px-4 rounded-3 fw-bold"
+            (click)="confirmDelete()"
+            [disabled]="isDeleting()"
+          >
+            @if (isDeleting()) {
+              <span
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            {{ isDeleting() ? 'Deleting...' : 'Confirm Delete' }}
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="modal-body-custom py-4">
-      <p class="mb-2">Are you sure you want to delete the entry for <strong>{{ deletingEvent()?.description }}</strong>?</p>
-      <p class="text-muted-custom small mb-0">This day will revert back to its standard status (working day or weekend).</p>
-    </div>
-    <div class="modal-footer-custom">
-      <button class="btn btn-light px-4 rounded-3" (click)="closeDeleteModal()" [disabled]="isDeleting()">Cancel</button>
-      <button class="btn btn-danger px-4 rounded-3 fw-bold" (click)="confirmDelete()" [disabled]="isDeleting()">
-        <span *ngIf="isDeleting()" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-        {{ isDeleting() ? 'Deleting...' : 'Confirm Delete' }}
-      </button>
-    </div>
-  </div>
-</div>
+  }
+}

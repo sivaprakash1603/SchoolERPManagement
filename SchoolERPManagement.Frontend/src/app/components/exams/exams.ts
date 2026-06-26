@@ -7,6 +7,9 @@ import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { SubjectService, SubjectResponseDTO } from '../../services/subject.service';
 import { StudentService, StudentQueryResponseDTO } from '../../services/student.service';
 import { ToastService } from '../../services/toast.service';
+import { TeacherService } from '../../services/teacher.service';
+import { TimetableService } from '../../services/timetable.service';
+import { ParentService } from '../../services/parent.service';
 
 interface StudentExamUI extends StudentQueryResponseDTO {
   marks: number | null;
@@ -28,6 +31,9 @@ export class Exams implements OnInit {
   private subjectService = inject(SubjectService);
   private studentService = inject(StudentService);
   private toastService = inject(ToastService);
+  private teacherService = inject(TeacherService);
+  private timetableService = inject(TimetableService);
+  private parentService = inject(ParentService);
 
   // Lists
   academicYears = signal<AcademicYearResponseDTO[]>([]);
@@ -43,6 +49,10 @@ export class Exams implements OnInit {
   selectedExam = signal<ExamResponseDTO | null>(null);
   selectedSchedule = signal<ExamScheduleResponseDTO | null>(null);
 
+  // Parent specific
+  parentChildren = signal<any[]>([]);
+  selectedChildId = signal<number | null>(null);
+
   // Modals
   showCreateExamModal = signal(false);
   showScheduleModal = signal(false);
@@ -55,9 +65,27 @@ export class Exams implements OnInit {
   isSavingSchedule = signal(false);
 
   isAdminOrTeacher = signal(false);
+  isAdmin = signal(false);
+  userRole = signal<string | null>(null);
+  teacherId = signal<number | null>(null);
+  teacherClassIds = signal<number[]>([]);
+  teacherSubjectClassMap = signal<{ [classId: number]: number[] }>({}); // classId -> subjectIds
   studentId = signal<number | null>(null);
   studentClassId = signal<number | null>(null);
   studentResults = signal<any[]>([]);
+
+  // View UI Helpers
+  get pageTitle(): string {
+    if (this.isAdminOrTeacher()) return 'Exam & Results Management';
+    if (this.userRole() === 'Parent') return 'Child Exams & Performance';
+    return 'Exams & Performance';
+  }
+
+  get pageDescription(): string {
+    if (this.isAdminOrTeacher()) return 'Schedule exams, publish results, and grade student submissions.';
+    if (this.userRole() === 'Parent') return "View your child's exam schedules, subject results, and term report cards.";
+    return 'View your exam schedules, subject results, and term report cards.';
+  }
 
   // Form states
   examForm = signal({
@@ -74,7 +102,9 @@ export class Exams implements OnInit {
 
   ngOnInit() {
     const role = sessionStorage.getItem('role');
+    this.userRole.set(role);
     this.isAdminOrTeacher.set(role === 'Admin' || role === 'Teacher');
+    this.isAdmin.set(role === 'Admin');
 
     const userIdStr = sessionStorage.getItem('userId');
     const userId = userIdStr ? parseInt(userIdStr, 10) : null;
@@ -88,8 +118,66 @@ export class Exams implements OnInit {
         },
         error: (err) => console.error('Failed to resolve student profile', err)
       });
+    } else if (role === 'Parent' && userId) {
+      this.parentService.getParentByUserId(userId).subscribe({
+        next: (parent) => {
+          this.parentService.getParentChildren(parent.id).subscribe({
+            next: (children) => {
+              this.parentChildren.set(children);
+              if (children.length > 0) {
+                const child = children[0];
+                this.selectedChildId.set(child.studentId);
+                this.studentId.set(child.studentId);
+                
+                if (child.classId) {
+                  this.studentClassId.set(child.classId);
+                  this.fetchStudentResults(child.studentId);
+                }
+              }
+            },
+            error: (err) => console.error('Failed to load parent children', err)
+          });
+        },
+        error: (err) => console.error('Failed to resolve parent profile', err)
+      });
+    } else if (role === 'Teacher') {
+      const username = sessionStorage.getItem('username') || '';
+      this.teacherService.getTeacherByUsername(username).subscribe({
+        next: (teacher) => {
+          this.teacherId.set(teacher.id);
+          this.timetableService.getTeacherTimetable(teacher.id).subscribe({
+            next: (slots) => {
+              const classIds = Array.from(new Set<number>(slots.map(s => s.classId)));
+              this.teacherClassIds.set(classIds);
+
+              const map: { [classId: number]: number[] } = {};
+              slots.forEach(s => {
+                if (!map[s.classId]) {
+                  map[s.classId] = [];
+                }
+                if (!map[s.classId].includes(s.subjectId)) {
+                  map[s.classId].push(s.subjectId);
+                }
+              });
+              this.teacherSubjectClassMap.set(map);
+
+              // Now fetch years and classes
+              this.fetchSubjects();
+            },
+            error: (err) => {
+              console.error('Failed to fetch teacher timetable', err);
+              this.fetchSubjects();
+            }
+          });
+        },
+        error: (err) => {
+          console.error('Failed to resolve teacher profile', err);
+          this.fetchSubjects();
+        }
+      });
     }
 
+    // Every role needs academic years for filtering/display logic
     this.fetchAcademicYears();
     this.fetchSubjects();
   }
@@ -112,9 +200,30 @@ export class Exams implements OnInit {
     });
   }
 
+  onChildChange(studentId: number) {
+    this.selectedChildId.set(studentId);
+    this.studentId.set(studentId);
+    
+    const child = this.parentChildren().find(c => c.studentId === studentId);
+    if (child && child.classId) {
+      this.studentClassId.set(child.classId);
+      this.fetchStudentResults(studentId);
+    } else {
+      this.studentClassId.set(null);
+      this.studentResults.set([]);
+    }
+  }
+
   fetchClasses(yearId: number) {
     this.classService.getAllClasses(yearId).subscribe({
-      next: (res) => this.classes.set(res),
+      next: (res) => {
+        if (this.userRole() === 'Teacher') {
+          const filtered = res.filter(c => this.teacherClassIds().includes(c.id));
+          this.classes.set(filtered);
+        } else {
+          this.classes.set(res);
+        }
+      },
       error: (err) => console.error('Failed to load classes', err)
     });
   }
@@ -153,9 +262,10 @@ export class Exams implements OnInit {
     });
   }
 
-  onYearSelect(val: number) {
-    this.selectedAcademicYearId.set(val);
-    this.fetchClasses(val);
+  onYearSelect(val: any) {
+    const yearId = typeof val === 'string' ? parseInt(val, 10) : val;
+    this.selectedAcademicYearId.set(yearId);
+    this.fetchClasses(yearId);
     this.fetchExams();
   }
 
@@ -170,8 +280,14 @@ export class Exams implements OnInit {
     this.loadingSchedules.set(true);
     this.examService.getExamSchedules(examId).subscribe({
       next: (res) => {
-        if (!this.isAdminOrTeacher() && this.studentClassId()) {
+        if (this.userRole() === 'Student' && this.studentClassId()) {
           this.schedules.set(res.filter(s => s.classId === this.studentClassId()));
+        } else if (this.userRole() === 'Teacher') {
+          const map = this.teacherSubjectClassMap();
+          this.schedules.set(res.filter(s => {
+            const allowedSubjects = map[s.classId];
+            return allowedSubjects && allowedSubjects.includes(s.subjectId);
+          }));
         } else {
           this.schedules.set(res);
         }
@@ -243,11 +359,23 @@ export class Exams implements OnInit {
 
     this.subjectService.getSubjectsByClass(classId).subscribe({
       next: (res) => {
-        this.modalSubjects.set(res);
-        if (res.length > 0) {
-          this.scheduleForm.set({ ...this.scheduleForm(), subjectId: res[0].id });
+        if (this.userRole() === 'Teacher') {
+          const map = this.teacherSubjectClassMap();
+          const allowedSubjects = map[classId] || [];
+          const filtered = res.filter(sub => allowedSubjects.includes(sub.id));
+          this.modalSubjects.set(filtered);
+          if (filtered.length > 0) {
+            this.scheduleForm.set({ ...this.scheduleForm(), subjectId: filtered[0].id });
+          } else {
+            this.scheduleForm.set({ ...this.scheduleForm(), subjectId: null });
+          }
         } else {
-          this.scheduleForm.set({ ...this.scheduleForm(), subjectId: null });
+          this.modalSubjects.set(res);
+          if (res.length > 0) {
+            this.scheduleForm.set({ ...this.scheduleForm(), subjectId: res[0].id });
+          } else {
+            this.scheduleForm.set({ ...this.scheduleForm(), subjectId: null });
+          }
         }
       },
       error: (err) => {

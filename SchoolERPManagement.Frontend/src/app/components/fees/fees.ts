@@ -7,6 +7,9 @@ import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { StudentService, StudentQueryResponseDTO } from '../../services/student.service';
 import { ParentService } from '../../services/parent.service';
 import { ToastService } from '../../services/toast.service';
+import { TeacherService } from '../../services/teacher.service';
+import { TimetableService } from '../../services/timetable.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-fees',
@@ -22,12 +25,18 @@ export class Fees implements OnInit {
   private studentService = inject(StudentService);
   private parentService = inject(ParentService);
   private toastService = inject(ToastService);
+  private teacherService = inject(TeacherService);
+  private timetableService = inject(TimetableService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   // User Role Info
   userRole = signal<string>('Student');
   currentUserId = signal<number | null>(null);
   currentStudentId = signal<number | null>(null);
   currentParentId = signal<number | null>(null);
+  currentTeacher = signal<any | null>(null);
+  teacherClassIds = signal<number[]>([]);
 
   // Selection signals
   selectedAcademicYearId = signal<number | null>(null);
@@ -60,6 +69,10 @@ export class Fees implements OnInit {
   isSavingStructure = signal(false);
   isSavingPayment = signal(false);
   isProcessingStripe = signal(false);
+  showStripeModal = signal(false);
+  stripePaymentComponent = signal<FeeComponentDTO | null>(null);
+  stripePaymentAmount = signal<number>(0);
+  stripePaymentMaxAmount = signal<number>(0);
 
   // Modal controls
   showCreateStructureModal = signal(false);
@@ -91,6 +104,28 @@ export class Fees implements OnInit {
 
     if (role === 'Admin') {
       this.fetchAcademicYears();
+    } else if (role === 'Teacher') {
+      const username = sessionStorage.getItem('username') || '';
+      this.teacherService.getTeacherByUsername(username).subscribe({
+        next: (teacher) => {
+          this.currentTeacher.set(teacher);
+          this.timetableService.getTeacherTimetable(teacher.id).subscribe({
+            next: (slots) => {
+              const classIds = Array.from(new Set<number>(slots.map(s => s.classId)));
+              this.teacherClassIds.set(classIds);
+              this.fetchAcademicYears();
+            },
+            error: (err) => {
+              console.error('Failed to load teacher timetable', err);
+              this.fetchAcademicYears();
+            }
+          });
+        },
+        error: (err) => {
+          console.error('Failed to load teacher profile', err);
+          this.fetchAcademicYears();
+        }
+      });
     } else if (role === 'Parent') {
       if (uid) {
         this.fetchParentAndChildren(uid);
@@ -102,7 +137,7 @@ export class Fees implements OnInit {
     }
   }
 
-  // --- ADMIN FLOW ---
+  // --- ADMIN & TEACHER FLOW ---
   fetchAcademicYears() {
     this.loadingYears.set(true);
     this.academicYearService.getAllAcademicYears().subscribe({
@@ -127,11 +162,22 @@ export class Fees implements OnInit {
     this.loadingClasses.set(true);
     this.classService.getAllClasses(yearId).subscribe({
       next: (res) => {
-        this.classes.set(res);
+        if (this.userRole() === 'Teacher') {
+          const teacher = this.currentTeacher();
+          const filtered = res.filter(c => 
+            this.teacherClassIds().includes(c.id) || 
+            (teacher && teacher.className && c.classname.toLowerCase() === teacher.className.toLowerCase() && 
+             (!teacher.section || c.section?.toLowerCase() === teacher.section.toLowerCase()))
+          );
+          this.classes.set(filtered);
+        } else {
+          this.classes.set(res);
+        }
         this.loadingClasses.set(false);
-        if (res.length > 0) {
-          this.selectedClassId.set(res[0].id);
-          this.fetchStudents(res[0].id);
+        const activeClasses = this.classes();
+        if (activeClasses.length > 0) {
+          this.selectedClassId.set(activeClasses[0].id);
+          this.fetchStudents(activeClasses[0].id);
         } else {
           this.selectedClassId.set(null);
           this.classStudentSummaries.set([]);
@@ -214,14 +260,16 @@ export class Fees implements OnInit {
     this.updateFilteredStudents(false);
   }
 
-  onYearChange(val: number) {
-    this.selectedAcademicYearId.set(val);
-    this.fetchClasses(val);
+  onYearChange(val: any) {
+    const yearId = typeof val === 'string' ? parseInt(val, 10) : val;
+    this.selectedAcademicYearId.set(yearId);
+    this.fetchClasses(yearId);
   }
 
-  onClassChange(val: number) {
-    this.selectedClassId.set(val);
-    this.fetchStudents(val);
+  onClassChange(val: any) {
+    const classId = typeof val === 'string' ? parseInt(val, 10) : val;
+    this.selectedClassId.set(classId);
+    this.fetchStudents(classId);
   }
 
   onStudentSelect(studentId: number) {
@@ -412,16 +460,32 @@ export class Fees implements OnInit {
   }
 
   // --- STRIPE CHECKOUT ---
-  payViaStripe(component: FeeComponentDTO) {
-    const studentId = this.selectedStudentId();
-    if (!studentId) return;
-
-    const relevantPayments = this.payments().filter(p => p.feeStructureId === component.id);
-    const paidForComponent = relevantPayments.reduce((sum, p) => sum + p.amountPaid, 0);
-    const balance = component.amount - paidForComponent;
-
+  openStripeModal(component: FeeComponentDTO) {
+    const balance = this.getOutstandingBalance(component);
     if (balance <= 0) {
       this.toastService.info('This fee component is already fully paid.');
+      return;
+    }
+    this.stripePaymentComponent.set(component);
+    this.stripePaymentMaxAmount.set(balance);
+    this.stripePaymentAmount.set(balance); // Default to full balance
+    this.showStripeModal.set(true);
+  }
+
+  closeStripeModal() {
+    this.showStripeModal.set(false);
+    this.stripePaymentComponent.set(null);
+  }
+
+  confirmStripePayment() {
+    const component = this.stripePaymentComponent();
+    const amount = this.stripePaymentAmount();
+    const studentId = this.selectedStudentId();
+
+    if (!component || !studentId) return;
+
+    if (amount <= 0 || amount > this.stripePaymentMaxAmount()) {
+      this.toastService.warning(`Please enter a valid amount between 1 and ${this.stripePaymentMaxAmount()}`);
       return;
     }
 
@@ -429,9 +493,9 @@ export class Fees implements OnInit {
     this.feeService.createCheckoutSession({
       studentId,
       feeStructureId: component.id,
-      amount: balance,
-      successUrl: window.location.origin + '/fees?payment=success',
-      cancelUrl: window.location.origin + '/fees?payment=cancelled'
+      amount: amount,
+      successUrl: window.location.origin + '/payment-result?status=success&session_id={CHECKOUT_SESSION_ID}',
+      cancelUrl: window.location.origin + '/payment-result?status=failed'
     }).subscribe({
       next: (res) => {
         if (res.url) {

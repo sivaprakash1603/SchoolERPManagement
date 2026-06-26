@@ -1,3 +1,8 @@
+@if (isLoading()) {
+  <div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 100px);">
+    <img src="/Book.svg" alt="Loading..." style="width: 100px; height: 100px;" />
+  </div>
+} @else {
 <div class="documents-page-container">
   <!-- Page Header -->
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
@@ -8,13 +13,33 @@
         Securely store, retrieve, and verify educational certificates, identity proofs, and qualifications.
       </p>
     </div>
-    @if (userRole() === 'Student' || userRole() === 'Parent') {
+    @if (userRole() === 'Student' || userRole() === 'Parent' || userRole() === 'Teacher') {
       <button (click)="openUploadModal()" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 rounded-3 fw-bold" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
         <i class="bi bi-cloud-arrow-up-fill"></i> Upload Document
       </button>
     }
   </div>
-
+  <!-- Teacher Tab Switcher -->
+  @if (userRole() === 'Teacher') {
+    <div class="minimal-card p-2 mb-4 d-inline-flex gap-2" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px;">
+      <button (click)="switchTeacherViewMode('verify')" class="btn btn-sm px-4 py-2.5 rounded-3 fw-bold transition-all d-flex align-items-center gap-2" 
+        [class.btn-primary]="teacherViewMode() === 'verify'" 
+        [class.btn-outline-secondary]="teacherViewMode() !== 'verify'" 
+        [style.background-color]="teacherViewMode() === 'verify' ? 'var(--primary-accent)' : 'transparent'" 
+        [style.border-color]="teacherViewMode() === 'verify' ? 'var(--primary-accent)' : 'transparent'"
+        [style.color]="teacherViewMode() === 'verify' ? '#fff' : 'var(--text-muted)'">
+        <i class="bi bi-shield-fill-check"></i> Verify Class Documents
+      </button>
+      <button (click)="switchTeacherViewMode('self')" class="btn btn-sm px-4 py-2.5 rounded-3 fw-bold transition-all d-flex align-items-center gap-2" 
+        [class.btn-primary]="teacherViewMode() === 'self'" 
+        [class.btn-outline-secondary]="teacherViewMode() !== 'self'" 
+        [style.background-color]="teacherViewMode() === 'self' ? 'var(--primary-accent)' : 'transparent'" 
+        [style.border-color]="teacherViewMode() === 'self' ? 'var(--primary-accent)' : 'transparent'"
+        [style.color]="teacherViewMode() === 'self' ? '#fff' : 'var(--text-muted)'">
+        <i class="bi bi-person-bounding-box"></i> My Documents
+      </button>
+    </div>
+  }
   <!-- Stats Cards Row (Dynamic summary) -->
   <div class="row g-4 mb-4">
     <!-- Total Uploads -->
@@ -29,7 +54,6 @@
         </div>
       </div>
     </div>
-
     <!-- Verified -->
     <div class="col-12 col-md-4">
       <div class="minimal-card p-3 d-flex align-items-center justify-content-between relative overflow-hidden card-hover">
@@ -42,20 +66,19 @@
         </div>
       </div>
     </div>
-
     <!-- Pending Verification -->
     <div class="col-12 col-md-4">
       <div class="minimal-card p-3 d-flex align-items-center justify-content-between relative overflow-hidden card-hover">
         <div>
           <span class="text-muted-custom fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">
-            @if (userRole() === 'Admin' || userRole() === 'Teacher') {
+            @if (userRole() === 'Admin' || (userRole() === 'Teacher' && teacherViewMode() === 'verify')) {
               System Pending Review
             } @else {
               Pending Review
             }
           </span>
           <h3 class="fw-extrabold fs-2 mt-1 mb-0 text-warning">
-            @if (userRole() === 'Admin' || userRole() === 'Teacher') {
+            @if (userRole() === 'Admin' || (userRole() === 'Teacher' && teacherViewMode() === 'verify')) {
               {{ systemPendingCount() }}
             } @else {
               {{ pendingDocsCount() }}
@@ -68,7 +91,6 @@
       </div>
     </div>
   </div>
-
   <!-- Parent Profile selector -->
   @if (userRole() === 'Parent') {
     <div class="minimal-card p-3 mb-4">
@@ -77,16 +99,15 @@
           <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Select Child</label>
           <select class="form-select" [ngModel]="selectedChildId()" (ngModelChange)="onChildChange($event)">
             @for (child of parentChildren(); track child.studentId) {
-              <option [value]="child.studentId">{{ child.name }} ({{ child.regNo }} - {{ child.className }})</option>
+              <option [value]="child.studentId" [selected]="child.studentId === selectedChildId()">{{ child.name }} ({{ child.regNo }} - {{ child.className }})</option>
             }
           </select>
         </div>
       </div>
     </div>
   }
-
-  <!-- Parent / Student single panel view -->
-  @if (userRole() === 'Student' || userRole() === 'Parent') {
+  <!-- Parent / Student / Teacher self single panel view -->
+  @if (userRole() === 'Student' || userRole() === 'Parent' || (userRole() === 'Teacher' && teacherViewMode() === 'self')) {
     <div class="minimal-card p-0 overflow-hidden mb-4">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -145,9 +166,8 @@
       </div>
     </div>
   }
-
   <!-- Admin / Teacher dual-panel directory workspace -->
-  @if (userRole() === 'Admin' || userRole() === 'Teacher') {
+  @if (userRole() === 'Admin' || (userRole() === 'Teacher' && teacherViewMode() === 'verify')) {
     <div class="row g-4">
       <!-- Left Panel: Directory -->
       <div class="col-12 col-lg-4">
@@ -167,21 +187,18 @@
               <h5 class="fw-bold mb-0" style="color: var(--primary-accent);">Students Directory</h5>
             </div>
           }
-
           <!-- Filters -->
           <div class="p-3 border-bottom d-flex flex-column gap-2" style="border-bottom: 1px solid var(--border-color);">
             <div class="input-group">
               <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
               <input type="text" class="form-control border-start-0" placeholder="Search by name..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); refreshDirectoryList()">
             </div>
-
             <div class="form-check my-1">
               <input class="form-check-input" type="checkbox" id="onlyShowPendingCheck" [ngModel]="onlyShowPending()" (ngModelChange)="onlyShowPending.set($event); refreshDirectoryList()">
               <label class="form-check-label text-muted-custom fw-semibold text-xs" for="onlyShowPendingCheck">
                 Only Show Pending Verification
               </label>
             </div>
-
             @if (activeDirectoryTab() === 'students' && !onlyShowPending()) {
               <select class="form-select" [ngModel]="selectedClassId()" (ngModelChange)="onClassChangeFilter($event)">
                 <option [ngValue]="null">All Classes</option>
@@ -191,7 +208,6 @@
               </select>
             }
           </div>
-
           <!-- Directory Scroll List -->
           <div class="flex-grow-1 overflow-auto scrollbar-custom p-2" style="max-height: 50vh;">
             @if (activeDirectoryTab() === 'students') {
@@ -238,7 +254,6 @@
           </div>
         </div>
       </div>
-
       <!-- Right Panel: Documents Area -->
       <div class="col-12 col-lg-8">
         <div class="minimal-card h-100-custom d-flex flex-column p-0 overflow-hidden">
@@ -273,7 +288,6 @@
                 </div>
               </div>
             </div>
-
             <!-- Documents Table -->
             <div class="flex-grow-1 overflow-auto scrollbar-custom p-0">
               <div class="table-responsive">
@@ -326,7 +340,6 @@
                               <a [href]="getFileUrl(doc.blobUrl)" target="_blank" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 py-1.5 px-3 rounded-2 fw-semibold">
                                 <i class="bi bi-box-arrow-up-right"></i> Open File
                               </a>
-
                               <!-- Verification Buttons (Admin / Teacher, only if pending) -->
                               @if (doc.status.toLowerCase() === 'pending') {
                                 <button (click)="updateVerificationStatus(doc, 'Verified')" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-2 fw-bold text-white">
@@ -336,7 +349,6 @@
                                   <i class="bi bi-x-lg"></i> Reject
                                 </button>
                               }
-
                               <!-- Delete Button (Admin Only) -->
                               @if (userRole() === 'Admin') {
                                 <button (click)="deleteDocument(doc)" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center p-1.5 rounded-2" title="Delete File">
@@ -357,9 +369,8 @@
       </div>
     </div>
   }
-
   <!-- Upload Modal -->
-  @if (showUploadModal() && (userRole() === 'Student' || userRole() === 'Parent')) {
+  @if (showUploadModal() && (userRole() === 'Student' || userRole() === 'Parent' || userRole() === 'Teacher')) {
     <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content custom-modal-content border-0 shadow-lg">
@@ -374,7 +385,6 @@
               <label class="form-label text-muted-custom fw-semibold mb-1">Document Display Name *</label>
               <input type="text" class="form-control" placeholder="e.g. Birth Certificate, Identity Proof" [(ngModel)]="uploadForm().documentName">
             </div>
-
             <div class="mb-3">
               <label class="form-label text-muted-custom fw-semibold mb-1">Select File *</label>
               <input type="file" class="form-control" (change)="onFileSelected($event)">
@@ -397,3 +407,5 @@
     </div>
   }
 </div>
+
+}

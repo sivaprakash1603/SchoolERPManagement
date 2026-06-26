@@ -8,6 +8,8 @@ import { SubjectService, SubjectResponseDTO } from '../../services/subject.servi
 import { TeacherService, TeacherResponseDTO } from '../../services/teacher.service';
 import { StudentService } from '../../services/student.service';
 import { ToastService } from '../../services/toast.service';
+import { TimetableService } from '../../services/timetable.service';
+import { ParentService } from '../../services/parent.service';
 
 @Component({
   selector: 'app-homework',
@@ -24,16 +26,23 @@ export class Homework implements OnInit {
   private teacherService = inject(TeacherService);
   private studentService = inject(StudentService);
   private toastService = inject(ToastService);
+  private timetableService = inject(TimetableService);
+  private parentService = inject(ParentService);
 
   // Selector data
   academicYears = signal<AcademicYearResponseDTO[]>([]);
   classes = signal<ClassResponseDTO[]>([]);
   subjects = signal<SubjectResponseDTO[]>([]);
   teachers = signal<TeacherResponseDTO[]>([]);
+  resolvedTeacherId = signal<number | null>(null);
 
   selectedAcademicYearId = signal<number | null>(null);
   selectedClassId = signal<number | null>(null);
   selectedSubjectId = signal<number | null>(null);
+
+  // Parent specific
+  parentChildren = signal<any[]>([]);
+  selectedChildId = signal<number | null>(null);
 
   // Homework list
   homeworks = signal<HomeworkResponseDTO[]>([]);
@@ -47,7 +56,7 @@ export class Homework implements OnInit {
   showSubmissionsModal = signal(false);
 
   // Loaders
-  loading = signal(false);
+  loading = signal(true);
   loadingSubmissions = signal(false);
   isSaving = signal(false);
   isEvaluating = signal(false);
@@ -67,6 +76,19 @@ export class Homework implements OnInit {
   studentSubmitFile: File | null = null;
   isSubmitting = signal(false);
   expandedHomeworkId = signal<number | null>(null);
+
+  // View UI Helpers
+  get pageTitle(): string {
+    if (this.userRole() === 'Student') return 'My Homework';
+    if (this.userRole() === 'Parent') return 'Child Homework';
+    return 'Homework & Assignments';
+  }
+
+  get pageDescription(): string {
+    if (this.userRole() === 'Student') return 'Track your assignments, submit work, and view grades.';
+    if (this.userRole() === 'Parent') return "Track your child's assignments, and view their grades.";
+    return 'Assign and evaluate student homework assignments.';
+  }
 
   // Forms
   createForm = signal({
@@ -109,9 +131,39 @@ export class Homework implements OnInit {
           this.toastService.error('Failed to resolve your student profile.');
         }
       });
+    } else if (role === 'Parent' && uid) {
+      this.parentService.getParentByUserId(parseInt(uid, 10)).subscribe({
+        next: (parent) => {
+          this.parentService.getParentChildren(parent.id).subscribe({
+            next: (children) => {
+              this.parentChildren.set(children);
+              if (children.length > 0) {
+                this.selectedChildId.set(children[0].studentId);
+                this.resolvedStudentId.set(children[0].studentId);
+                this.fetchStudentHomeworks(children[0].studentId);
+              }
+            },
+            error: (err) => console.error('Failed to load parent children', err)
+          });
+        },
+        error: (err) => {
+          console.error('Failed to resolve parent profile', err);
+          this.toastService.error('Failed to resolve parent profile.');
+            this.loading.set(false);
+        }
+      });
     } else {
       this.fetchAcademicYears();
       this.fetchTeachers();
+      if (role === 'Teacher') {
+        const username = sessionStorage.getItem('username') || '';
+        this.teacherService.getTeacherByUsername(username).subscribe({
+          next: (teacher) => {
+            this.resolvedTeacherId.set(teacher.id);
+          },
+          error: (err) => console.error('Failed to resolve teacher profile', err)
+        });
+      }
     }
   }
 
@@ -123,6 +175,8 @@ export class Homework implements OnInit {
         if (currentYear) {
           this.selectedAcademicYearId.set(currentYear.id);
           this.fetchClasses(currentYear.id);
+        } else {
+          this.loading.set(false);
         }
       },
       error: (err) => {
@@ -132,24 +186,93 @@ export class Homework implements OnInit {
     });
   }
 
+  onChildChange(studentId: number) {
+    this.selectedChildId.set(studentId);
+    this.resolvedStudentId.set(studentId);
+    
+    const child = this.parentChildren().find(c => c.studentId === studentId);
+    this.fetchStudentHomeworks(studentId);
+  }
+
   fetchClasses(yearId: number) {
     this.classService.getAllClasses(yearId).subscribe({
       next: (res) => {
-        this.classes.set(res);
-        if (res.length > 0) {
-          this.selectedClassId.set(res[0].id);
-          this.fetchSubjectsForClass();
-          this.fetchHomeworks();
+        if (this.userRole() === 'Teacher') {
+          const username = sessionStorage.getItem('username') || '';
+          this.teacherService.getTeacherByUsername(username).subscribe({
+            next: (teacher) => {
+              this.resolvedTeacherId.set(teacher.id);
+              this.timetableService.getTeacherTimetable(teacher.id).subscribe({
+                next: (slots) => {
+                  const assignedClassIds = new Set<number>(slots.map(s => s.classId));
+                  const filtered = res.filter(c => 
+                    assignedClassIds.has(c.id) || 
+                    (teacher.className && c.classname.toLowerCase() === teacher.className.toLowerCase() && 
+                     (!teacher.section || c.section?.toLowerCase() === teacher.section.toLowerCase()))
+                  );
+                  this.classes.set(filtered);
+                  if (filtered.length > 0) {
+                    this.selectedClassId.set(filtered[0].id);
+                    this.fetchSubjectsForClass();
+                    this.fetchHomeworks();
+                  } else {
+                    this.selectedClassId.set(null);
+                    this.subjects.set([]);
+                    this.homeworks.set([]);
+                    this.calculateMetrics();
+                    this.loading.set(false);
+                  }
+                },
+                error: (err) => {
+                  console.error('Failed to load teacher timetable', err);
+                  const filtered = res.filter(c => 
+                    teacher.className && c.classname.toLowerCase() === teacher.className.toLowerCase() && 
+                    (!teacher.section || c.section?.toLowerCase() === teacher.section.toLowerCase())
+                  );
+                  this.classes.set(filtered);
+                  if (filtered.length > 0) {
+                    this.selectedClassId.set(filtered[0].id);
+                    this.fetchSubjectsForClass();
+                    this.fetchHomeworks();
+                  } else {
+                    this.selectedClassId.set(null);
+                    this.subjects.set([]);
+                    this.homeworks.set([]);
+                    this.calculateMetrics();
+                    this.loading.set(false);
+                  }
+                }
+              });
+            },
+            error: (err) => {
+              console.error('Failed to load teacher profile', err);
+              this.classes.set([]);
+              this.selectedClassId.set(null);
+              this.subjects.set([]);
+              this.homeworks.set([]);
+              this.calculateMetrics();
+                    this.loading.set(false);
+            }
+          });
         } else {
-          this.selectedClassId.set(null);
-          this.subjects.set([]);
-          this.homeworks.set([]);
-          this.calculateMetrics();
+          this.classes.set(res);
+          if (res.length > 0) {
+            this.selectedClassId.set(res[0].id);
+            this.fetchSubjectsForClass();
+            this.fetchHomeworks();
+          } else {
+            this.selectedClassId.set(null);
+            this.subjects.set([]);
+            this.homeworks.set([]);
+            this.calculateMetrics();
+                    this.loading.set(false);
+          }
         }
       },
       error: (err) => {
         console.error('Failed to load classes', err);
         this.toastService.error('Failed to load classes.');
+        this.loading.set(false);
       }
     });
   }
@@ -196,6 +319,7 @@ export class Homework implements OnInit {
       next: (res) => {
         this.homeworks.set(res);
         this.calculateMetrics();
+                    this.loading.set(false);
         this.loading.set(false);
       },
       error: (err) => {
@@ -231,9 +355,12 @@ export class Homework implements OnInit {
 
   openCreateModal() {
     const today = new Date().toISOString().split('T')[0];
+    const defaultTeacherId = this.userRole() === 'Teacher' && this.resolvedTeacherId() 
+      ? this.resolvedTeacherId() 
+      : (this.teachers().length > 0 ? this.teachers()[0].id : null);
     this.createForm.set({
       subjectId: this.subjects().length > 0 ? this.subjects()[0].id : null,
-      teacherId: this.teachers().length > 0 ? this.teachers()[0].id : null,
+      teacherId: defaultTeacherId,
       title: '',
       description: '',
       dueDate: today,

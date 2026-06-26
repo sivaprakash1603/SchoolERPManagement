@@ -42,8 +42,7 @@ public sealed class AuthService : IAuthService
             throw new BusinessRuleException("Your account has been deactivated.");
         }
 
-        var response = _mapper.Map<AuthResponseDTO>(user);
-        return response with { AccessToken = _tokenGenerator.GenerateToken(user, user.Role) };
+        return new AuthResponseDTO(_tokenGenerator.GenerateToken(user, user.Role));
     }
 
     public async Task<string> ForgotPasswordAsync(ForgotPasswordDTO dto, CancellationToken cancellationToken)

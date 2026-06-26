@@ -1,7 +1,12 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
-import { ParentService, ParentResponseDTO, ParentQueryRequest, PagedResponse } from '../../services/parent.service';
+import {
+  ParentService,
+  ParentResponseDTO,
+  ParentQueryRequest,
+  PagedResponse,
+} from '../../services/parent.service';
 import { ToastService } from '../../services/toast.service';
 import { NotificationService } from '../../services/notification.service';
 
@@ -13,7 +18,7 @@ interface ParentUI extends ParentResponseDTO {
 @Component({
   selector: 'app-parents',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './parents.html',
   styleUrl: './parents.css',
 })
@@ -21,7 +26,7 @@ export class Parents implements OnInit {
   private parentService = inject(ParentService);
   private toastService = inject(ToastService);
   private notificationService = inject(NotificationService);
-  
+
   parents = signal<ParentUI[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
@@ -64,22 +69,25 @@ export class Parents implements OnInit {
   fetchParents() {
     this.loading.set(true);
     this.error.set(null);
-    
+
     const request: ParentQueryRequest = {
       pageNumber: this.pageNumber(),
       pageSize: this.pageSize(),
       searchQuery: this.searchQuery(),
-      status: this.status()
+      status: this.status(),
     };
 
     this.parentService.getAllParents(request).subscribe({
       next: (response: PagedResponse<ParentResponseDTO>) => {
-        const mappedData = response.items.map(dto => ({
+        const mappedData = response.items.map((dto) => ({
           ...dto,
           email: dto.email || 'N/A',
-          avatarUrl: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(dto.name) + '&background=random'
+          avatarUrl:
+            'https://ui-avatars.com/api/?name=' +
+            encodeURIComponent(dto.name) +
+            '&background=random',
         }));
-        
+
         this.parents.set(mappedData);
         this.totalCount.set(response.totalCount);
         this.totalPages.set(response.totalPages);
@@ -89,7 +97,7 @@ export class Parents implements OnInit {
         console.error('Failed to fetch parents', err);
         this.error.set('Failed to load parents. Please try again later.');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -110,7 +118,7 @@ export class Parents implements OnInit {
   exportPdf() {
     const request: ParentQueryRequest = {
       searchQuery: this.searchQuery(),
-      status: this.status()
+      status: this.status(),
     };
 
     this.parentService.exportParentsPdf(request).subscribe({
@@ -127,20 +135,20 @@ export class Parents implements OnInit {
       error: (err) => {
         console.error('Failed to export PDF', err);
         alert('Failed to generate PDF report.');
-      }
+      },
     });
   }
 
   previousPage() {
     if (this.pageNumber() > 1) {
-      this.pageNumber.update(p => p - 1);
+      this.pageNumber.update((p) => p - 1);
       this.fetchParents();
     }
   }
 
   nextPage() {
     if (this.pageNumber() < this.totalPages()) {
-      this.pageNumber.update(p => p + 1);
+      this.pageNumber.update((p) => p + 1);
       this.fetchParents();
     }
   }
@@ -158,7 +166,11 @@ export class Parents implements OnInit {
   }
 
   sendNotification() {
-    if (!this.notificationTitle() || !this.notificationMessage() || this.notificationTargetUserIds().length === 0) {
+    if (
+      !this.notificationTitle() ||
+      !this.notificationMessage() ||
+      this.notificationTargetUserIds().length === 0
+    ) {
       return;
     }
 
@@ -166,7 +178,7 @@ export class Parents implements OnInit {
     const dto = {
       title: this.notificationTitle(),
       message: this.notificationMessage(),
-      targetUserIds: this.notificationTargetUserIds()
+      targetUserIds: this.notificationTargetUserIds(),
     };
 
     this.notificationService.sendNotification(dto).subscribe({
@@ -180,13 +192,13 @@ export class Parents implements OnInit {
         console.error('Failed to send notification', err);
         this.toastService.error(err.error?.message || 'Failed to send notification');
         this.isSendingNotification.set(false);
-      }
+      },
     });
   }
 
   toggleSelectParent(id: number) {
-    this.selectedParentIds.update(ids => 
-      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    this.selectedParentIds.update((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
     );
   }
 
@@ -197,7 +209,7 @@ export class Parents implements OnInit {
   toggleSelectAll(event: Event) {
     const checkbox = event.target as HTMLInputElement;
     if (checkbox.checked) {
-      const pageIds = this.parents().map(p => p.id);
+      const pageIds = this.parents().map((p) => p.id);
       this.selectedParentIds.set(pageIds);
     } else {
       this.selectedParentIds.set([]);
@@ -210,8 +222,8 @@ export class Parents implements OnInit {
 
   openBulkNotificationModal() {
     const ids = this.selectedParentIds();
-    const selectedParents = this.parents().filter(p => ids.includes(p.id));
-    const targetUserIds = selectedParents.map(p => p.userId);
+    const selectedParents = this.parents().filter((p) => ids.includes(p.id));
+    const targetUserIds = selectedParents.map((p) => p.userId);
     const targetNames = `${selectedParents.length} Selected Parents`;
     this.openNotificationModal(targetNames, targetUserIds);
   }
@@ -221,7 +233,7 @@ export class Parents implements OnInit {
     this.editForm.set({
       name: parent.name,
       email: parent.email,
-      phonenumber: parent.phonenumber || ''
+      phonenumber: parent.phonenumber || '',
     });
     this.showEditModal.set(true);
   }
@@ -247,7 +259,7 @@ export class Parents implements OnInit {
         console.error('Failed to update parent', err);
         this.toastService.error(err.error?.message || 'Failed to update parent details.');
         this.isUpdating.set(false);
-      }
+      },
     });
   }
 
@@ -277,7 +289,7 @@ export class Parents implements OnInit {
         console.error('Failed to delete parent', err);
         this.toastService.error(err.error?.message || 'Failed to deactivate parent.');
         this.isDeleting.set(false);
-      }
+      },
     });
   }
 }

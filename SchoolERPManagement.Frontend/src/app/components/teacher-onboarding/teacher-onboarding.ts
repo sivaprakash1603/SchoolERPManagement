@@ -114,7 +114,7 @@ export class TeacherOnboarding implements OnInit {
         classId,
         subjectId,
         className: `${cls.classname} - ${cls.section}`,
-        subjectName: sub.subjectname
+        subjectName: sub.subjectName || sub.subjectname
       };
 
       this.selectedAssignments.update(list => [...list, assignment]);
@@ -179,6 +179,7 @@ export class TeacherOnboarding implements OnInit {
             next: () => resolve(),
             error: (err) => {
               console.error('Failed to assign subject', err);
+              this.toastService.error(err.error?.Message || err.error?.message || 'Failed to assign subject');
               resolve(); // Continue onboarding other elements
             }
           });

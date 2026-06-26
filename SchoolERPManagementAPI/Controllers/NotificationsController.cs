@@ -31,5 +31,20 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _notificationService.GetUserNotificationsAsync(userId, cancellationToken);
             return Ok(result);
         }
+
+        [HttpPut("user/{userId}/read/{notificationId}")]
+        public async Task<IActionResult> MarkAsRead(int userId, int notificationId, CancellationToken cancellationToken)
+        {
+            var success = await _notificationService.MarkAsReadAsync(userId, notificationId, cancellationToken);
+            if (!success) return NotFound("Notification not found or access denied.");
+            return Ok(new { success = true });
+        }
+
+        [HttpPut("user/{userId}/readAll")]
+        public async Task<IActionResult> MarkAllAsRead(int userId, CancellationToken cancellationToken)
+        {
+            var success = await _notificationService.MarkAllAsReadAsync(userId, cancellationToken);
+            return Ok(new { success = true });
+        }
     }
 }

@@ -67,6 +67,21 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id}/assignments")]
+        public async Task<IActionResult> GetTeacherAssignments(int id, CancellationToken cancellationToken)
+        {
+            var result = await _teacherService.GetTeacherAssignmentsAsync(id, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}/assignments/{classId}/{subjectId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteTeacherAssignment(int id, int classId, int subjectId, CancellationToken cancellationToken)
+        {
+            await _teacherService.DeleteTeacherAssignmentAsync(id, classId, subjectId, cancellationToken);
+            return NoContent();
+        }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateTeacher(int id, [FromBody] UpdateTeacherDTO dto, CancellationToken cancellationToken)

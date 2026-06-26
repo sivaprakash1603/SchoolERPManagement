@@ -7,6 +7,9 @@ using SchoolERPManagementDALLibrary.Interfaces;
 using SchoolERPManagementModelLibrary.Models;
 using Stripe;
 using Stripe.Checkout;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace SchoolERPManagementBLLibrary.Services;
 
@@ -17,19 +20,22 @@ public sealed class FeeService : IFeeService
     private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
     private readonly IRepository<int, Feestructure> _feeStructureRepository;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
 
     public FeeService(
         IRepository<int, Feepayment> feePaymentRepository,
         IRepository<int, Student> studentRepository,
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
         IRepository<int, Feestructure> feeStructureRepository,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IEmailService emailService)
     {
         _feePaymentRepository = feePaymentRepository;
         _studentRepository = studentRepository;
         _studentEnrollmentRepository = studentEnrollmentRepository;
         _feeStructureRepository = feeStructureRepository;
         _configuration = configuration;
+        _emailService = emailService;
     }
 
     public async Task<FeeStructureResponseDTO> AddFeeStructureAsync(AddFeeStructureDTO dto, CancellationToken cancellationToken)
@@ -139,14 +145,21 @@ public sealed class FeeService : IFeeService
 
     public async Task<string> CreateStripeCheckoutSessionAsync(CreateCheckoutSessionDTO dto, CancellationToken cancellationToken)
     {
-        if (await _studentRepository.GetByIdAsync(dto.StudentId) is null)
+        var student = await _studentRepository.GetByIdAsync(dto.StudentId);
+        if (student is null)
         {
             throw new EntityNotFoundException("Student", dto.StudentId.ToString());
         }
 
+        var feeStructure = await _feeStructureRepository.GetByIdAsync(dto.FeeStructureId);
+        if (feeStructure is null)
+        {
+            throw new EntityNotFoundException("FeeStructure", dto.FeeStructureId.ToString());
+        }
+
         var options = new SessionCreateOptions
         {
-            PaymentMethodTypes = new List<string> { "card" },
+            PaymentMethodTypes = new List<string> { "card" }, // Note: UPI requires IN region. Since stripe config might not support upi without proper setup, we'll enable Automatic Payment Methods later if needed. For now we will add 'upi'. Wait, wait. I will just add "upi" to the list as the user asked.
             LineItems = new List<SessionLineItemOptions>
             {
                 new SessionLineItemOptions
@@ -157,7 +170,7 @@ public sealed class FeeService : IFeeService
                         Currency = "inr",
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = $"School Fee Payment for Student ID: {dto.StudentId}",
+                            Name = $"{feeStructure.Feename} for {student.Name}",
                         },
                     },
                     Quantity = 1,
@@ -168,9 +181,11 @@ public sealed class FeeService : IFeeService
             CancelUrl = dto.CancelUrl ?? "http://localhost:4200/payment-cancelled",
             Metadata = new Dictionary<string, string>
             {
-                { "StudentId", dto.StudentId.ToString() }
+                { "StudentId", dto.StudentId.ToString() },
+                { "FeeStructureId", dto.FeeStructureId.ToString() }
             }
         };
+        options.PaymentMethodTypes.Add("upi");
 
         var service = new SessionService();
         Session session = await service.CreateAsync(options, cancellationToken: cancellationToken);
@@ -194,6 +209,12 @@ public sealed class FeeService : IFeeService
                 {
                     var transactionId = session.PaymentIntentId ?? session.Id;
 
+                    int feeStructureId = 0;
+                    if (session.Metadata.TryGetValue("FeeStructureId", out var feeStructureIdString))
+                    {
+                        int.TryParse(feeStructureIdString, out feeStructureId);
+                    }
+
                     // Prevent duplicate entries if the webhook is delivered multiple times
                     bool paymentExists = await _feePaymentRepository.Query(false)
                         .AnyAsync(p => p.Transactionid == transactionId, cancellationToken);
@@ -206,7 +227,7 @@ public sealed class FeeService : IFeeService
                     var payment = new Feepayment
                     {
                         Studentid = studentId,
-                        Feestructureid = 0, // Fallback since Stripe Webhook might not know
+                        Feestructureid = feeStructureId,
                         Amountpaid = (decimal)(session.AmountTotal ?? 0) / 100m,
                         Paymentdate = DateTime.UtcNow,
                         Paymentmethod = "Stripe",
@@ -214,6 +235,46 @@ public sealed class FeeService : IFeeService
                     };
 
                     await _feePaymentRepository.AddAsync(payment, save: true, ct: cancellationToken);
+
+                    try
+                    {
+                        var pdfBytes = await GenerateReceiptPdfAsync(transactionId, cancellationToken);
+                        
+                        var studentWithParent = await _studentRepository.Query(true)
+                            .Include(s => s.Studentparents)
+                            .ThenInclude(sp => sp.Parent)
+                            .ThenInclude(p => p.User)
+                            .FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
+
+                        if (studentWithParent != null)
+                        {
+                            foreach (var sp in studentWithParent.Studentparents)
+                            {
+                                if (!string.IsNullOrEmpty(sp.Parent?.User?.Email))
+                                {
+                                    string emailBody = $@"
+                                    <h3>Payment Successful</h3>
+                                    <p>Dear Parent,</p>
+                                    <p>We have successfully received the fee payment of {payment.Amountpaid.ToString("C", new System.Globalization.CultureInfo("en-IN"))} for {studentWithParent.Name}.</p>
+                                    <p>Please find the payment receipt attached to this email.</p>
+                                    <p>Thank you,<br/>School ERP Management</p>";
+
+                                    await _emailService.SendEmailWithAttachmentAsync(
+                                        sp.Parent.User.Email,
+                                        $"Fee Payment Receipt - {studentWithParent.Name}",
+                                        emailBody,
+                                        pdfBytes,
+                                        $"Receipt_{transactionId}.pdf",
+                                        cancellationToken
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to send receipt email: {ex.Message}");
+                    }
                 }
             }
         }
@@ -262,5 +323,150 @@ public sealed class FeeService : IFeeService
         }).ToList();
 
         return summaries;
+    }
+
+    public async Task<CheckoutSessionResultDTO> GetCheckoutSessionDetailsAsync(string sessionId, CancellationToken cancellationToken)
+    {
+        var service = new SessionService();
+        var session = await service.GetAsync(sessionId, cancellationToken: cancellationToken);
+
+        string studentName = "Unknown Student";
+        string feeName = "Unknown Fee";
+        decimal amountPaid = (decimal)(session.AmountTotal ?? 0) / 100m;
+        string transactionId = session.PaymentIntentId ?? session.Id;
+
+        if (session.Metadata.TryGetValue("StudentId", out var studentIdString) && int.TryParse(studentIdString, out int studentId))
+        {
+            var student = await _studentRepository.GetByIdAsync(studentId);
+            if (student != null)
+            {
+                studentName = student.Name;
+            }
+        }
+
+        if (session.Metadata.TryGetValue("FeeStructureId", out var feeStructureIdString) && int.TryParse(feeStructureIdString, out int feeStructureId))
+        {
+            var feeStructure = await _feeStructureRepository.GetByIdAsync(feeStructureId);
+            if (feeStructure != null)
+            {
+                feeName = feeStructure.Feename;
+            }
+        }
+
+        return new CheckoutSessionResultDTO(
+            transactionId,
+            amountPaid,
+            studentName,
+            feeName,
+            DateTime.UtcNow
+        );
+    }
+
+    public async Task<byte[]> GenerateReceiptPdfAsync(string transactionId, CancellationToken cancellationToken)
+    {
+        // Find the payment record by transaction ID
+        var payment = await _feePaymentRepository.Query(true)
+            .Include(p => p.Student)
+            .Include(p => p.Feestructure)
+            .FirstOrDefaultAsync(p => p.Transactionid == transactionId, cancellationToken);
+
+        if (payment == null)
+        {
+            throw new EntityNotFoundException("Fee Payment Transaction", transactionId);
+        }
+
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
+        var document = QuestPDF.Fluent.Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(QuestPDF.Helpers.PageSizes.A4);
+                page.Margin(2, QuestPDF.Infrastructure.Unit.Centimetre);
+                page.PageColor(QuestPDF.Helpers.Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(11));
+
+                page.Header().Element(ComposeHeader);
+                page.Content().Element(x => ComposeContent(x, payment));
+                page.Footer().Element(ComposeFooter);
+            });
+        });
+
+        return document.GeneratePdf();
+    }
+
+    void ComposeHeader(QuestPDF.Infrastructure.IContainer container)
+    {
+        container.Row(row =>
+        {
+            row.RelativeItem().Column(column =>
+            {
+                column.Item().Text("School ERP Management").FontSize(20).SemiBold().FontColor(QuestPDF.Helpers.Colors.Blue.Darken2);
+                column.Item().Text("Payment Receipt").FontSize(14).FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+            });
+        });
+    }
+
+    void ComposeContent(QuestPDF.Infrastructure.IContainer container, Feepayment payment)
+    {
+        container.PaddingVertical(1, QuestPDF.Infrastructure.Unit.Centimetre).Column(column =>
+        {
+            column.Spacing(5);
+
+            column.Item().Text($"Receipt No: {payment.Id}");
+            column.Item().Text($"Transaction ID: {payment.Transactionid}");
+            column.Item().Text($"Payment Date: {payment.Paymentdate?.ToString("f") ?? "N/A"}");
+            column.Item().Text($"Payment Method: {payment.Paymentmethod}");
+            column.Item().PaddingTop(10).LineHorizontal(1).LineColor(QuestPDF.Helpers.Colors.Grey.Lighten2);
+
+            column.Item().PaddingTop(10).Row(row =>
+            {
+                row.RelativeItem().Column(col =>
+                {
+                    col.Item().Text("Student Details").SemiBold();
+                    col.Item().Text($"Name: {payment.Student?.Name ?? "N/A"}");
+                    col.Item().Text($"Reg No: {payment.Student?.Regno ?? "N/A"}");
+                });
+
+                row.RelativeItem().Column(col =>
+                {
+                    col.Item().Text("Fee Details").SemiBold();
+                    col.Item().Text($"Fee Name: {payment.Feestructure?.Feename ?? "General Fee"}");
+                });
+            });
+
+            column.Item().PaddingTop(10).LineHorizontal(1).LineColor(QuestPDF.Helpers.Colors.Grey.Lighten2);
+
+            column.Item().PaddingTop(10).Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn();
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Text("Description").SemiBold();
+                    header.Cell().AlignRight().Text("Amount Paid (INR)").SemiBold();
+                });
+
+                table.Cell().Text(payment.Feestructure?.Feename ?? "Fee Payment");
+                table.Cell().AlignRight().Text(payment.Amountpaid.ToString("C", new System.Globalization.CultureInfo("en-IN")));
+            });
+
+            column.Item().PaddingTop(20).AlignRight().Text($"Total Paid: {payment.Amountpaid.ToString("C", new System.Globalization.CultureInfo("en-IN"))}").FontSize(14).SemiBold();
+        });
+    }
+
+    void ComposeFooter(QuestPDF.Infrastructure.IContainer container)
+    {
+        container.AlignCenter().Text(x =>
+        {
+            x.Span("Page ");
+            x.CurrentPageNumber();
+            x.Span(" of ");
+            x.TotalPages();
+        });
     }
 }

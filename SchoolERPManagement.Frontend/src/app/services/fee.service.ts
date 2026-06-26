@@ -70,6 +70,14 @@ export interface ClassFeeSummaryDTO {
   pendingAmount: number;
 }
 
+export interface CheckoutSessionResultDTO {
+  transactionId: string;
+  amountPaid: number;
+  studentName: string;
+  feeName: string;
+  date: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -92,6 +100,10 @@ export class FeeService {
 
   createCheckoutSession(dto: CreateCheckoutSessionDTO): Observable<{ url: string }> {
     return this.http.post<{ url: string }>(`${this.baseUrl}/create-checkout-session`, dto);
+  }
+
+  getCheckoutSessionDetails(sessionId: string): Observable<CheckoutSessionResultDTO> {
+    return this.http.get<CheckoutSessionResultDTO>(`${this.baseUrl}/checkout-session/${sessionId}`);
   }
 
   addFeeStructure(dto: AddFeeStructureDTO): Observable<FeeStructureResponseDTO> {

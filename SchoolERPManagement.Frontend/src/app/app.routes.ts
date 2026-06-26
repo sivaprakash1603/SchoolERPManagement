@@ -20,6 +20,10 @@ import { Exams } from './components/exams/exams';
 import { Fees } from './components/fees/fees';
 import { Assets } from './components/assets/assets';
 import { Documents } from './components/documents/documents';
+import { PaymentResultComponent } from './components/payment-result/payment-result';
+import { NotificationsComponent } from './components/notifications/notifications';
+
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
     { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -28,6 +32,7 @@ export const routes: Routes = [
     { 
         path: '', 
         component: Layout,
+        canActivate: [authGuard],
         children: [
             { path: 'dashboard', component: Dashboard },
             { path: 'students', component: Students },
@@ -44,8 +49,10 @@ export const routes: Routes = [
             { path: 'fees', component: Fees },
             { path: 'assets', component: Assets },
             { path: 'documents', component: Documents },
+            { path: 'payment-result', component: PaymentResultComponent },
             { path: 'academic-calendar', component: AcademicCalendar },
-            { path: 'academic-sessions', component: AcademicSessions }
+            { path: 'academic-sessions', component: AcademicSessions },
+            { path: 'notifications', component: NotificationsComponent }
         ]
     }
 ];

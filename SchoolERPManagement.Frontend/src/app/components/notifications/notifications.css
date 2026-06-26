@@ -1,0 +1,85 @@
+.notifications-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.text-primary-custom {
+  color: #4361ee !important;
+}
+
+.btn-outline-primary-custom {
+  color: #4361ee;
+  border-color: #4361ee;
+}
+.btn-outline-primary-custom:hover {
+  background-color: #4361ee;
+  color: white;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.notification-card {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+.notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
+}
+
+.notification-card.unread {
+  background-color: #f8faff !important;
+  border-left: 4px solid #4361ee;
+}
+
+.unread-indicator {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 10px;
+  height: 10px;
+  background-color: #ef233c;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(239, 35, 60, 0.15);
+}
+
+.icon-circle {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.empty-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background-color: #f8f9fa;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn {
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+.action-btn:hover {
+  background-color: #e9ecef;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

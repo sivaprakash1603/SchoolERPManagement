@@ -11,6 +11,7 @@ namespace SchoolERPManagementBLLibrary.DTOs.Document
         int OwnerId,
         string OwnerName,
         string OwnerType,
-        string OwnerIdentifier // RegNo for student, Username for teacher
+        string OwnerIdentifier, // RegNo for student, Username for teacher
+        int? ClassId = null
     );
 }
