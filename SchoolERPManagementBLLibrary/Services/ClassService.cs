@@ -20,6 +20,7 @@ public sealed class ClassService : IClassService
     private readonly IRepository<int, Feestructure> _feeStructureRepository;
     private readonly IRepository<int, Examschedule> _examScheduleRepository;
     private readonly IRepository<int, Asset> _assetRepository;
+    private readonly IRepository<int, Classsubject> _classSubjectRepository;
     private readonly IMapper _mapper;
 
     public ClassService(
@@ -33,6 +34,7 @@ public sealed class ClassService : IClassService
         IRepository<int, Feestructure> feeStructureRepository,
         IRepository<int, Examschedule> examScheduleRepository,
         IRepository<int, Asset> assetRepository,
+        IRepository<int, Classsubject> classSubjectRepository,
         IMapper mapper)
     {
         _classRepository = classRepository;
@@ -45,6 +47,7 @@ public sealed class ClassService : IClassService
         _feeStructureRepository = feeStructureRepository;
         _examScheduleRepository = examScheduleRepository;
         _assetRepository = assetRepository;
+        _classSubjectRepository = classSubjectRepository;
         _mapper = mapper;
     }
 
@@ -62,6 +65,8 @@ public sealed class ClassService : IClassService
 
         var query = _classRepository.Query(true)
             .Include(c => c.Studentenrollments)
+            .Include(c => c.Classsubjects)
+                .ThenInclude(cs => cs.Subject)
             .AsQueryable();
         if (academicYearId.HasValue)
         {
@@ -120,6 +125,26 @@ public sealed class ClassService : IClassService
         };
 
         await _classRepository.AddAsync(classEntity, save: true, ct: cancellationToken);
+
+        if (dto.SubjectIds != null && dto.SubjectIds.Any())
+        {
+            foreach (var subjectId in dto.SubjectIds)
+            {
+                await _classSubjectRepository.AddAsync(new Classsubject
+                {
+                    Classid = classEntity.Id,
+                    Subjectid = subjectId
+                }, save: false, ct: cancellationToken);
+            }
+            await _classSubjectRepository.SaveChangesAsync(cancellationToken);
+            
+            // Reload with includes
+            classEntity = await _classRepository.Query(true)
+                .Include(c => c.Classsubjects)
+                    .ThenInclude(cs => cs.Subject)
+                .FirstOrDefaultAsync(c => c.Id == classEntity.Id, cancellationToken);
+        }
+
         return _mapper.Map<ClassResponseDTO>(classEntity);
     }
 
@@ -127,6 +152,8 @@ public sealed class ClassService : IClassService
     {
         var classEntity = await _classRepository.Query(false)
             .Include(c => c.Studentenrollments)
+            .Include(c => c.Classsubjects)
+                .ThenInclude(cs => cs.Subject)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (classEntity is null)
@@ -179,6 +206,33 @@ public sealed class ClassService : IClassService
 
         await _classRepository.UpdateAsync(classEntity, save: true, ct: cancellationToken);
 
+        if (dto.SubjectIds != null)
+        {
+            var existingSubjects = await _classSubjectRepository.Query(false)
+                .Where(cs => cs.Classid == classEntity.Id)
+                .ToListAsync(cancellationToken);
+            
+            foreach (var es in existingSubjects)
+            {
+                await _classSubjectRepository.DeleteAsync(es, save: false, ct: cancellationToken);
+            }
+
+            foreach (var subjectId in dto.SubjectIds)
+            {
+                await _classSubjectRepository.AddAsync(new Classsubject
+                {
+                    Classid = classEntity.Id,
+                    Subjectid = subjectId
+                }, save: false, ct: cancellationToken);
+            }
+            await _classSubjectRepository.SaveChangesAsync(cancellationToken);
+            
+            classEntity = await _classRepository.Query(true)
+                .Include(c => c.Classsubjects)
+                    .ThenInclude(cs => cs.Subject)
+                .FirstOrDefaultAsync(c => c.Id == classEntity.Id, cancellationToken);
+        }
+
         return _mapper.Map<ClassResponseDTO>(classEntity);
     }
 
@@ -192,6 +246,7 @@ public sealed class ClassService : IClassService
             .Include(c => c.Feestructures)
             .Include(c => c.Examschedules)
             .Include(c => c.Assets)
+            .Include(c => c.Classsubjects)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (classEntity is null)
@@ -204,6 +259,14 @@ public sealed class ClassService : IClassService
             foreach (var se in classEntity.Studentenrollments.ToList())
             {
                 await _studentEnrollmentRepository.DeleteAsync(se, save: false, ct: cancellationToken);
+            }
+        }
+
+        if (classEntity.Classsubjects != null)
+        {
+            foreach (var cs in classEntity.Classsubjects.ToList())
+            {
+                await _classSubjectRepository.DeleteAsync(cs, save: false, ct: cancellationToken);
             }
         }
 

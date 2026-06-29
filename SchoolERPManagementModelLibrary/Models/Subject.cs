@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace SchoolERPManagementModelLibrary.Models;
@@ -18,4 +18,6 @@ public partial class Subject
     public virtual ICollection<Teachersubject> Teachersubjects { get; set; } = new List<Teachersubject>();
 
     public virtual ICollection<Timetable> Timetables { get; set; } = new List<Timetable>();
+
+    public virtual ICollection<Classsubject> Classsubjects { get; set; } = new List<Classsubject>();
 }

@@ -42,13 +42,14 @@ public class AppMappingProfile : Profile
 
         
         CreateMap<Class, ClassResponseDTO>()
-            .ConstructUsing(src => new ClassResponseDTO(
+            .ConstructUsing((src, ctx) => new ClassResponseDTO(
                 src.Id,
                 src.Classname,
                 src.Section,
                 src.Classteacherid,
                 src.Academicyearid,
-                src.Studentenrollments != null ? src.Studentenrollments.Count : 0
+                src.Studentenrollments != null ? src.Studentenrollments.Count : 0,
+                src.Classsubjects != null ? src.Classsubjects.Select(cs => new SubjectResponseDTO(cs.Subjectid, cs.Subject != null ? cs.Subject.Subjectname : string.Empty)).ToList() : null
             ));
 
         
@@ -160,7 +161,10 @@ public class AppMappingProfile : Profile
                 src.User != null ? src.User.Email : null,
                 src.Teacherdocuments.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo") != null 
                     ? src.Teacherdocuments.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo")!.Bloburl 
-                    : null
+                    : null,
+                src.Teachersubjects != null ? src.Teachersubjects.Count : 0,
+                src.SubjectSpecialtyId,
+                src.SubjectSpecialty != null ? src.SubjectSpecialty.Subjectname : null
             ));
         
         CreateMap<Teachersubject, TeacherSubjectResponseDTO>();

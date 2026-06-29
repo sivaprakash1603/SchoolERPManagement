@@ -41,6 +41,14 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("stats")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
+        public async Task<IActionResult> GetAssetStats(CancellationToken cancellationToken)
+        {
+            var result = await _assetService.GetAssetStatsAsync(cancellationToken);
+            return Ok(result);
+        }
+
         [HttpGet("types")]
         [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<IActionResult> GetAssetTypes(CancellationToken cancellationToken)

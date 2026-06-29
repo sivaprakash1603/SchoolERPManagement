@@ -1,13 +1,14 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StudentService, StudentQueryResponseDTO, StudentQueryRequest, PagedResponse, ParentSelection } from '../../services/student.service';
+import { StudentService, StudentQueryResponseDTO, StudentQueryRequest, PagedResponse, ParentSelection, StudentStatsDTO } from '../../services/student.service';
 import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { ParentService, ParentResponseDTO } from '../../services/parent.service';
 import { DocumentService, DocumentResponseDTO } from '../../services/document.service';
 import { AcademicYearService, AcademicYearResponseDTO } from '../../services/academic-year.service';
 import { ToastService } from '../../services/toast.service';
 import { NotificationService } from '../../services/notification.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 interface StudentUI extends StudentQueryResponseDTO {
   email: string;
@@ -31,6 +32,28 @@ export class Students implements OnInit {
   private academicYearService = inject(AcademicYearService);
   private toastService = inject(ToastService);
   private notificationService = inject(NotificationService);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('students');
+    if (savedState) {
+      if (savedState.searchQuery !== undefined) this.searchQuery.set(savedState.searchQuery);
+      if (savedState.classId !== undefined) this.classId.set(savedState.classId);
+      if (savedState.gender !== undefined) this.gender.set(savedState.gender);
+      if (savedState.status !== undefined) this.status.set(savedState.status);
+      if (savedState.pageNumber !== undefined) this.pageNumber.set(savedState.pageNumber);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('students', {
+        searchQuery: this.searchQuery(),
+        classId: this.classId(),
+        gender: this.gender(),
+        status: this.status(),
+        pageNumber: this.pageNumber()
+      });
+    });
+  }
 
   showNotificationModal = signal(false);
   notificationTitle = signal('');
@@ -48,6 +71,8 @@ export class Students implements OnInit {
 
   loading = signal(true);
   error = signal<string | null>(null);
+
+  studentStats = signal<StudentStatsDTO | null>(null);
 
   selectedStudent = signal<StudentUI | null>(null);
   showViewModal = signal(false);
@@ -106,42 +131,17 @@ export class Students implements OnInit {
     const role = sessionStorage.getItem('role') || 'Student';
     this.userRole.set(role);
     this.isAdmin.set(role === 'Admin');
-    this.loadFilterState();
+
     this.fetchCurrentAcademicSession();
     this.fetchParents();
+    this.fetchStudentStats();
   }
 
-  loadFilterState() {
-    const savedState = sessionStorage.getItem('students_filter_state');
-    if (savedState) {
-      try {
-        const state = JSON.parse(savedState);
-        this.searchQuery.set(state.searchQuery || '');
-        this.status.set(state.status || 'All');
-        this.gender.set(state.gender || 'Any Gender');
-        this.pageNumber.set(state.pageNumber || 1);
-        if (state.classId !== undefined) {
-          this.classId.set(state.classId);
-        }
-        if (state.selectedAcademicYearId !== undefined) {
-          this.selectedAcademicYearId.set(state.selectedAcademicYearId);
-        }
-      } catch (e) {
-        console.error('Failed to parse saved filter state', e);
-      }
-    }
-  }
-
-  saveFilterState() {
-    const state = {
-      searchQuery: this.searchQuery(),
-      status: this.status(),
-      gender: this.gender(),
-      pageNumber: this.pageNumber(),
-      classId: this.classId(),
-      selectedAcademicYearId: this.selectedAcademicYearId()
-    };
-    sessionStorage.setItem('students_filter_state', JSON.stringify(state));
+  fetchStudentStats() {
+    this.studentService.getStudentStats().subscribe({
+      next: (stats) => this.studentStats.set(stats),
+      error: (err) => console.error('Failed to fetch student stats', err)
+    });
   }
 
   fetchCurrentAcademicSession() {
@@ -201,7 +201,6 @@ export class Students implements OnInit {
       this.currentSessionName.set(matched.yearName);
     }
     this.classId.set(null); // reset class filter since classes change per year
-    this.saveFilterState();
     this.fetchClasses();
     this.onFilterChange();
   }
@@ -251,7 +250,6 @@ export class Students implements OnInit {
 
   onFilterChange() {
     this.pageNumber.set(1);
-    this.saveFilterState();
     this.fetchStudents();
   }
 
@@ -616,7 +614,6 @@ export class Students implements OnInit {
   changePage(page: number) {
     if (page >= 1 && page <= this.totalPages()) {
       this.pageNumber.set(page);
-      this.saveFilterState();
       this.fetchStudents();
     }
   }

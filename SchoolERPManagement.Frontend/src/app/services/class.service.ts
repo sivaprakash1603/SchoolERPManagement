@@ -9,6 +9,7 @@ export interface ClassResponseDTO {
   classteacherId?: number;
   academicyearId?: number;
   studentCount?: number;
+  subjects?: { id: number; subjectName: string; subjectCode: string }[];
 }
 
 @Injectable({
@@ -24,11 +25,11 @@ export class ClassService {
     return this.http.get<ClassResponseDTO[]>(url);
   }
 
-  createClass(dto: { classname: string; section: string; classteacherId?: number; academicyearId?: number }): Observable<ClassResponseDTO> {
+  createClass(dto: { classname: string; section: string; classteacherId?: number; academicyearId?: number; subjectIds?: number[] }): Observable<ClassResponseDTO> {
     return this.http.post<ClassResponseDTO>(this.baseUrl, dto);
   }
 
-  updateClass(id: number, dto: { classname: string; section: string; classteacherId?: number; academicyearId?: number }): Observable<ClassResponseDTO> {
+  updateClass(id: number, dto: { classname: string; section: string; classteacherId?: number; academicyearId?: number; subjectIds?: number[] }): Observable<ClassResponseDTO> {
     return this.http.put<ClassResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }
 

@@ -22,6 +22,8 @@ export interface TeacherResponseDTO {
   section?: string;
   email?: string;
   profilePhotoUrl?: string;
+  subjectSpecialtyId?: number;
+  subjectSpecialtyName?: string;
 }
 
 export interface TeacherQueryRequest {
@@ -31,6 +33,12 @@ export interface TeacherQueryRequest {
   pageSize?: number;
   sortBy?: string;
   sortDirection?: string;
+}
+
+export interface TeacherStatsDTO {
+  totalTeachers: number;
+  activeTeachers: number;
+  inactiveTeachers: number;
 }
 
 @Injectable({
@@ -68,8 +76,12 @@ export class TeacherService {
     });
   }
 
-  addTeacher(dto: { email: string, name: string, phonenumber?: string, qualifications?: string }): Observable<any> {
+  addTeacher(dto: { email: string, name: string, phonenumber?: string, qualifications?: string, subjectSpecialtyId?: number }): Observable<any> {
     return this.http.post<any>(this.baseUrl, dto);
+  }
+
+  getTeacherStats(): Observable<TeacherStatsDTO> {
+    return this.http.get<TeacherStatsDTO>(`${this.baseUrl}/stats`);
   }
 
   assignSubject(dto: { teacherId: number, subjectId: number, classId: number }): Observable<any> {
@@ -88,7 +100,7 @@ export class TeacherService {
     return this.http.delete<void>(`${this.baseUrl}/${teacherId}/assignments/${classId}/${subjectId}`);
   }
 
-  updateTeacher(id: number, dto: { name: string, phonenumber?: string, qualifications?: string }): Observable<TeacherResponseDTO> {
+  updateTeacher(id: number, dto: { name: string, phonenumber?: string, qualifications?: string, subjectSpecialtyId?: number }): Observable<TeacherResponseDTO> {
     return this.http.put<TeacherResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }
 
@@ -98,5 +110,9 @@ export class TeacherService {
 
   getTeacherByUsername(username: string): Observable<TeacherResponseDTO> {
     return this.http.get<TeacherResponseDTO>(`${this.baseUrl}/username/${username}`);
+  }
+
+  autoAssignTeachers(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/auto-assign`, {});
   }
 }

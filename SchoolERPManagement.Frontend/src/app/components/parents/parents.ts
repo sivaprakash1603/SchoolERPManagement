@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, inject, effect } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import {
@@ -6,9 +6,11 @@ import {
   ParentResponseDTO,
   ParentQueryRequest,
   PagedResponse,
+  ParentStatsDTO
 } from '../../services/parent.service';
 import { ToastService } from '../../services/toast.service';
 import { NotificationService } from '../../services/notification.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 interface ParentUI extends ParentResponseDTO {
   email: string;
@@ -26,10 +28,30 @@ export class Parents implements OnInit {
   private parentService = inject(ParentService);
   private toastService = inject(ToastService);
   private notificationService = inject(NotificationService);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('parents');
+    if (savedState) {
+      if (savedState.searchQuery !== undefined) this.searchQuery.set(savedState.searchQuery);
+      if (savedState.status !== undefined) this.status.set(savedState.status);
+      if (savedState.pageNumber !== undefined) this.pageNumber.set(savedState.pageNumber);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('parents', {
+        searchQuery: this.searchQuery(),
+        status: this.status(),
+        pageNumber: this.pageNumber()
+      });
+    });
+  }
 
   parents = signal<ParentUI[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+
+  parentStats = signal<ParentStatsDTO | null>(null);
 
   showEditModal = signal(false);
   showDeleteModal = signal(false);
@@ -64,6 +86,14 @@ export class Parents implements OnInit {
 
   ngOnInit() {
     this.fetchParents();
+    this.fetchParentStats();
+  }
+
+  fetchParentStats() {
+    this.parentService.getParentStats().subscribe({
+      next: (stats) => this.parentStats.set(stats),
+      error: (err) => console.error('Failed to fetch parent stats', err)
+    });
   }
 
   fetchParents() {

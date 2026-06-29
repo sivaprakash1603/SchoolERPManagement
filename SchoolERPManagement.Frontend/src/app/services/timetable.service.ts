@@ -23,6 +23,28 @@ export interface CreateTimetableDTO {
   roomNo?: string;
 }
 
+export interface TeacherRequirementDTO {
+  subjectId: number;
+  subjectName: string;
+  totalClassesTakingSubject: number;
+  requiredTeachers: number;
+  availableTeachers: number;
+  status: string;
+}
+
+export interface PeriodTimingDTO {
+  periodNumber: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface GenerateTimetableRequestDTO {
+  classIds: number[];
+  periodsPerDay: number;
+  freePeriodsPerStaff: number;
+  timings: PeriodTimingDTO[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -41,5 +63,17 @@ export class TimetableService {
 
   createTimetable(dto: CreateTimetableDTO): Observable<TimetableResponseDTO> {
     return this.http.post<TimetableResponseDTO>(this.baseUrl, dto);
+  }
+
+  getTeacherRequirements(periodsPerDay: number, freePeriodsPerStaff: number): Observable<TeacherRequirementDTO[]> {
+    return this.http.get<TeacherRequirementDTO[]>(`${this.baseUrl}/teacher-requirements?periodsPerDay=${periodsPerDay}&freePeriodsPerStaff=${freePeriodsPerStaff}`);
+  }
+
+  generateTimetable(request: GenerateTimetableRequestDTO): Observable<TimetableResponseDTO[]> {
+    return this.http.post<TimetableResponseDTO[]>(`${this.baseUrl}/generate`, request);
+  }
+
+  saveGeneratedTimetable(generatedTimetable: TimetableResponseDTO[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/save-generated`, generatedTimetable);
   }
 }

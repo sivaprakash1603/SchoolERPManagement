@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HomeworkService, HomeworkResponseDTO, HomeworkSubmissionDetailsDTO } from '../../services/homework.service';
@@ -10,6 +10,7 @@ import { StudentService } from '../../services/student.service';
 import { ToastService } from '../../services/toast.service';
 import { TimetableService } from '../../services/timetable.service';
 import { ParentService } from '../../services/parent.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 @Component({
   selector: 'app-homework',
@@ -28,6 +29,26 @@ export class Homework implements OnInit {
   private toastService = inject(ToastService);
   private timetableService = inject(TimetableService);
   private parentService = inject(ParentService);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('homework');
+    if (savedState) {
+      if (savedState.selectedAcademicYearId !== undefined) this.selectedAcademicYearId.set(savedState.selectedAcademicYearId);
+      if (savedState.selectedClassId !== undefined) this.selectedClassId.set(savedState.selectedClassId);
+      if (savedState.selectedSubjectId !== undefined) this.selectedSubjectId.set(savedState.selectedSubjectId);
+      if (savedState.studentFilterTab !== undefined) this.studentFilterTab.set(savedState.studentFilterTab);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('homework', {
+        selectedAcademicYearId: this.selectedAcademicYearId(),
+        selectedClassId: this.selectedClassId(),
+        selectedSubjectId: this.selectedSubjectId(),
+        studentFilterTab: this.studentFilterTab()
+      });
+    });
+  }
 
   // Selector data
   academicYears = signal<AcademicYearResponseDTO[]>([]);
@@ -171,7 +192,11 @@ export class Homework implements OnInit {
     this.academicYearService.getAllAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
-        const currentYear = years.find((y) => y.isCurrent) || years[0];
+        const savedId = this.selectedAcademicYearId();
+        const currentYear = (savedId && years.find((y) => y.id === savedId)) 
+          || years.find((y) => y.isCurrent) 
+          || years[0];
+          
         if (currentYear) {
           this.selectedAcademicYearId.set(currentYear.id);
           this.fetchClasses(currentYear.id);
@@ -212,7 +237,9 @@ export class Homework implements OnInit {
                   );
                   this.classes.set(filtered);
                   if (filtered.length > 0) {
-                    this.selectedClassId.set(filtered[0].id);
+                    const savedId = this.selectedClassId();
+                    const validId = (savedId && filtered.some(c => c.id === savedId)) ? savedId : filtered[0].id;
+                    this.selectedClassId.set(validId);
                     this.fetchSubjectsForClass();
                     this.fetchHomeworks();
                   } else {
@@ -231,7 +258,9 @@ export class Homework implements OnInit {
                   );
                   this.classes.set(filtered);
                   if (filtered.length > 0) {
-                    this.selectedClassId.set(filtered[0].id);
+                    const savedId = this.selectedClassId();
+                    const validId = (savedId && filtered.some(c => c.id === savedId)) ? savedId : filtered[0].id;
+                    this.selectedClassId.set(validId);
                     this.fetchSubjectsForClass();
                     this.fetchHomeworks();
                   } else {
@@ -257,7 +286,9 @@ export class Homework implements OnInit {
         } else {
           this.classes.set(res);
           if (res.length > 0) {
-            this.selectedClassId.set(res[0].id);
+            const savedId = this.selectedClassId();
+            const validId = (savedId && res.some(c => c.id === savedId)) ? savedId : res[0].id;
+            this.selectedClassId.set(validId);
             this.fetchSubjectsForClass();
             this.fetchHomeworks();
           } else {

@@ -127,6 +127,19 @@
               placeholder="e.g. M.Sc. B.Ed, PhD"
             />
           </div>
+          <div class="col-md-6 mt-3">
+            <label
+              class="form-label text-muted-custom fw-bold text-uppercase mb-1"
+              style="font-size: 0.7rem; letter-spacing: 0.05em"
+              >Subject Specialty</label
+            >
+            <select class="form-select" [(ngModel)]="teacherForm().subjectSpecialtyId">
+              <option [ngValue]="null">General / No Specialty</option>
+              @for (sub of subjects(); track sub.id) {
+                <option [ngValue]="sub.id">{{ sub.subjectName || sub.subjectname }}</option>
+              }
+            </select>
+          </div>
         </div>
       </div>
     }

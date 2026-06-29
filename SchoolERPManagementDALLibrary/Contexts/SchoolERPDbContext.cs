@@ -83,6 +83,8 @@ public partial class SchoolERPDbContext : DbContext
     
     public virtual DbSet<Usernotification> Usernotifications { get; set; }
 
+    public virtual DbSet<Classsubject> Classsubjects { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=SchoolERPSystem;Username=postgres;Password=postgres");
 
@@ -110,6 +112,25 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Yearname)
                 .HasMaxLength(20)
                 .HasColumnName("yearname");
+        });
+
+        modelBuilder.Entity<Classsubject>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("classsubjects_pkey");
+
+            entity.ToTable("classsubjects");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Classid).HasColumnName("classid");
+            entity.Property(e => e.Subjectid).HasColumnName("subjectid");
+
+            entity.HasOne(d => d.Class).WithMany(p => p.Classsubjects)
+                .HasForeignKey(d => d.Classid)
+                .HasConstraintName("classsubjects_classid_fkey");
+
+            entity.HasOne(d => d.Subject).WithMany(p => p.Classsubjects)
+                .HasForeignKey(d => d.Subjectid)
+                .HasConstraintName("classsubjects_subjectid_fkey");
         });
 
         modelBuilder.Entity<Academiccalendar>(entity =>
@@ -759,7 +780,13 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Qualifications)
                 .HasMaxLength(500)
                 .HasColumnName("qualifications");
+            entity.Property(e => e.SubjectSpecialtyId).HasColumnName("subjectspecialtyid");
             entity.Property(e => e.Userid).HasColumnName("userid");
+
+            entity.HasOne(d => d.SubjectSpecialty).WithMany()
+                .HasForeignKey(d => d.SubjectSpecialtyId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("teachers_subjectspecialtyid_fkey");
 
             entity.HasOne(d => d.User).WithOne(p => p.Teacher)
                 .HasForeignKey<Teacher>(d => d.Userid)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace SchoolERPManagementModelLibrary.Models;
@@ -16,6 +16,10 @@ public partial class Teacher
     public DateOnly? Joiningdate { get; set; }
 
     public string? Qualifications { get; set; }
+
+    public int? SubjectSpecialtyId { get; set; }
+
+    public virtual Subject? SubjectSpecialty { get; set; }
 
     public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 

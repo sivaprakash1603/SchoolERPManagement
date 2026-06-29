@@ -26,6 +26,125 @@
       New Onboarding
     </button>
   </div>
+
+  <!-- Stats Cards -->
+  @if (teacherStats()) {
+    <div class="row g-4 mb-4">
+      <div class="col-12 col-md-4">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca">
+              <i class="bi bi-people-fill fs-5"></i>
+            </div>
+            <span class="badge text-primary bg-transparent px-0"><i class="bi bi-person-fill"></i> Total</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em">TOTAL TEACHERS</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">{{ teacherStats()!.totalTeachers }}</h3>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #dcfce7; color: #15803d">
+              <i class="bi bi-person-check-fill fs-5"></i>
+            </div>
+            <span class="badge text-success bg-transparent px-0"><i class="bi bi-check-circle me-1"></i>Active</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em">ACTIVE TEACHERS</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">{{ teacherStats()!.activeTeachers }}</h3>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #fee2e2; color: #b91c1c">
+              <i class="bi bi-person-x-fill fs-5"></i>
+            </div>
+            <span class="badge text-danger bg-transparent px-0"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em">INACTIVE TEACHERS</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">{{ teacherStats()!.inactiveTeachers }}</h3>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Teacher Requirements Section -->
+  <div class="minimal-card p-4 mb-4" style="border-left: 4px solid var(--primary-accent)">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="fs-5 fw-bold mb-1"><i class="bi bi-diagram-3-fill me-2" style="color: var(--primary-accent)"></i>Staff Requirement Analysis</h3>
+        <p class="text-muted-custom mb-0" style="font-size: 0.85rem">Analyze teacher requirements per subject based on timetable constraints.</p>
+      </div>
+      <button class="btn btn-outline-primary btn-sm" (click)="showTeacherRequirements.set(!showTeacherRequirements())">
+        {{ showTeacherRequirements() ? 'Hide Analysis' : 'Show Analysis' }}
+      </button>
+    </div>
+
+    @if (showTeacherRequirements()) {
+      <div class="row g-3 align-items-end bg-light p-3 rounded mb-3">
+        <div class="col-md-4">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem">Periods per Day</label>
+          <input type="number" class="form-control" [ngModel]="periodsPerDay()" (ngModelChange)="periodsPerDay.set($event)" min="1" max="10">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem">Free Periods per Staff</label>
+          <input type="number" class="form-control" [ngModel]="freePeriodsPerStaff()" (ngModelChange)="freePeriodsPerStaff.set($event)" min="0" max="8">
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-primary w-100" (click)="fetchTeacherRequirements()" [disabled]="isLoadingRequirements()">
+            @if (isLoadingRequirements()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Analyzing...
+            } @else {
+              <i class="bi bi-play-fill me-1"></i> Run Analysis
+            }
+          </button>
+        </div>
+      </div>
+
+      @if (requirementsError()) {
+        <div class="alert alert-danger py-2">
+          <i class="bi bi-exclamation-circle-fill me-2"></i> {{ requirementsError() }}
+        </div>
+      }
+
+      @if (teacherRequirements().length > 0) {
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th class="text-uppercase text-muted-custom" style="font-size: 0.75rem">Subject</th>
+                <th class="text-uppercase text-muted-custom text-center" style="font-size: 0.75rem">Total Classes</th>
+                <th class="text-uppercase text-muted-custom text-center" style="font-size: 0.75rem">Required Staff</th>
+                <th class="text-uppercase text-muted-custom text-center" style="font-size: 0.75rem">Available Staff</th>
+                <th class="text-uppercase text-muted-custom text-center" style="font-size: 0.75rem">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (req of teacherRequirements(); track req.subjectId) {
+                <tr>
+                  <td class="fw-bold">{{ req.subjectName }}</td>
+                  <td class="text-center">{{ req.totalClassesTakingSubject }}</td>
+                  <td class="text-center fw-bold text-primary">{{ req.requiredTeachers }}</td>
+                  <td class="text-center">{{ req.availableTeachers }}</td>
+                  <td class="text-center">
+                    @if (req.status === 'Sufficient') {
+                      <span class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-check-circle me-1"></i>Sufficient</span>
+                    } @else {
+                      <span class="badge bg-danger rounded-pill px-3 py-2"><i class="bi bi-exclamation-triangle me-1"></i>Shortage ({{req.requiredTeachers - req.availableTeachers}})</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </div>
+
   <!-- Filter Bar -->
   <div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">
     <div class="flex-grow-1" style="min-width: 200px">
@@ -70,6 +189,13 @@
         (click)="fetchTeachers()"
       >
         <i class="bi bi-arrow-clockwise"></i>
+      </button>
+      <button
+        class="btn btn-warning d-flex align-items-center justify-content-center p-2 gap-2 fw-bold text-dark"
+        (click)="autoAssignTeachers()"
+        title="Auto Assign Subjects"
+      >
+        <i class="bi bi-magic"></i> Auto-Assign
       </button>
       <button
         class="btn btn-danger d-flex align-items-center justify-content-center p-2 gap-2 fw-bold"
@@ -174,6 +300,11 @@
                     <div>
                       <div class="fw-bold" style="color: var(--primary-accent)">
                         {{ teacher.name }}
+                        @if (teacher.assignmentsCount !== undefined) {
+                          <span class="badge bg-secondary ms-2" style="font-size: 0.65rem">
+                            {{ teacher.assignmentsCount }} Assignments
+                          </span>
+                        }
                       </div>
                       <div class="small text-muted-custom">{{ teacher.email }}</div>
                     </div>
@@ -411,6 +542,17 @@
                 [(ngModel)]="editForm().qualifications"
                 placeholder="e.g. M.Sc, B.Ed"
               />
+            </div>
+            <div class="col-md-6 mt-3">
+              <label class="modal-form-label"
+                ><i class="bi bi-book me-1"></i> Subject Specialty</label
+              >
+              <select class="form-select" [(ngModel)]="editForm().subjectSpecialtyId">
+                <option [ngValue]="null">General / No Specialty</option>
+                @for (sub of availableSubjects(); track sub.id) {
+                  <option [ngValue]="sub.id">{{ sub.subjectName || sub.subjectname }}</option>
+                }
+              </select>
             </div>
           </div>
         </div>

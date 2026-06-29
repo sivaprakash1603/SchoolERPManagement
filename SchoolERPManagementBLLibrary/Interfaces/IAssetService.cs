@@ -9,4 +9,5 @@ public interface IAssetService
     Task<IReadOnlyList<AssetResponseDTO>> GetAssetsAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<AssetTypeResponseDTO>> GetAssetTypesAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<AssetReportResponseDTO>> GetAssetReportsAsync(CancellationToken cancellationToken);
+    Task<AssetStatsDTO> GetAssetStatsAsync(CancellationToken cancellationToken);
 }

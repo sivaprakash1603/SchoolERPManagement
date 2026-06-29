@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AssetService, AssetResponseDTO, AssetTypeResponseDTO, CreateAssetDTO, AssetIssueDTO, AssetReportResponseDTO } from '../../services/asset.service';
@@ -7,6 +7,7 @@ import { StudentService } from '../../services/student.service';
 import { ToastService } from '../../services/toast.service';
 import { TeacherService } from '../../services/teacher.service';
 import { TimetableService } from '../../services/timetable.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 @Component({
   selector: 'app-assets',
@@ -22,6 +23,24 @@ export class Assets implements OnInit {
   private toastService = inject(ToastService);
   private teacherService = inject(TeacherService);
   private timetableService = inject(TimetableService);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('assets');
+    if (savedState) {
+      if (savedState.searchQuery !== undefined) this.searchQuery.set(savedState.searchQuery);
+      if (savedState.selectedTypeId !== undefined) this.selectedTypeId.set(savedState.selectedTypeId);
+      if (savedState.selectedStatus !== undefined) this.selectedStatus.set(savedState.selectedStatus);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('assets', {
+        searchQuery: this.searchQuery(),
+        selectedTypeId: this.selectedTypeId(),
+        selectedStatus: this.selectedStatus()
+      });
+    });
+  }
 
   // Auth Info
   userRole = signal<string>('Student');
@@ -178,11 +197,23 @@ export class Assets implements OnInit {
   }
 
   calculateStats() {
-    const list = this.assets();
-    this.totalAssetsCount.set(list.length);
-    this.activeAssetsCount.set(list.filter(a => a.status?.toLowerCase() === 'active').length);
-    this.underRepairAssetsCount.set(list.filter(a => a.status?.toLowerCase() === 'under repair' || a.status?.toLowerCase() === 'under_repair').length);
-    this.brokenAssetsCount.set(list.filter(a => a.status?.toLowerCase() === 'broken').length);
+    if (this.userRole() === 'Admin') {
+      this.assetService.getAssetStats().subscribe({
+        next: (stats) => {
+          this.totalAssetsCount.set(stats.totalAssets);
+          this.activeAssetsCount.set(stats.activeAssets);
+          this.underRepairAssetsCount.set(stats.underRepairAssets);
+          this.brokenAssetsCount.set(stats.brokenAssets);
+        },
+        error: (err) => console.error('Failed to load asset stats', err)
+      });
+    } else {
+      const list = this.assets();
+      this.totalAssetsCount.set(list.length);
+      this.activeAssetsCount.set(list.filter(a => a.status?.toLowerCase() === 'active').length);
+      this.underRepairAssetsCount.set(list.filter(a => a.status?.toLowerCase() === 'under repair' || a.status?.toLowerCase() === 'under_repair').length);
+      this.brokenAssetsCount.set(list.filter(a => a.status?.toLowerCase() === 'broken').length);
+    }
   }
 
   getFilteredAssets(): AssetResponseDTO[] {

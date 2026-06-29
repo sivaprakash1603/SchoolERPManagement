@@ -12,5 +12,8 @@ public record TeacherResponseDTO(
     string? Classname = null,
     string? Section = null,
     string? Email = null,
-    string? ProfilePhotoUrl = null
+    string? ProfilePhotoUrl = null,
+    int AssignmentsCount = 0,
+    int? SubjectSpecialtyId = null,
+    string? SubjectSpecialtyName = null
 );

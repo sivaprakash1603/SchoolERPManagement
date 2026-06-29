@@ -45,6 +45,7 @@ public sealed class TeacherService : ITeacherService
             .Include(t => t.User)
             .Include(t => t.Classes)
             .Include(t => t.Teacherdocuments)
+            .Include(t => t.Teachersubjects)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.SearchQuery))
@@ -91,13 +92,14 @@ public sealed class TeacherService : ITeacherService
                 teacher.Name, 
                 teacher.Phonenumber, 
                 teacher.Joiningdate, 
-                teacher.Qualifications, 
-                null, 
-                teacher.User!.Username, 
-                teacher.Classes.FirstOrDefault()?.Classname, 
-                teacher.Classes.FirstOrDefault()?.Section,
-                teacher.User.Email,
-                photoDoc?.Bloburl
+                teacher.Qualifications,
+                null,
+                null,
+                teacher.Classes?.FirstOrDefault()?.Classname,
+                teacher.Classes?.FirstOrDefault()?.Section,
+                teacher.User?.Email,
+                photoDoc?.Bloburl,
+                teacher.Teachersubjects?.Count ?? 0, teacher.SubjectSpecialtyId, teacher.SubjectSpecialty?.Subjectname
             );
         }).ToList();
 
@@ -114,10 +116,11 @@ public sealed class TeacherService : ITeacherService
     public async Task<TeacherResponseDTO> GetTeacherByIdAsync(int id, CancellationToken cancellationToken)
     {
         var teacher = await _teacherRepository.Query(true)
-            .Include(t=>t.User)
-            .Include(t=>t.Classes)
-            .Include(t=>t.Teacherdocuments)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .Include(t => t.User)
+            .Include(t => t.Classes)
+            .Include(t => t.Teacherdocuments)
+            .Include(t => t.Teachersubjects)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         if (teacher is null)
         {
@@ -145,10 +148,11 @@ public sealed class TeacherService : ITeacherService
     public async Task<TeacherResponseDTO> GetTeacherByUsernameAsync(string username, CancellationToken cancellationToken)
     {
         var teacher = await _teacherRepository.Query(true)
-            .Include(t=>t.User)
-            .Include(t=>t.Classes)
-            .Include(t=>t.Teacherdocuments)
-            .FirstOrDefaultAsync(x => x.User.Username == username, cancellationToken);
+            .Include(t => t.User)
+            .Include(t => t.Classes)
+            .Include(t => t.Teacherdocuments)
+            .Include(t => t.Teachersubjects)
+            .FirstOrDefaultAsync(t => t.User.Username == username, cancellationToken);
 
         if (teacher is null)
         {
@@ -208,7 +212,8 @@ public sealed class TeacherService : ITeacherService
             Name = dto.Name,
             Phonenumber = dto.Phonenumber,
             Joiningdate = DateOnly.FromDateTime(DateTime.UtcNow),
-            Qualifications = dto.Qualifications
+            Qualifications = dto.Qualifications,
+            SubjectSpecialtyId = dto.SubjectSpecialtyId
         };
 
         await _teacherRepository.AddAsync(teacher, save: true, ct: cancellationToken);
@@ -232,7 +237,7 @@ public sealed class TeacherService : ITeacherService
             // Ensure onboarding completes even if email delivery fails.
         }
 
-        return new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, generatedPassword, generatedUsername, null, null, user.Email, null);
+        return new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, generatedPassword, generatedUsername, null, null, user.Email, null, 0, teacher.SubjectSpecialtyId);
     }
 
     public async Task<TeacherSubjectResponseDTO> AssignSubjectAsync(AssignTeacherSubjectDTO dto, CancellationToken cancellationToken)
@@ -348,12 +353,18 @@ public sealed class TeacherService : ITeacherService
             teacher.Qualifications = dto.Qualifications;
         }
 
-        await _teacherRepository.SaveChangesAsync(cancellationToken);
+        if (dto.SubjectSpecialtyId.HasValue)
+        {
+            teacher.SubjectSpecialtyId = dto.SubjectSpecialtyId.Value;
+        }
+
+        await _teacherRepository.UpdateAsync(teacher, save: true, ct: cancellationToken);
 
         var updatedTeacher = await _teacherRepository.Query(true)
             .Include(t => t.User)
             .Include(t => t.Classes)
             .Include(t => t.Teacherdocuments)
+            .Include(t => t.Teachersubjects)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         var photoDoc = updatedTeacher?.Teacherdocuments?.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo");
@@ -366,11 +377,12 @@ public sealed class TeacherService : ITeacherService
             updatedTeacher.Joiningdate,
             updatedTeacher.Qualifications,
             null,
-            updatedTeacher.User?.Username,
-            updatedTeacher.Classes.FirstOrDefault()?.Classname,
-            updatedTeacher.Classes.FirstOrDefault()?.Section,
+            null,
+            updatedTeacher.Classes?.FirstOrDefault()?.Classname,
+            updatedTeacher.Classes?.FirstOrDefault()?.Section,
             updatedTeacher.User?.Email,
-            photoDoc?.Bloburl
+            photoDoc?.Bloburl,
+            updatedTeacher.Teachersubjects?.Count ?? 0, updatedTeacher.SubjectSpecialtyId, updatedTeacher.SubjectSpecialty?.Subjectname
         );
     }
 
@@ -388,5 +400,98 @@ public sealed class TeacherService : ITeacherService
             user.Isactive = false;
             await _userRepository.UpdateAsync(user, save: true, ct: cancellationToken);
         }
+    }
+
+    public async Task<TeacherStatsDTO> GetTeacherStatsAsync(CancellationToken cancellationToken)
+    {
+        var allTeachersQuery = await _teacherRepository.ListAsync(cancellationToken);
+        
+        // Ensure we load User relationship to check Isactive
+        var usersQuery = await _userRepository.ListAsync(cancellationToken);
+        
+        var teachers = allTeachersQuery.ToList();
+        var users = usersQuery.ToList();
+
+        int activeTeachers = 0;
+        int inactiveTeachers = 0;
+
+        foreach (var teacher in teachers)
+        {
+            var user = users.FirstOrDefault(u => u.Id == teacher.Userid);
+            if (user != null && user.Isactive == true)
+            {
+                activeTeachers++;
+            }
+            else
+            {
+                inactiveTeachers++;
+            }
+        }
+
+        return new TeacherStatsDTO
+        {
+            TotalTeachers = teachers.Count,
+            ActiveTeachers = activeTeachers,
+            InactiveTeachers = inactiveTeachers
+        };
+    }
+
+    public async Task<AutoAssignResultDTO> AutoAssignTeachersAsync(CancellationToken cancellationToken)
+    {
+        var classes = await _classRepository.Query(false)
+            .Include(c => c.Classsubjects)
+            .Include(c => c.Teachersubjects)
+            .ToListAsync(cancellationToken);
+
+        var teachers = await _teacherRepository.Query(false)
+            .Include(t => t.Teachersubjects)
+            .ToListAsync(cancellationToken);
+
+        var messages = new List<string>();
+        int assignmentsMade = 0;
+
+        foreach (var cls in classes)
+        {
+            var subjectsNeeded = cls.Classsubjects.Select(cs => cs.Subjectid).ToList();
+            
+            foreach (var subjectId in subjectsNeeded)
+            {
+                // Check if already assigned
+                if (cls.Teachersubjects.Any(ts => ts.Subjectid == subjectId))
+                {
+                    continue;
+                }
+
+                // Find eligible teachers for this subject based on SubjectSpecialtyId
+                var eligibleTeachers = teachers.Where(t => t.SubjectSpecialtyId == subjectId).ToList();
+                
+                if (!eligibleTeachers.Any())
+                {
+                    messages.Add($"No teacher with specialty found for Subject ID {subjectId} in Class {cls.Classname}");
+                    continue;
+                }
+
+                // Pick the one with the lowest assignment count
+                var selectedTeacher = eligibleTeachers.OrderBy(t => t.Teachersubjects.Count).First();
+
+                var newAssignment = new Teachersubject
+                {
+                    Teacherid = selectedTeacher.Id,
+                    Classid = cls.Id,
+                    Subjectid = subjectId
+                };
+
+                cls.Teachersubjects.Add(newAssignment);
+                selectedTeacher.Teachersubjects.Add(newAssignment); // update in memory for next iteration
+                assignmentsMade++;
+            }
+        }
+
+        if (assignmentsMade > 0)
+        {
+            await _classRepository.SaveChangesAsync(cancellationToken);
+        }
+
+        return new AutoAssignResultDTO(assignmentsMade, messages);
     }
 }

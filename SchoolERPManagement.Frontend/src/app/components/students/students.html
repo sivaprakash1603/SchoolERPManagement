@@ -20,7 +20,7 @@
     @if (isAdmin()) {
       <button
         routerLink="/students/onboarding"
-        class="btn btn-primary btn-sm d-flex align-items-center justify-content-center gap-1 rounded-3"
+        class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold"
         style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
       >
         <i class="bi bi-person-plus-fill"></i>
@@ -28,6 +28,91 @@
       </button>
     }
   </div>
+
+  <!-- Stats Cards -->
+  @if (studentStats()) {
+    <div class="row g-4 mb-4">
+      <div class="col-12 col-md-3">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #e0e7ff; color: #4338ca">
+              <i class="bi bi-people-fill fs-5"></i>
+            </div>
+            <span class="badge text-primary bg-transparent px-0"><i class="bi bi-person-fill"></i> Total</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em">TOTAL STUDENTS</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">{{ studentStats()!.totalStudents }}</h3>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #dcfce7; color: #15803d">
+              <i class="bi bi-person-check-fill fs-5"></i>
+            </div>
+            <span class="badge text-success bg-transparent px-0"><i class="bi bi-check-circle me-1"></i>Active</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em">ACTIVE STUDENTS</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">{{ studentStats()!.activeStudents }}</h3>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <div class="minimal-card p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; background-color: #fee2e2; color: #b91c1c">
+              <i class="bi bi-person-x-fill fs-5"></i>
+            </div>
+            <span class="badge text-danger bg-transparent px-0"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+          </div>
+          <p class="text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em">INACTIVE STUDENTS</p>
+          <h3 class="fs-3 fw-bold mb-0" style="color: var(--text-primary)">{{ studentStats()!.inactiveStudents }}</h3>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <div class="minimal-card p-4 d-flex flex-column justify-content-between h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted-custom fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>GENDER RATIO</span>
+          </div>
+          
+          <div class="d-flex justify-content-between align-items-end mb-3">
+            <div class="d-flex flex-column align-items-start">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="d-flex align-items-center justify-content-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: rgba(59, 130, 246, 0.15); color: #3b82f6">
+                  <i class="bi bi-gender-male" style="font-size: 0.95rem"></i>
+                </div>
+                <span class="fs-4 fw-bold mb-0 lh-1" style="color: var(--text-primary)">{{ studentStats()!.boys }}</span>
+              </div>
+              <span class="text-muted-custom fw-medium" style="font-size: 0.65rem; letter-spacing: 0.05em">Boys</span>
+            </div>
+
+            <div class="d-flex flex-column align-items-end">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="fs-4 fw-bold mb-0 lh-1" style="color: var(--text-primary)">{{ studentStats()!.girls }}</span>
+                <div class="d-flex align-items-center justify-content-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: rgba(236, 72, 153, 0.15); color: #ec4899">
+                  <i class="bi bi-gender-female" style="font-size: 0.95rem"></i>
+                </div>
+              </div>
+              <span class="text-muted-custom fw-medium" style="font-size: 0.65rem; letter-spacing: 0.05em">Girls</span>
+            </div>
+          </div>
+
+          <div class="progress" style="height: 6px; border-radius: 4px; overflow: hidden; background-color: #f3f4f6;">
+            <div class="progress-bar" 
+                 role="progressbar" 
+                 [style.width.%]="studentStats()!.totalStudents > 0 ? (studentStats()!.boys / studentStats()!.totalStudents * 100) : 50" 
+                 style="background-color: #3b82f6;"></div>
+            <div class="progress-bar" 
+                 role="progressbar" 
+                 [style.width.%]="studentStats()!.totalStudents > 0 ? (studentStats()!.girls / studentStats()!.totalStudents * 100) : 50" 
+                 style="background-color: #ec4899;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Filter Bar -->
   <div class="minimal-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-end">

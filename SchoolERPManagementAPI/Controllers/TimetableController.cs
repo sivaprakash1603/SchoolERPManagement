@@ -38,5 +38,25 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _timetableService.GetTeacherTimetableAsync(teacherId, cancellationToken);
             return Ok(result);
         }
+        [HttpGet("teacher-requirements")]
+        public async Task<ActionResult<IReadOnlyList<TeacherRequirementDTO>>> GetTeacherRequirements([FromQuery] int periodsPerDay, [FromQuery] int freePeriodsPerStaff, CancellationToken cancellationToken)
+        {
+            var result = await _timetableService.GetTeacherRequirementsAsync(periodsPerDay, freePeriodsPerStaff, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPost("generate")]
+        public async Task<ActionResult<IReadOnlyList<TimetableResponseDTO>>> GenerateTimetable([FromBody] GenerateTimetableRequestDTO request, CancellationToken cancellationToken)
+        {
+            var result = await _timetableService.GenerateTimetableAsync(request, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPost("save-generated")]
+        public async Task<IActionResult> SaveGeneratedTimetable([FromBody] IReadOnlyList<TimetableResponseDTO> generatedTimetable, CancellationToken cancellationToken)
+        {
+            await _timetableService.SaveGeneratedTimetableAsync(generatedTimetable, cancellationToken);
+            return Ok();
+        }
     }
 }

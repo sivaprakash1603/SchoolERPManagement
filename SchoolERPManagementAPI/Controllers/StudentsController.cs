@@ -29,6 +29,14 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("stats")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetStudentStats(CancellationToken cancellationToken)
+        {
+            var result = await _studentService.GetStudentStatsAsync(cancellationToken);
+            return Ok(result);
+        }
+
         [HttpGet("export/pdf")]
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> ExportStudentsPdf([FromQuery] StudentQueryRequest request, CancellationToken cancellationToken)

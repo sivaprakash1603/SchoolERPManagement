@@ -40,6 +40,13 @@ export interface AssetReportResponseDTO {
   createdat?: string;
 }
 
+export interface AssetStatsDTO {
+  totalAssets: number;
+  activeAssets: number;
+  underRepairAssets: number;
+  brokenAssets: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -50,6 +57,10 @@ export class AssetService {
 
   getAssets(): Observable<AssetResponseDTO[]> {
     return this.http.get<AssetResponseDTO[]>(this.baseUrl);
+  }
+
+  getAssetStats(): Observable<AssetStatsDTO> {
+    return this.http.get<AssetStatsDTO>(`${this.baseUrl}/stats`);
   }
 
   getAssetTypes(): Observable<AssetTypeResponseDTO[]> {

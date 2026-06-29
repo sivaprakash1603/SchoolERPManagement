@@ -96,4 +96,18 @@ public sealed class AssetService : IAssetService
         var items = await _assetReportRepository.Query(true).ToListAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<AssetReportResponseDTO>>(items);
     }
+
+    public async Task<AssetStatsDTO> GetAssetStatsAsync(CancellationToken cancellationToken)
+    {
+        var allAssetsQuery = await _assetRepository.ListAsync(cancellationToken);
+        var assets = allAssetsQuery.ToList();
+
+        return new AssetStatsDTO
+        {
+            TotalAssets = assets.Count,
+            ActiveAssets = assets.Count(a => a.Status?.ToLower() == "active"),
+            UnderRepairAssets = assets.Count(a => a.Status?.ToLower() == "under repair" || a.Status?.ToLower() == "under_repair"),
+            BrokenAssets = assets.Count(a => a.Status?.ToLower() == "broken")
+        };
+    }
 }

@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttendanceService, AttendanceResponseDTO } from '../../services/attendance.service';
@@ -12,6 +12,7 @@ import { TimetableService } from '../../services/timetable.service';
 
 
 import { ParentService } from '../../services/parent.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 interface StudentAttendanceUI extends StudentQueryResponseDTO {
   status: string; // 'present' | 'absent' | 'late' | 'unmarked'
@@ -44,6 +45,28 @@ export class Attendance implements OnInit {
   private toastService = inject(ToastService);
   private timetableService = inject(TimetableService);
   private parentService = inject(ParentService);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('attendance');
+    if (savedState) {
+      if (savedState.activeTab !== undefined) this.activeTab.set(savedState.activeTab);
+      if (savedState.selectedAcademicYearId !== undefined) this.selectedAcademicYearId.set(savedState.selectedAcademicYearId);
+      if (savedState.selectedClassId !== undefined) this.selectedClassId.set(savedState.selectedClassId);
+      if (savedState.historyFilterMonth !== undefined) this.historyFilterMonth.set(savedState.historyFilterMonth);
+      if (savedState.teacherHistoryFilterMonth !== undefined) this.teacherHistoryFilterMonth.set(savedState.teacherHistoryFilterMonth);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('attendance', {
+        activeTab: this.activeTab(),
+        selectedAcademicYearId: this.selectedAcademicYearId(),
+        selectedClassId: this.selectedClassId(),
+        historyFilterMonth: this.historyFilterMonth(),
+        teacherHistoryFilterMonth: this.teacherHistoryFilterMonth()
+      });
+    });
+  }
   
   // Date constraints
   minDate = signal<string>('');
@@ -172,7 +195,10 @@ export class Attendance implements OnInit {
     this.academicYearService.getAllAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
-        const currentYear = years.find(y => y.isCurrent) || years[0];
+        const savedId = this.selectedAcademicYearId();
+        const currentYear = (savedId && years.find(y => y.id === savedId))
+          || years.find(y => y.isCurrent) 
+          || years[0];
         if (currentYear) {
           this.selectedAcademicYearId.set(currentYear.id);
           this.loadYearDetails(currentYear);
@@ -304,7 +330,9 @@ export class Attendance implements OnInit {
                   );
                   this.classes.set(filtered);
                   if (filtered.length > 0) {
-                    this.selectedClassId.set(filtered[0].id);
+                    const savedId = this.selectedClassId();
+                    const validId = (savedId && filtered.some(c => c.id === savedId)) ? savedId : filtered[0].id;
+                    this.selectedClassId.set(validId);
                   } else {
                     this.selectedClassId.set(null);
                   }
@@ -318,7 +346,9 @@ export class Attendance implements OnInit {
                   );
                   this.classes.set(filtered);
                   if (filtered.length > 0) {
-                    this.selectedClassId.set(filtered[0].id);
+                    const savedId = this.selectedClassId();
+                    const validId = (savedId && filtered.some(c => c.id === savedId)) ? savedId : filtered[0].id;
+                    this.selectedClassId.set(validId);
                   } else {
                     this.selectedClassId.set(null);
                   }
@@ -336,7 +366,9 @@ export class Attendance implements OnInit {
         } else {
           this.classes.set(res);
           if (res.length > 0) {
-            this.selectedClassId.set(res[0].id);
+            const savedId = this.selectedClassId();
+            const validId = (savedId && res.some(c => c.id === savedId)) ? savedId : res[0].id;
+            this.selectedClassId.set(validId);
           } else {
             this.selectedClassId.set(null);
           }

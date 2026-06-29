@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DocumentService, DocumentResponseDTO, PendingDocumentDTO } from '../../services/document.service';
@@ -8,6 +8,7 @@ import { ParentService } from '../../services/parent.service';
 import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { ToastService } from '../../services/toast.service';
 import { TimetableService } from '../../services/timetable.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 @Component({
   selector: 'app-documents',
@@ -24,6 +25,22 @@ export class Documents implements OnInit {
   private classService = inject(ClassService);
   private toastService = inject(ToastService);
   private timetableService = inject(TimetableService);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('documents');
+    if (savedState) {
+      if (savedState.activeDirectoryTab !== undefined) this.activeDirectoryTab.set(savedState.activeDirectoryTab);
+      if (savedState.selectedClassId !== undefined) this.selectedClassId.set(savedState.selectedClassId);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('documents', {
+        activeDirectoryTab: this.activeDirectoryTab(),
+        selectedClassId: this.selectedClassId()
+      });
+    });
+  }
 
   // Auth & Roles
   userRole = signal<string>('Student');

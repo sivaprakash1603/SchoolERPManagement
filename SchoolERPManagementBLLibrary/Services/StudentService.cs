@@ -466,4 +466,38 @@ public sealed class StudentService : IStudentService
             await _studentEnrollmentRepository.AddAsync(enrollmentsToAdd[i], save: save, ct: cancellationToken);
         }
     }
+
+    public async Task<StudentStatsDTO> GetStudentStatsAsync(CancellationToken cancellationToken)
+    {
+        var allStudentsQuery = await _studentRepository.ListAsync(cancellationToken);
+        var usersQuery = await _userRepository.ListAsync(cancellationToken);
+        
+        var students = allStudentsQuery.ToList();
+        var users = usersQuery.ToList();
+
+        int activeStudents = 0;
+        int inactiveStudents = 0;
+
+        foreach (var student in students)
+        {
+            var user = users.FirstOrDefault(u => u.Id == student.Userid);
+            if (user != null && user.Isactive == true)
+            {
+                activeStudents++;
+            }
+            else
+            {
+                inactiveStudents++;
+            }
+        }
+
+        return new StudentStatsDTO
+        {
+            TotalStudents = students.Count,
+            ActiveStudents = activeStudents,
+            InactiveStudents = inactiveStudents,
+            Boys = students.Count(s => s.Gender == "Male"),
+            Girls = students.Count(s => s.Gender == "Female")
+        };
+    }
 }

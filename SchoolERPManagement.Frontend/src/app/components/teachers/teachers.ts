@@ -6,10 +6,13 @@ import { TeacherService, TeacherResponseDTO, TeacherQueryRequest, PagedResponse 
 import { ToastService } from '../../services/toast.service';
 import { NotificationService } from '../../services/notification.service';
 import { ClassService } from '../../services/class.service';
+import { FilterStateService } from '../../services/filter-state.service';
+import { TimetableService, TeacherRequirementDTO } from '../../services/timetable.service';
 
 interface TeacherUI extends TeacherResponseDTO {
   email: string;
   avatarUrl: string;
+  assignmentsCount?: number;
 }
 
 @Component({
@@ -24,10 +27,13 @@ export class Teachers implements OnInit {
   private toastService = inject(ToastService);
   private notificationService = inject(NotificationService);
   private classService = inject(ClassService);
+  private filterStateService = inject(FilterStateService);
+  private timetableService = inject(TimetableService);
   
   teachers = signal<TeacherUI[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  teacherStats = signal<any>(null);
 
   showViewModal = signal(false);
   showEditModal = signal(false);
@@ -50,7 +56,8 @@ export class Teachers implements OnInit {
   editForm = signal({
     name: '',
     phonenumber: '',
-    qualifications: ''
+    qualifications: '',
+    subjectSpecialtyId: null as number | null
   });
 
   showNotificationModal = signal(false);
@@ -69,6 +76,14 @@ export class Teachers implements OnInit {
   totalPages = signal(0);
 
   // Filters state
+  // Add Requirements Analysis state
+  showTeacherRequirements = signal(false);
+  periodsPerDay = signal<number>(8);
+  freePeriodsPerStaff = signal<number>(2);
+  teacherRequirements = signal<TeacherRequirementDTO[]>([]);
+  isLoadingRequirements = signal(false);
+  requirementsError = signal<string | null>(null);
+
   searchQuery = signal('');
   status = signal('All');
 
@@ -78,29 +93,27 @@ export class Teachers implements OnInit {
   ngOnInit() {
     this.loadFilterState();
     this.fetchTeachers();
+    this.teacherService.getAllSubjects().subscribe({
+      next: (subjects) => this.availableSubjects.set(subjects),
+      error: () => console.error('Failed to load subjects')
+    });
   }
 
   loadFilterState() {
-    const savedState = sessionStorage.getItem('teachers_filter_state');
-    if (savedState) {
-      try {
-        const state = JSON.parse(savedState);
-        this.searchQuery.set(state.searchQuery || '');
-        this.status.set(state.status || 'All');
-        this.pageNumber.set(state.pageNumber || 1);
-      } catch (e) {
-        console.error('Failed to parse saved filter state', e);
-      }
+    const state = this.filterStateService.getState('teachers');
+    if (state) {
+      this.searchQuery.set(state.searchQuery || '');
+      this.status.set(state.status || 'All');
+      this.pageNumber.set(state.pageNumber || 1);
     }
   }
 
   saveFilterState() {
-    const state = {
+    this.filterStateService.saveState('teachers', {
       searchQuery: this.searchQuery(),
       status: this.status(),
       pageNumber: this.pageNumber()
-    };
-    sessionStorage.setItem('teachers_filter_state', JSON.stringify(state));
+    });
   }
 
   fetchTeachers() {
@@ -137,6 +150,29 @@ export class Teachers implements OnInit {
     });
   }
 
+  fetchTeacherRequirements() {
+    if (this.periodsPerDay() <= this.freePeriodsPerStaff()) {
+      this.toastService.error('Free periods must be less than total periods per day');
+      return;
+    }
+    
+    this.isLoadingRequirements.set(true);
+    this.requirementsError.set(null);
+
+    this.timetableService.getTeacherRequirements(this.periodsPerDay(), this.freePeriodsPerStaff()).subscribe({
+      next: (data) => {
+        this.teacherRequirements.set(data);
+        this.isLoadingRequirements.set(false);
+        this.showTeacherRequirements.set(true);
+      },
+      error: (err) => {
+        console.error('Failed to fetch requirements', err);
+        this.requirementsError.set(err.error?.message || 'Failed to analyze requirements');
+        this.isLoadingRequirements.set(false);
+      }
+    });
+  }
+
   onFilterChange() {
     this.pageNumber.set(1);
     this.saveFilterState();
@@ -152,28 +188,43 @@ export class Teachers implements OnInit {
     }, 500);
   }
 
-  exportPdf() {
-    const request: TeacherQueryRequest = {
+  buildQueryRequest(): TeacherQueryRequest {
+    return {
       searchQuery: this.searchQuery(),
       status: this.status()
     };
+  }
 
-    this.teacherService.exportTeachersPdf(request).subscribe({
+  exportPdf() {
+    this.teacherService.exportTeachersPdf(this.buildQueryRequest()).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'teachers-directory.pdf';
-        document.body.appendChild(a);
+        a.download = `teachers_export_${new Date().toISOString().split('T')[0]}.pdf`;
         a.click();
-        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => {
-        console.error('Failed to export PDF', err);
-        alert('Failed to generate PDF report.');
-      }
+      error: () => this.toastService.error('Failed to export PDF')
     });
+  }
+
+  autoAssignTeachers() {
+    if (confirm('This will automatically assign eligible teachers to unassigned class subjects based on their specialty. Do you want to proceed?')) {
+      this.teacherService.autoAssignTeachers().subscribe({
+        next: (result) => {
+          this.toastService.success(`Auto-assignment complete. ${result.totalAssignmentsMade} assignments were made.`);
+          if (result.messages && result.messages.length > 0) {
+            console.log('Auto-Assign Log:', result.messages);
+          }
+          this.fetchTeachers(); // refresh assignment counts
+        },
+        error: (err) => {
+          console.error(err);
+          this.toastService.error('Failed to auto-assign teachers.');
+        }
+      });
+    }
   }
 
   previousPage() {
@@ -213,7 +264,8 @@ export class Teachers implements OnInit {
     this.editForm.set({
       name: teacher.name,
       phonenumber: teacher.phonenumber || '',
-      qualifications: teacher.qualifications || ''
+      qualifications: teacher.qualifications || '',
+      subjectSpecialtyId: teacher.subjectSpecialtyId ?? null
     });
     this.showEditModal.set(true);
   }
@@ -232,7 +284,8 @@ export class Teachers implements OnInit {
     this.teacherService.updateTeacher(teacherId, {
       name: form.name,
       phonenumber: form.phonenumber,
-      qualifications: form.qualifications
+      qualifications: form.qualifications,
+      subjectSpecialtyId: form.subjectSpecialtyId ?? undefined
     }).subscribe({
       next: (res) => {
         this.isSaving.set(false);
@@ -269,11 +322,6 @@ export class Teachers implements OnInit {
       next: (classes) => this.availableClasses.set(classes),
       error: () => this.toastService.error('Failed to load classes')
     });
-    
-    this.teacherService.getAllSubjects().subscribe({
-      next: (subjects) => this.availableSubjects.set(subjects),
-      error: () => this.toastService.error('Failed to load subjects')
-    });
 
     this.loadTeacherAssignments(teacher.id);
   }
@@ -294,6 +342,16 @@ export class Teachers implements OnInit {
     const teacher = this.selectedTeacher();
     const form = this.assignmentForm();
     if (!teacher || !form.classId || !form.subjectId) return;
+
+    const cls = this.availableClasses().find((c: any) => c.id === form.classId);
+    const sub = this.availableSubjects().find((s: any) => s.id === form.subjectId);
+
+    if (cls && sub) {
+      if (!cls.subjects || !cls.subjects.some((s: any) => s.id === form.subjectId)) {
+        this.toastService.warning(`Subject '${sub.subjectName || sub.subjectname}' is not assigned to Class '${cls.classname}'. Please map it in the Classes page first.`);
+        return;
+      }
+    }
 
     this.isAssigning.set(true);
     this.teacherService.assignSubject({ teacherId: teacher.id, classId: form.classId, subjectId: form.subjectId }).subscribe({

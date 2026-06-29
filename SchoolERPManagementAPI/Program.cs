@@ -175,6 +175,7 @@ builder.Services.AddScoped<IRepository<int, Studentdocument>, AbstractRepository
 builder.Services.AddScoped<IRepository<int, Teacherdocument>, AbstractRepository<int, Teacherdocument>>();
 builder.Services.AddScoped<IRepository<int, Parentdocument>, AbstractRepository<int, Parentdocument>>();
 builder.Services.AddScoped<IRepository<int, Notification>, AbstractRepository<int, Notification>>();
+builder.Services.AddScoped<IRepository<int, Classsubject>, AbstractRepository<int, Classsubject>>();
 #endregion
 
 #region Helpers 

@@ -36,6 +36,12 @@ export interface CreateParentDTO {
   phonenumber: string;
 }
 
+export interface ParentStatsDTO {
+  totalParents: number;
+  activeParents: number;
+  inactiveParents: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -46,6 +52,10 @@ export class ParentService {
 
   addParent(dto: CreateParentDTO): Observable<ParentResponseDTO> {
     return this.http.post<ParentResponseDTO>(this.baseUrl, dto);
+  }
+
+  getParentStats(): Observable<ParentStatsDTO> {
+    return this.http.get<ParentStatsDTO>(`${this.baseUrl}/stats`);
   }
 
   getAllParents(request: ParentQueryRequest): Observable<PagedResponse<ParentResponseDTO>> {

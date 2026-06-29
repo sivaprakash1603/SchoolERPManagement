@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, inject, computed } from '@angular/core';
+import { Component, signal, OnInit, inject, computed, effect } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { TimetableService, TimetableResponseDTO } from '../../services/timetable.service';
@@ -9,6 +9,7 @@ import { AcademicYearService, AcademicYearResponseDTO } from '../../services/aca
 import { StudentService } from '../../services/student.service';
 import { ToastService } from '../../services/toast.service';
 import { ParentService } from '../../services/parent.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 @Component({
   selector: 'app-timetable',
@@ -26,6 +27,24 @@ export class Timetable implements OnInit {
   private studentService = inject(StudentService);
   private toastService = inject(ToastService);
   private parentService = inject(ParentService);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('timetable');
+    if (savedState) {
+      if (savedState.selectedAcademicYearId !== undefined) this.selectedAcademicYearId.set(savedState.selectedAcademicYearId);
+      if (savedState.selectedClassId !== undefined) this.selectedClassId.set(savedState.selectedClassId);
+      if (savedState.viewMode !== undefined) this.viewMode.set(savedState.viewMode);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('timetable', {
+        selectedAcademicYearId: this.selectedAcademicYearId(),
+        selectedClassId: this.selectedClassId(),
+        viewMode: this.viewMode()
+      });
+    });
+  }
 
   // Data signals
   classes = signal<ClassResponseDTO[]>([]);
@@ -76,13 +95,60 @@ export class Timetable implements OnInit {
     dayOfWeek: 'monday',
     subjectId: null as number | null,
     teacherId: null as number | null,
-    startTime: '',
-    endTime: '',
+    startTime: '09:00',
+    endTime: '10:00',
     roomNo: '',
   });
 
+  showGeneratorModal = signal(false);
+  isGenerating = signal(false);
+  isSavingGenerated = signal(false);
+  generatedPreview = signal<TimetableResponseDTO[]>([]);
+  generatorForm = signal({
+    periodsPerDay: 8,
+    freePeriodsPerStaff: 2
+  });
+
+  periodTimings = signal<{ periodNumber: number, startTime: string, endTime: string }[]>([]);
+
+  // Function to initialize timings when modal opens or periodsPerDay changes
+  initializeTimings(count: number) {
+    const current = this.periodTimings();
+    const newTimings = [];
+    let currentStartTime = new Date();
+    currentStartTime.setHours(9, 0, 0, 0);
+
+    for (let i = 1; i <= count; i++) {
+      if (i <= current.length) {
+        newTimings.push(current[i - 1]);
+      } else {
+        const startStr = currentStartTime.toTimeString().substring(0, 5);
+        currentStartTime.setMinutes(currentStartTime.getMinutes() + 45); // 45 min per period default
+        const endStr = currentStartTime.toTimeString().substring(0, 5);
+        
+        newTimings.push({
+          periodNumber: i,
+          startTime: startStr,
+          endTime: endStr
+        });
+      }
+    }
+    this.periodTimings.set(newTimings);
+  }
+
+  updateTiming(index: number, field: 'startTime' | 'endTime', value: string) {
+    const current = [...this.periodTimings()];
+    current[index] = { ...current[index], [field]: value };
+    this.periodTimings.set(current);
+  }
+
+  onPeriodsPerDayChange(val: number) {
+    this.generatorForm.set({...this.generatorForm(), periodsPerDay: val});
+    this.initializeTimings(val);
+  }
+
   // Timetable days
-  days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Computed signal for selected class name
   selectedClassName = computed(() => {
@@ -185,11 +251,13 @@ export class Timetable implements OnInit {
     this.academicYearService.getAllAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
-        const currentYear = years.find((y) => y.isCurrent);
+        this.academicYears.set(years);
+        const savedId = this.selectedAcademicYearId();
+        const currentYear = (savedId && years.find((y) => y.id === savedId))
+          || years.find((y) => y.isCurrent)
+          || years[0];
         if (currentYear) {
           this.selectedAcademicYearId.set(currentYear.id);
-        } else if (years.length > 0) {
-          this.selectedAcademicYearId.set(years[0].id);
         }
         this.fetchClasses();
       },
@@ -227,7 +295,9 @@ export class Timetable implements OnInit {
       next: (res) => {
         this.classes.set(res);
         if (res.length > 0) {
-          this.selectedClassId.set(res[0].id);
+          const savedId = this.selectedClassId();
+          const validId = (savedId && res.some((c) => c.id === savedId)) ? savedId : res[0].id;
+          this.selectedClassId.set(validId);
           if (this.viewMode() === 'class') {
             this.fetchTimetable();
           } else {
@@ -397,6 +467,69 @@ export class Timetable implements OnInit {
         this.isSaving.set(false);
         this.toastService.error(err.error?.message || 'Failed to add timetable slot.');
       },
+    });
+  }
+
+  openGeneratorModal() {
+    this.generatedPreview.set([]);
+    this.initializeTimings(this.generatorForm().periodsPerDay);
+    this.showGeneratorModal.set(true);
+  }
+
+  closeGeneratorModal() {
+    this.showGeneratorModal.set(false);
+    this.generatedPreview.set([]);
+    this.fetchTimetable(); // Restore view
+  }
+
+  generateTimetable() {
+    this.isGenerating.set(true);
+    
+    const timings = this.periodTimings().map(t => ({
+      periodNumber: t.periodNumber,
+      startTime: t.startTime.length === 5 ? t.startTime + ':00' : t.startTime,
+      endTime: t.endTime.length === 5 ? t.endTime + ':00' : t.endTime
+    }));
+
+    const request = {
+      classIds: this.classes().map(c => c.id),
+      periodsPerDay: this.generatorForm().periodsPerDay,
+      freePeriodsPerStaff: this.generatorForm().freePeriodsPerStaff,
+      timings: timings
+    };
+
+    this.timetableService.generateTimetable(request).subscribe({
+      next: (data) => {
+        this.generatedPreview.set(data);
+        this.isGenerating.set(false);
+        const classId = this.selectedClassId();
+        if (classId) {
+          this.slots.set(data.filter(s => s.classId === classId));
+        } else {
+          this.slots.set([]);
+        }
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Failed to generate timetable.');
+        this.isGenerating.set(false);
+      }
+    });
+  }
+
+  saveGeneratedTimetable() {
+    this.isSavingGenerated.set(true);
+    this.timetableService.saveGeneratedTimetable(this.generatedPreview()).subscribe({
+      next: () => {
+        this.toastService.success('Timetable saved successfully.');
+        this.isSavingGenerated.set(false);
+        this.closeGeneratorModal();
+        this.fetchTimetable();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toastService.error('Failed to save timetable.');
+        this.isSavingGenerated.set(false);
+      }
     });
   }
 }

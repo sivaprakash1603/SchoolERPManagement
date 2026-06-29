@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExamService, ExamResponseDTO, ExamScheduleResponseDTO } from '../../services/exam.service';
@@ -10,6 +10,7 @@ import { ToastService } from '../../services/toast.service';
 import { TeacherService } from '../../services/teacher.service';
 import { TimetableService } from '../../services/timetable.service';
 import { ParentService } from '../../services/parent.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 interface StudentExamUI extends StudentQueryResponseDTO {
   marks: number | null;
@@ -34,6 +35,24 @@ export class Exams implements OnInit {
   private teacherService = inject(TeacherService);
   private timetableService = inject(TimetableService);
   private parentService = inject(ParentService);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('exams');
+    if (savedState) {
+      if (savedState.selectedAcademicYearId !== undefined) this.selectedAcademicYearId.set(savedState.selectedAcademicYearId);
+      if (savedState.selectedExam !== undefined) this.selectedExam.set(savedState.selectedExam);
+      if (savedState.selectedSchedule !== undefined) this.selectedSchedule.set(savedState.selectedSchedule);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('exams', {
+        selectedAcademicYearId: this.selectedAcademicYearId(),
+        selectedExam: this.selectedExam(),
+        selectedSchedule: this.selectedSchedule()
+      });
+    });
+  }
 
   // Lists
   academicYears = signal<AcademicYearResponseDTO[]>([]);
@@ -186,7 +205,10 @@ export class Exams implements OnInit {
     this.academicYearService.getAllAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
-        const currentYear = years.find((y) => y.isCurrent) || years[0];
+        const savedId = this.selectedAcademicYearId();
+        const currentYear = (savedId && years.find((y) => y.id === savedId))
+          || years.find((y) => y.isCurrent)
+          || years[0];
         if (currentYear) {
           this.selectedAcademicYearId.set(currentYear.id);
           this.fetchClasses(currentYear.id);

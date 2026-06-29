@@ -57,6 +57,14 @@ export interface StudentQueryRequest {
   sortDirection?: string;
 }
 
+export interface StudentStatsDTO {
+  totalStudents: number;
+  activeStudents: number;
+  inactiveStudents: number;
+  boys: number;
+  girls: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -79,6 +87,10 @@ export class StudentService {
 
   addStudent(dto: CreateStudentDTO): Observable<any> {
     return this.http.post(this.baseUrl, dto);
+  }
+
+  getStudentStats(): Observable<StudentStatsDTO> {
+    return this.http.get<StudentStatsDTO>(`${this.baseUrl}/stats`);
   }
 
   exportStudentsPdf(request: StudentQueryRequest): Observable<Blob> {

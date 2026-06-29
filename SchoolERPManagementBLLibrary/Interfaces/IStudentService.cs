@@ -13,4 +13,5 @@ public interface IStudentService
     Task<IEnumerable<StudentResponseDTO>> GetStudentsByClassIdAsync(int classId, CancellationToken cancellationToken);
     Task EnrollStudentAsync(int studentId, EnrollStudentDTO dto, CancellationToken cancellationToken);
     Task BulkEnrollStudentsAsync(BulkEnrollStudentsDTO dto, CancellationToken cancellationToken);
+    Task<StudentStatsDTO> GetStudentStatsAsync(CancellationToken cancellationToken);
 }

@@ -16,4 +16,6 @@ public interface ITeacherService
     Task<bool> VerifyTeacherAssignmentAsync(int userId, int teacherId, int classId, int subjectId, CancellationToken cancellationToken);
     Task<TeacherResponseDTO> UpdateTeacherAsync(int id, UpdateTeacherDTO dto, CancellationToken cancellationToken);
     Task DeleteTeacherAsync(int id, CancellationToken cancellationToken);
+    Task<TeacherStatsDTO> GetTeacherStatsAsync(CancellationToken cancellationToken);
+    Task<AutoAssignResultDTO> AutoAssignTeachersAsync(CancellationToken cancellationToken);
 }

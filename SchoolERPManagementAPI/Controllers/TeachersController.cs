@@ -26,6 +26,14 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("stats")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetTeacherStats(CancellationToken cancellationToken)
+        {
+            var result = await _teacherService.GetTeacherStatsAsync(cancellationToken);
+            return Ok(result);
+        }
+
         [HttpGet("export/pdf")]
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> ExportTeachersPdf([FromQuery] TeacherQueryRequest request, CancellationToken cancellationToken)
@@ -64,6 +72,14 @@ namespace SchoolERPManagementAPI.Controllers
         public async Task<IActionResult> AssignSubject([FromBody] AssignTeacherSubjectDTO dto, CancellationToken cancellationToken)
         {
             var result = await _teacherService.AssignSubjectAsync(dto, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPost("auto-assign")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AutoAssignTeachers(CancellationToken cancellationToken)
+        {
+            var result = await _teacherService.AutoAssignTeachersAsync(cancellationToken);
             return Ok(result);
         }
 

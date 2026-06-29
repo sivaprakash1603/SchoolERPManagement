@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SchoolERPManagementDALLibrary.Contexts;
@@ -11,9 +12,11 @@ using SchoolERPManagementDALLibrary.Contexts;
 namespace SchoolERPManagementDALLibrary.Migrations
 {
     [DbContext(typeof(SchoolERPDbContext))]
-    partial class SchoolERPDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629104609_AddClassSubject")]
+    partial class AddClassSubject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1153,18 +1156,12 @@ namespace SchoolERPManagementDALLibrary.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("qualifications");
 
-                    b.Property<int?>("SubjectSpecialtyId")
-                        .HasColumnType("integer")
-                        .HasColumnName("subjectspecialtyid");
-
                     b.Property<int>("Userid")
                         .HasColumnType("integer")
                         .HasColumnName("userid");
 
                     b.HasKey("Id")
                         .HasName("teachers_pkey");
-
-                    b.HasIndex("SubjectSpecialtyId");
 
                     b.HasIndex(new[] { "Userid" }, "teachers_userid_key")
                         .IsUnique();
@@ -1802,19 +1799,11 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Teacher", b =>
                 {
-                    b.HasOne("SchoolERPManagementModelLibrary.Models.Subject", "SubjectSpecialty")
-                        .WithMany()
-                        .HasForeignKey("SubjectSpecialtyId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("teachers_subjectspecialtyid_fkey");
-
                     b.HasOne("SchoolERPManagementModelLibrary.Models.User", "User")
                         .WithOne("Teacher")
                         .HasForeignKey("SchoolERPManagementModelLibrary.Models.Teacher", "Userid")
                         .IsRequired()
                         .HasConstraintName("teachers_userid_fkey");
-
-                    b.Navigation("SubjectSpecialty");
 
                     b.Navigation("User");
                 });

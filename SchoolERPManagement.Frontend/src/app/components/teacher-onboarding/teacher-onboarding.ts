@@ -41,7 +41,8 @@ export class TeacherOnboarding implements OnInit {
     name: '',
     email: '',
     phonenumber: '',
-    qualifications: ''
+    qualifications: '',
+    subjectSpecialtyId: null as number | null
   });
 
   // Assignments State
@@ -110,6 +111,11 @@ export class TeacherOnboarding implements OnInit {
     const sub = this.subjects().find(s => s.id === subjectId);
 
     if (cls && sub) {
+      if (!cls.subjects || !cls.subjects.some((s: any) => s.id === subjectId)) {
+        this.toastService.warning(`Subject '${sub.subjectName || sub.subjectname}' is not assigned to Class '${cls.classname}'. Please map it in the Classes page first.`);
+        return;
+      }
+
       const assignment: SubjectAssignment = {
         classId,
         subjectId,
@@ -160,8 +166,16 @@ export class TeacherOnboarding implements OnInit {
 
     try {
       // Step 1: Create Teacher
+      const form = this.teacherForm();
+      const payload = {
+        name: form.name,
+        email: form.email,
+        phonenumber: form.phonenumber,
+        qualifications: form.qualifications,
+        subjectSpecialtyId: form.subjectSpecialtyId ?? undefined
+      };
       const newTeacher = await new Promise<any>((resolve, reject) => {
-        this.teacherService.addTeacher(this.teacherForm()).subscribe({
+        this.teacherService.addTeacher(payload).subscribe({
           next: (res) => resolve(res),
           error: (err) => reject(err)
         });

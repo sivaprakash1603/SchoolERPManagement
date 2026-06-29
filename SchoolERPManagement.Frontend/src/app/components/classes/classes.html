@@ -215,6 +215,28 @@
                 }
               </select>
             </div>
+            <div class="col-12">
+              <label class="modal-form-label mb-2">Subjects</label>
+              <div class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                <div class="row g-2">
+                  @for (subject of subjects(); track subject.id) {
+                    <div class="col-6 col-md-4">
+                      <button 
+                        type="button" 
+                        class="btn btn-sm w-100 text-truncate text-start" 
+                        [class.btn-primary]="createForm().subjectIds.includes(subject.id)"
+                        [class.btn-outline-secondary]="!createForm().subjectIds.includes(subject.id)"
+                        (click)="toggleSubjectSelection(subject.id, 'create')"
+                        style="border-radius: 0.5rem; padding: 0.5rem 0.75rem;"
+                      >
+                        <i class="bi me-2" [class.bi-check-circle-fill]="createForm().subjectIds.includes(subject.id)" [class.bi-circle]="!createForm().subjectIds.includes(subject.id)"></i>
+                        {{ subject.subjectName }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer-custom">
@@ -306,6 +328,28 @@
                   <option [value]="year.id">{{ year.yearName }}</option>
                 }
               </select>
+            </div>
+            <div class="col-12">
+              <label class="modal-form-label mb-2">Subjects</label>
+              <div class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                <div class="row g-2">
+                  @for (subject of subjects(); track subject.id) {
+                    <div class="col-6 col-md-4">
+                      <button 
+                        type="button" 
+                        class="btn btn-sm w-100 text-truncate text-start" 
+                        [class.btn-primary]="editForm().subjectIds.includes(subject.id)"
+                        [class.btn-outline-secondary]="!editForm().subjectIds.includes(subject.id)"
+                        (click)="toggleSubjectSelection(subject.id, 'edit')"
+                        style="border-radius: 0.5rem; padding: 0.5rem 0.75rem;"
+                      >
+                        <i class="bi me-2" [class.bi-check-circle-fill]="editForm().subjectIds.includes(subject.id)" [class.bi-circle]="!editForm().subjectIds.includes(subject.id)"></i>
+                        {{ subject.subjectName }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
           </div>
         </div>

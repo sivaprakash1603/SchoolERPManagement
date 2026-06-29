@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { TeacherService, TeacherResponseDTO } from '../../services/teacher.service';
 import { AcademicYearService, AcademicYearResponseDTO } from '../../services/academic-year.service';
+import { SubjectService, SubjectResponseDTO } from '../../services/subject.service';
 import { ToastService } from '../../services/toast.service';
 
 @Component({
@@ -17,11 +18,13 @@ export class Classes implements OnInit {
   private classService = inject(ClassService);
   private teacherService = inject(TeacherService);
   private academicYearService = inject(AcademicYearService);
+  private subjectService = inject(SubjectService);
   private toastService = inject(ToastService);
 
   classes = signal<ClassResponseDTO[]>([]);
   academicYears = signal<AcademicYearResponseDTO[]>([]);
   teachers = signal<TeacherResponseDTO[]>([]);
+  subjects = signal<SubjectResponseDTO[]>([]);
   selectedAcademicYearId = signal<number | null>(null);
 
   loading = signal(false);
@@ -38,6 +41,7 @@ export class Classes implements OnInit {
     section: '',
     classteacherId: null as number | null,
     academicyearId: null as number | null,
+    subjectIds: [] as number[],
   });
   isUpdating = signal(false);
   isDeleting = signal(false);
@@ -49,6 +53,7 @@ export class Classes implements OnInit {
     section: '',
     classteacherId: null as number | null,
     academicyearId: null as number | null,
+    subjectIds: [] as number[],
   });
 
   ngOnInit() {
@@ -58,6 +63,7 @@ export class Classes implements OnInit {
     this.loadFilterState();
     this.fetchAcademicYears();
     this.fetchTeachers();
+    this.fetchSubjects();
   }
 
   loadFilterState() {
@@ -142,6 +148,13 @@ export class Classes implements OnInit {
     });
   }
 
+  fetchSubjects() {
+    this.subjectService.getAllSubjects().subscribe({
+      next: (res) => this.subjects.set(res),
+      error: (err) => console.error('Failed to load subjects', err),
+    });
+  }
+
   getTeacherName(teacherId?: number): string {
     if (!teacherId) return 'Not Assigned';
     const teacher = this.teachers().find((t) => t.id === teacherId);
@@ -181,6 +194,7 @@ export class Classes implements OnInit {
       section: '',
       classteacherId: null,
       academicyearId: this.selectedAcademicYearId(),
+      subjectIds: [],
     });
     this.showCreateModal.set(true);
   }
@@ -202,6 +216,7 @@ export class Classes implements OnInit {
       section: form.section,
       classteacherId: form.classteacherId || undefined,
       academicyearId: form.academicyearId || undefined,
+      subjectIds: form.subjectIds,
     };
 
     this.classService.createClass(dto).subscribe({
@@ -229,6 +244,7 @@ export class Classes implements OnInit {
       section: cls.section || '',
       classteacherId: cls.classteacherId || null,
       academicyearId: cls.academicyearId || null,
+      subjectIds: cls.subjects ? cls.subjects.map((s) => s.id) : [],
     });
     this.showEditModal.set(true);
   }
@@ -236,6 +252,24 @@ export class Classes implements OnInit {
   closeEditModal() {
     this.showEditModal.set(false);
     this.editingClass.set(null);
+  }
+
+  toggleSubjectSelection(subjectId: number, formType: 'create' | 'edit') {
+    if (formType === 'create') {
+      const current = this.createForm().subjectIds || [];
+      if (current.includes(subjectId)) {
+        this.createForm.set({ ...this.createForm(), subjectIds: current.filter(id => id !== subjectId) });
+      } else {
+        this.createForm.set({ ...this.createForm(), subjectIds: [...current, subjectId] });
+      }
+    } else {
+      const current = this.editForm().subjectIds || [];
+      if (current.includes(subjectId)) {
+        this.editForm.set({ ...this.editForm(), subjectIds: current.filter(id => id !== subjectId) });
+      } else {
+        this.editForm.set({ ...this.editForm(), subjectIds: [...current, subjectId] });
+      }
+    }
   }
 
   saveEdit() {
@@ -254,6 +288,7 @@ export class Classes implements OnInit {
       section: form.section,
       classteacherId: form.classteacherId || undefined,
       academicyearId: form.academicyearId || undefined,
+      subjectIds: form.subjectIds,
     };
 
     this.classService.updateClass(cls.id, dto).subscribe({

@@ -277,4 +277,38 @@ public sealed class ParentService : IParentService
             await _userRepository.UpdateAsync(user, save: true, ct: cancellationToken);
         }
     }
+
+    public async Task<ParentStatsDTO> GetParentStatsAsync(CancellationToken cancellationToken)
+    {
+        var allParentsQuery = await _parentRepository.ListAsync(cancellationToken);
+        
+        // Ensure we load User relationship to check Isactive
+        var usersQuery = await _userRepository.ListAsync(cancellationToken);
+        
+        var parents = allParentsQuery.ToList();
+        var users = usersQuery.ToList();
+
+        int activeParents = 0;
+        int inactiveParents = 0;
+
+        foreach (var parent in parents)
+        {
+            var user = users.FirstOrDefault(u => u.Id == parent.Userid);
+            if (user != null && user.Isactive == true)
+            {
+                activeParents++;
+            }
+            else
+            {
+                inactiveParents++;
+            }
+        }
+
+        return new ParentStatsDTO
+        {
+            TotalParents = parents.Count,
+            ActiveParents = activeParents,
+            InactiveParents = inactiveParents
+        };
+    }
 }
