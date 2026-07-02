@@ -500,7 +500,7 @@
                     <div class="d-flex align-items-center gap-3">
                       @if (student.profilePhotoUrl) {
                         <img
-                          [src]="'http://localhost:5203' + student.profilePhotoUrl"
+                          [src]="baseUrl + student.profilePhotoUrl"
                           class="rounded-circle object-fit-cover"
                           style="width: 36px; height: 36px"
                         />

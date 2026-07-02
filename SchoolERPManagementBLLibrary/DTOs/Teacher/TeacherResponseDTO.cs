@@ -15,5 +15,11 @@ public record TeacherResponseDTO(
     string? ProfilePhotoUrl = null,
     int AssignmentsCount = 0,
     int? SubjectSpecialtyId = null,
-    string? SubjectSpecialtyName = null
+    string? SubjectSpecialtyName = null,
+    IEnumerable<SimpleTeacherAssignmentDTO>? Assignments = null
+);
+
+public record SimpleTeacherAssignmentDTO(
+    int ClassId,
+    int SubjectId
 );

@@ -8,6 +8,8 @@ public record AdminDashboardDTO(
     int TotalParents,
     decimal TotalRevenue,
     int TotalClasses,
+    int TotalSubjects,
+    int TotalTimetables,
     int TotalAssets,
     double StudentAttendanceRate,
     double StaffAttendanceRate,

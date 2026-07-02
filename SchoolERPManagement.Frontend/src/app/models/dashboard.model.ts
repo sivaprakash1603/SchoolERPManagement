@@ -16,6 +16,8 @@ export interface AdminDashboardDTO {
   totalParents: number;
   totalRevenue: number;
   totalClasses: number;
+  totalSubjects: number;
+  totalTimetables: number;
   totalAssets: number;
   studentAttendanceRate: number;
   staffAttendanceRate: number;

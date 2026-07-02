@@ -25,9 +25,11 @@
   <!-- Toasts Container -->
   <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
     @for (toast of toastService.toasts(); track toast.id) {
-      <div class="toast show align-items-center text-white border-0 mb-2 p-2 rounded-3 shadow d-flex" [class.bg-success]="toast.type === 'success'" [class.bg-danger]="toast.type === 'danger'" [class.bg-warning]="toast.type === 'warning'" [class.bg-info]="toast.type === 'info'" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast show align-items-center text-white border-0 mb-2 p-2 d-flex" 
+           style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);"
+           [class.bg-success]="toast.type === 'success'" [class.bg-danger]="toast.type === 'danger'" [class.bg-warning]="toast.type === 'warning'" [class.bg-info]="toast.type === 'info'" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex w-100 align-items-center justify-content-between">
-          <div class="toast-body d-flex align-items-center gap-2 fw-semibold px-2">
+          <div class="toast-body d-flex align-items-center gap-2 fw-semibold px-2" style="font-size: 0.875rem;">
             @if (toast.type === 'success') { <i class="bi bi-check-circle-fill fs-5"></i> }
             @if (toast.type === 'danger') { <i class="bi bi-exclamation-octagon-fill fs-5"></i> }
             @if (toast.type === 'warning') { <i class="bi bi-exclamation-triangle-fill fs-5"></i> }

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, AfterViewInit, ElementRef, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -7,18 +7,18 @@ import {
   FormsModule,
 } from '@angular/forms';
 import { Auth } from '../../services/auth';
-import { Router } from '@angular/router';
-
+import { Router, RouterLink } from '@angular/router';
+import { ThemeService } from '../../services/theme';
 import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login {
+export class Login implements OnInit, OnDestroy, AfterViewInit {
   loginForm: FormGroup;
   progress = signal(false);
   errorMessage = signal<string | null>(null);
@@ -26,6 +26,20 @@ export class Login {
 
   isForgotPassword = signal(false);
   forgotPasswordEmail = signal('');
+
+  themeService = inject(ThemeService);
+  private el = inject(ElementRef);
+
+  // ─── Quote Carousel ───
+  activeQuoteIndex = signal(0);
+  private quoteInterval: any;
+
+  quotes = [
+    { text: 'Education is the most powerful weapon which you can use to change the world.', author: 'Nelson Mandela' },
+    { text: 'The beautiful thing about learning is that nobody can take it away from you.', author: 'B.B. King' },
+    { text: 'An investment in knowledge pays the best interest.', author: 'Benjamin Franklin' },
+    { text: 'The mind is not a vessel to be filled, but a fire to be kindled.', author: 'Plutarch' },
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -43,6 +57,32 @@ export class Login {
       ],
       password: ['', [Validators.required]],
     });
+  }
+
+  ngOnInit() {
+    this.quoteInterval = setInterval(() => {
+      this.activeQuoteIndex.update(i => (i + 1) % this.quotes.length);
+    }, 5000);
+  }
+
+  ngAfterViewInit() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    const revealItems = this.el.nativeElement.querySelectorAll('.reveal-item');
+    revealItems.forEach((item: HTMLElement) => observer.observe(item));
+  }
+
+  ngOnDestroy() {
+    if (this.quoteInterval) {
+      clearInterval(this.quoteInterval);
+    }
   }
 
   togglePasswordVisibility() {
@@ -67,7 +107,6 @@ export class Login {
       next: (response) => {
         sessionStorage.setItem('token', response.accessToken);
         
-        // Decode JWT payload to get user data securely
         try {
           const base64Url = response.accessToken.split('.')[1];
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -87,7 +126,6 @@ export class Login {
         }
 
         this.progress.set(false);
-        // Navigate based on role (default to dashboard for now)
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {

@@ -10,5 +10,6 @@ public interface IExamService
     Task<IReadOnlyList<ExamResponseDTO>> GetAllExamsAsync(CancellationToken cancellationToken);
     Task<ExamScheduleResponseDTO> CreateExamScheduleAsync(CreateExamScheduleDTO dto, CancellationToken cancellationToken);
     Task<IReadOnlyList<ExamScheduleResponseDTO>> GetExamSchedulesByExamIdAsync(int examId, CancellationToken cancellationToken);
+    Task<ExamScheduleResponseDTO> UpdateExamScheduleAsync(int scheduleId, UpdateExamScheduleDTO dto, CancellationToken cancellationToken);
     Task<IReadOnlyList<ExamResultResponseDTO>> GetExamResultsByClassAsync(int examId, int classId, int subjectId, CancellationToken cancellationToken);
 }

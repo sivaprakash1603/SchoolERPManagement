@@ -119,6 +119,8 @@ export class Exams implements OnInit {
     session: 'Morning',
   });
 
+  editingScheduleId = signal<number | null>(null);
+
   ngOnInit() {
     const role = sessionStorage.getItem('role');
     this.userRole.set(role);
@@ -357,6 +359,7 @@ export class Exams implements OnInit {
     const today = new Date().toISOString().split('T')[0];
     const defaultClassId = this.classes().length > 0 ? this.classes()[0].id : null;
     
+    this.editingScheduleId.set(null);
     this.scheduleForm.set({
       classId: defaultClassId,
       subjectId: null,
@@ -372,7 +375,7 @@ export class Exams implements OnInit {
     this.showScheduleModal.set(true);
   }
 
-  onModalClassChange(classId: number | null) {
+  onModalClassChange(classId: number | null, preserveSubjectId?: number) {
     if (!classId) {
       this.modalSubjects.set([]);
       this.scheduleForm.set({ ...this.scheduleForm(), subjectId: null });
@@ -381,23 +384,21 @@ export class Exams implements OnInit {
 
     this.subjectService.getSubjectsByClass(classId).subscribe({
       next: (res) => {
+        let availableSubjects = res;
         if (this.userRole() === 'Teacher') {
           const map = this.teacherSubjectClassMap();
           const allowedSubjects = map[classId] || [];
-          const filtered = res.filter(sub => allowedSubjects.includes(sub.id));
-          this.modalSubjects.set(filtered);
-          if (filtered.length > 0) {
-            this.scheduleForm.set({ ...this.scheduleForm(), subjectId: filtered[0].id });
-          } else {
-            this.scheduleForm.set({ ...this.scheduleForm(), subjectId: null });
-          }
+          availableSubjects = res.filter(sub => allowedSubjects.includes(sub.id));
+        }
+
+        this.modalSubjects.set(availableSubjects);
+        
+        if (preserveSubjectId && availableSubjects.some(s => s.id === preserveSubjectId)) {
+          this.scheduleForm.set({ ...this.scheduleForm(), subjectId: preserveSubjectId });
+        } else if (availableSubjects.length > 0) {
+          this.scheduleForm.set({ ...this.scheduleForm(), subjectId: availableSubjects[0].id });
         } else {
-          this.modalSubjects.set(res);
-          if (res.length > 0) {
-            this.scheduleForm.set({ ...this.scheduleForm(), subjectId: res[0].id });
-          } else {
-            this.scheduleForm.set({ ...this.scheduleForm(), subjectId: null });
-          }
+          this.scheduleForm.set({ ...this.scheduleForm(), subjectId: null });
         }
       },
       error: (err) => {
@@ -406,6 +407,21 @@ export class Exams implements OnInit {
         this.scheduleForm.set({ ...this.scheduleForm(), subjectId: null });
       }
     });
+  }
+
+  editSchedule(schedule: ExamScheduleResponseDTO) {
+    this.editingScheduleId.set(schedule.id);
+    this.scheduleForm.set({
+      classId: schedule.classId,
+      subjectId: schedule.subjectId,
+      examDate: schedule.examDate.split('T')[0],
+      durationMinutes: schedule.durationMinutes,
+      session: schedule.session || 'Morning'
+    });
+    
+    this.modalSubjects.set([]);
+    this.onModalClassChange(schedule.classId, schedule.subjectId);
+    this.showScheduleModal.set(true);
   }
 
   closeScheduleModal() {
@@ -418,28 +434,54 @@ export class Exams implements OnInit {
     if (!exam || !form.classId || !form.subjectId || !form.examDate) return;
 
     this.isSavingSchedule.set(true);
-    const dto = {
-      examId: exam.id,
-      classId: form.classId,
-      subjectId: form.subjectId,
-      examDate: form.examDate,
-      durationMinutes: form.durationMinutes,
-      session: form.session
-    };
+    const editingId = this.editingScheduleId();
 
-    this.examService.createExamSchedule(dto).subscribe({
-      next: () => {
-        this.toastService.success('Subject scheduled successfully.');
-        this.isSavingSchedule.set(false);
-        this.closeScheduleModal();
-        this.fetchSchedules(exam.id);
-      },
-      error: (err) => {
-        console.error('Failed to save schedule', err);
-        this.toastService.error(this.getErrorMessage(err, 'Failed to schedule exam subject.'));
-        this.isSavingSchedule.set(false);
-      }
-    });
+    if (editingId) {
+      const dto = {
+        classId: form.classId,
+        subjectId: form.subjectId,
+        examDate: form.examDate,
+        durationMinutes: form.durationMinutes,
+        session: form.session
+      };
+
+      this.examService.updateExamSchedule(editingId, dto).subscribe({
+        next: () => {
+          this.toastService.success('Schedule updated successfully.');
+          this.isSavingSchedule.set(false);
+          this.closeScheduleModal();
+          this.fetchSchedules(exam.id);
+        },
+        error: (err) => {
+          console.error('Failed to update schedule', err);
+          this.toastService.error(this.getErrorMessage(err, 'Failed to update schedule.'));
+          this.isSavingSchedule.set(false);
+        }
+      });
+    } else {
+      const dto = {
+        examId: exam.id,
+        classId: form.classId,
+        subjectId: form.subjectId,
+        examDate: form.examDate,
+        durationMinutes: form.durationMinutes,
+        session: form.session
+      };
+
+      this.examService.createExamSchedule(dto).subscribe({
+        next: () => {
+          this.toastService.success('Subject scheduled successfully.');
+          this.isSavingSchedule.set(false);
+          this.closeScheduleModal();
+          this.fetchSchedules(exam.id);
+        },
+        error: (err) => {
+          console.error('Failed to save schedule', err);
+          this.toastService.error(this.getErrorMessage(err, 'Failed to schedule exam subject.'));
+          this.isSavingSchedule.set(false);
+        }
+      });
+    }
   }
 
   selectSchedule(schedule: ExamScheduleResponseDTO) {

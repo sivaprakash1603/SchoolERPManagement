@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface CalendarEventResponseDTO {
   id: number;
@@ -31,7 +32,7 @@ export interface AcademicCalendarSummaryDTO {
   providedIn: 'root'
 })
 export class AcademicCalendarService {
-  private readonly baseUrl = 'http://localhost:5203/api/AcademicCalendar';
+  private readonly baseUrl = `${environment.apiUrl}/AcademicCalendar`;
 
   constructor(private http: HttpClient) {}
 

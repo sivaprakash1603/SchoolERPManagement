@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AcademicYearResponseDTO {
   id: number;
@@ -21,7 +22,7 @@ export interface CreateAcademicYearDTO {
 })
 export class AcademicYearService {
   private http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:5203/api/AcademicYears';
+  private readonly baseUrl = `${environment.apiUrl}/AcademicYears`;
 
   getAllAcademicYears(): Observable<AcademicYearResponseDTO[]> {
     return this.http.get<AcademicYearResponseDTO[]>(this.baseUrl);
@@ -32,6 +33,6 @@ export class AcademicYearService {
   }
 
   setCurrentAcademicYear(id: number): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/${id}/set-current`, {});
+    return this.http.patch<void>(`${this.baseUrl}/${id}/set-current`, {});
   }
 }

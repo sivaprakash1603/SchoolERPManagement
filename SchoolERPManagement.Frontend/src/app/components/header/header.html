@@ -1,42 +1,59 @@
-<header class="py-2 py-md-3 px-3 px-md-4 bg-main border-bottom" style="background-color: var(--bg-main);">
+<header class="py-2 py-md-3 px-3 px-md-4 border-bottom" style="background-color: var(--bg-main); border-color: var(--border-color) !important;">
   <div class="d-flex align-items-center justify-content-between gap-2">
     <!-- Left: Hamburger Menu -->
     <div class="d-flex align-items-center gap-3">
-      <button class="btn btn-link text-muted-custom p-0 border-0 d-md-none" (click)="layoutService.toggleSidebar()" aria-label="Toggle Menu">
+      <button class="btn btn-link p-0 border-0 d-md-none" style="color: var(--text-secondary);" (click)="layoutService.toggleSidebar()" aria-label="Toggle Menu">
         <i class="bi bi-list fs-3"></i>
       </button>
     </div>
 
     <!-- Right: Icons & Profile -->
-    <div class="d-flex align-items-center gap-3 gap-md-4 text-end text-muted-custom flex-shrink-0">
-      <button class="btn btn-link text-muted-custom p-0 border-0 position-relative" [routerLink]="['/notifications']" aria-label="Notifications">
-        <i class="bi bi-bell fs-5"></i>
+    <div class="d-flex align-items-center gap-2 gap-md-3 text-end flex-shrink-0">
+      <!-- Notifications -->
+      <button class="btn btn-sm d-flex align-items-center justify-content-center position-relative"
+              style="width: 36px; height: 36px; border-radius: 10px; background-color: var(--primary-accent-soft, rgba(99, 91, 255, 0.06)); color: var(--text-secondary); border: 1px solid var(--border-color);"
+              [routerLink]="['/notifications']" aria-label="Notifications">
+        <i class="bi bi-bell" style="font-size: 1rem;"></i>
         @if (notificationService.unreadCount() > 0) {
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 0.25em 0.4em;">
+          <span class="position-absolute translate-middle badge rounded-pill bg-danger" 
+                style="font-size: 0.55rem; padding: 0.2em 0.4em; top: 2px; right: -4px;">
             {{ notificationService.unreadCount() }}
           </span>
         }
       </button>
-      
-      <button class="btn btn-link text-muted-custom p-0 border-0" (click)="themeService.toggleTheme()" aria-label="Toggle theme">
+
+      <!-- Theme Toggle -->
+      <button class="btn btn-sm d-flex align-items-center justify-content-center"
+              style="width: 36px; height: 36px; border-radius: 10px; background-color: var(--primary-accent-soft, rgba(99, 91, 255, 0.06)); color: var(--text-secondary); border: 1px solid var(--border-color);"
+              (click)="themeService.toggleTheme()" aria-label="Toggle theme">
         @if (themeService.isDarkMode()) {
-          <i class="bi bi-sun-fill fs-5 text-warning"></i>
+          <i class="bi bi-sun-fill text-warning" style="font-size: 1rem;"></i>
         } @else {
-          <i class="bi bi-moon-fill fs-5"></i>
+          <i class="bi bi-moon-fill" style="font-size: 0.9rem;"></i>
         }
       </button>
-      
-      <button class="btn btn-link text-danger p-0 border-0" (click)="logout()" aria-label="Logout" title="Logout">
-        <i class="bi bi-box-arrow-right fs-5"></i>
+
+      <!-- Logout -->
+      <button class="btn btn-sm d-flex align-items-center justify-content-center"
+              style="width: 36px; height: 36px; border-radius: 10px; background-color: rgba(239, 68, 68, 0.06); color: #ef4444; border: 1px solid var(--border-color);"
+              (click)="logout()" aria-label="Logout" title="Logout">
+        <i class="bi bi-box-arrow-right" style="font-size: 1rem;"></i>
       </button>
+
+      <!-- Divider -->
+      <div class="vr mx-1 d-none d-sm-block" style="height: 28px; opacity: 0.15;"></div>
       
+      <!-- Profile -->
       <div class="d-flex align-items-center gap-2" style="cursor: pointer;">
         @if (displayPhotoUrl()) {
-          <img [src]="displayPhotoUrl()" alt="Profile Photo" width="32" height="32" class="rounded-circle object-fit-cover">
+          <img [src]="displayPhotoUrl()" alt="Profile Photo" width="34" height="34" class="rounded-circle object-fit-cover" style="border: 2px solid var(--border-color);">
         } @else {
-          <img [src]="'https://ui-avatars.com/api/?name=' + displayName() + '&background=3730a3&color=fff'" alt="Avatar" width="32" height="32" class="rounded-circle">
+          <img [src]="'https://ui-avatars.com/api/?name=' + displayName() + '&background=635bff&color=fff&bold=true&size=68'" alt="Avatar" width="34" height="34" class="rounded-circle" style="border: 2px solid var(--border-color);">
         }
-        <span class="fw-bold d-none d-sm-inline" style="color: var(--primary-accent);">{{ displayName() }}</span>
+        <div class="d-none d-sm-block text-start">
+          <div class="fw-bold" style="font-size: 0.8rem; color: var(--text-primary); line-height: 1.2;">{{ displayName() }}</div>
+          <div style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">{{ userRole() }}</div>
+        </div>
       </div>
     </div>
   </div>

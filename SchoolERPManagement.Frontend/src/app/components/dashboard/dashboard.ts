@@ -14,10 +14,12 @@ import { ParentService } from '../../services/parent.service';
 import { AdminDashboardDTO, TeacherDashboardDTO } from '../../models/dashboard.model';
 import Chart from 'chart.js/auto';
 
+import { RouterModule, Router } from '@angular/router';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
@@ -32,6 +34,7 @@ export class Dashboard implements OnInit {
   private subjectService = inject(SubjectService);
   private teacherService = inject(TeacherService);
   private parentService = inject(ParentService);
+  private router = inject(Router);
 
   @ViewChild('demographicsChart') demographicsChartRef!: ElementRef;
   @ViewChild('revenueChart') revenueChartRef!: ElementRef;
@@ -63,6 +66,72 @@ export class Dashboard implements OnInit {
   parentData = signal<any>(null);
   parentChildren = signal<any[]>([]);
   selectedChildId = signal<number | null>(null);
+
+  // Setup Guide Modal State
+  showSetupModal = signal<boolean>(false);
+  selectedSetupStep = signal<any>(null);
+  
+  setupInstructions = [
+    {
+      id: 1,
+      title: 'Academic Sessions',
+      icon: 'bi-calendar-range',
+      description: 'The foundation of the system is the Academic Year. In this step, you will create a new academic session (e.g., 2026-2027) and set its start and end dates. Make sure to mark the current session as "Active".',
+      route: '/academic-sessions'
+    },
+    {
+      id: 2,
+      title: 'Subjects',
+      icon: 'bi-book-half',
+      description: 'Before creating classes, define all the subjects taught in your institution (e.g., Mathematics, English, Physics). These subjects will later be assigned to classes and teachers.',
+      route: '/subjects'
+    },
+    {
+      id: 3,
+      title: 'Classes',
+      icon: 'bi-building',
+      description: 'Create the physical or logical classes for your institution (e.g., Grade 10 - Section A). You will assign a Class Teacher, classroom capacity, and map the subjects that are taught in this specific class.',
+      route: '/classes'
+    },
+    {
+      id: 4,
+      title: 'Teachers',
+      icon: 'bi-person-badge-fill',
+      description: 'Onboard your staff members. You will create teacher profiles, assign them their primary subject specialty, and configure their login credentials. Teachers need to be in the system before generating timetables.',
+      route: '/teachers'
+    },
+    {
+      id: 5,
+      title: 'Students',
+      icon: 'bi-people-fill',
+      description: 'Admit students into the system and assign them to their respective classes. You can also link parent profiles during this step to enable the parent portal.',
+      route: '/students'
+    },
+    {
+      id: 6,
+      title: 'Timetable',
+      icon: 'bi-clock-fill',
+      description: 'Once you have Sessions, Subjects, Classes, and Teachers, you can generate the timetable. The system will help you analyze teacher requirements and prevent scheduling conflicts.',
+      route: '/timetable'
+    }
+  ];
+
+  openSetupModal(stepId: number, isCompleted: boolean = false) {
+    const step = this.setupInstructions.find(s => s.id === stepId);
+    if (!step) return;
+
+    if (isCompleted) {
+      this.router.navigate([step.route]);
+    } else {
+      this.selectedSetupStep.set(step);
+      this.showSetupModal.set(true);
+    }
+  }
+
+  closeSetupModal() {
+    this.showSetupModal.set(false);
+    this.selectedSetupStep.set(null);
+  }
 
   get userName() {
     if (this.userRole() === 'Parent' && this.parentData()) {

@@ -59,6 +59,14 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
+        [HttpPut("schedules/{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> UpdateExamSchedule(int id, [FromBody] UpdateExamScheduleDTO dto, CancellationToken cancellationToken)
+        {
+            var result = await _examService.UpdateExamScheduleAsync(id, dto, cancellationToken);
+            return Ok(result);
+        }
+
         [HttpGet("{examId}/schedules")]
         public async Task<IActionResult> GetExamSchedules(int examId, CancellationToken cancellationToken)
         {

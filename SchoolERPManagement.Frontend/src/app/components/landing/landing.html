@@ -1,0 +1,298 @@
+<div class="landing-container">
+  <!-- Nav Bar -->
+  <nav class="navbar navbar-expand-lg sticky-top navbar-custom">
+    <div class="container py-2 px-3">
+      <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center justify-content-center rounded-3 brand-logo">
+          E
+        </div>
+        <div>
+          <h5 class="fw-bold mb-0 logo-text">EduControl</h5>
+          <small class="logo-subtext">School ERP</small>
+        </div>
+      </div>
+      
+      <div class="d-flex align-items-center gap-3 ms-auto">
+        <!-- Theme Toggle -->
+        <button class="btn btn-link text-muted-custom p-0 border-0 d-flex align-items-center justify-content-center"
+                style="width: 36px; height: 36px; border-radius: 10px; background-color: var(--primary-accent-soft); color: var(--text-secondary); border: 1px solid var(--border-color);"
+                (click)="themeService.toggleTheme()" aria-label="Toggle theme">
+          @if (themeService.isDarkMode()) {
+            <i class="bi bi-sun-fill text-warning" style="font-size: 1rem;"></i>
+          } @else {
+            <i class="bi bi-moon-fill" style="font-size: 0.9rem;"></i>
+          }
+        </button>
+        <a [routerLink]="['/login']" class="btn btn-outline-primary rounded-pill px-4 btn-signin">
+          Sign In
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       HERO SECTION — Full parallax with scroll-driven fade, scale, tilt
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="hero-section position-relative overflow-hidden">
+    <!-- Grid Overlay — fades out as user scrolls -->
+    <div class="grid-overlay"
+         [style.transform]="'translateY(' + (scrollY() * 0.2) + 'px)'"
+         [style.opacity]="gridOpacity()"></div>
+
+    <!-- Parallax Orbs — translate + rotate + scale on scroll -->
+    <div class="parallax-bg layer-1"
+         [style.transform]="'translateY(' + orb(0.15, 0).y + 'px) rotate(' + orb(0.15, 0).rotate + 'deg) scale(' + orb(0.15, 0).scale + ')'"></div>
+    <div class="parallax-bg layer-2"
+         [style.transform]="'translateY(' + orb(0.3, 1.5).y + 'px) rotate(' + orb(0.3, 1.5).rotate + 'deg) scale(' + orb(0.3, 1.5).scale + ')'"></div>
+    <div class="parallax-bg layer-3"
+         [style.transform]="'translateY(' + orb(0.45, 3).y + 'px) rotate(' + orb(0.45, 3).rotate + 'deg) scale(' + orb(0.45, 3).scale + ')'"></div>
+
+    <!-- Hero Content — scrolls up, fades, shrinks -->
+    <div class="container position-relative z-1 hero-content text-center py-5"
+         [style.transform]="'translateY(' + heroTranslateY() + 'px) scale(' + heroScale() + ')'"
+         [style.opacity]="heroOpacity()">
+      <div class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill mb-3 reveal-item reveal-fade-up" style="--reveal-delay: 0s;">
+        ✨ Unifying Institution Operations
+      </div>
+      <h1 class="display-3 fw-extrabold mb-3 hero-title reveal-item reveal-fade-up" style="--reveal-delay: 0.15s;">
+        The Operating System for <br>
+        <span class="gradient-text">Modern Institutions</span>
+      </h1>
+      <p class="lead text-secondary-custom mb-5 mx-auto hero-desc reveal-item reveal-fade-up" style="max-width: 650px; --reveal-delay: 0.3s;">
+        Unifying students, teachers, parents, and administrators into one seamless, premium portal. Manage calendars, timetables, attendance, grades, fees, and more.
+      </p>
+      <div class="d-flex justify-content-center gap-3 flex-wrap reveal-item reveal-fade-up" style="--reveal-delay: 0.45s;">
+        <a [routerLink]="['/login']" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-lg-custom">
+          Get Started <i class="bi bi-arrow-right ms-2"></i>
+        </a>
+      </div>
+
+      <!-- Floating Mockup — 3D tilt flattens to normal on scroll -->
+      <div class="mockup-container mt-5 pt-4 position-relative reveal-item reveal-scale" style="--reveal-delay: 0.6s; --reveal-duration: 0.8s;">
+        <div class="mockup-main shadow-lg-custom rounded-4 border"
+             [style.transform]="'perspective(1200px) rotateX(' + mockupRotateX() + 'deg) rotateY(' + mockupRotateY() + 'deg) scale(' + mockupScale() + ')'">
+          <!-- Mockup Header -->
+          <div class="mockup-header border-bottom d-flex align-items-center gap-2 px-3 py-2">
+            <span class="dot-btn bg-danger"></span>
+            <span class="dot-btn bg-warning"></span>
+            <span class="dot-btn bg-success"></span>
+            <span class="mockup-title text-muted ms-2">educontrol-dashboard.app</span>
+          </div>
+          <!-- Mockup Body -->
+          <div class="mockup-body p-4 text-start">
+            <div class="row g-4">
+              <!-- Left Sidebar Mock -->
+              <div class="col-3 d-none d-md-block border-end pe-3">
+                <div class="d-flex align-items-center gap-2 mb-4">
+                  <div class="bg-primary rounded-circle" style="width: 24px; height: 24px;"></div>
+                  <div class="skeleton-line" style="width: 60%;"></div>
+                </div>
+                <div class="d-flex flex-column gap-3">
+                  <div class="skeleton-line" style="width: 80%;"></div>
+                  <div class="skeleton-line" style="width: 90%;"></div>
+                  <div class="skeleton-line" style="width: 70%;"></div>
+                  <div class="skeleton-line" style="width: 85%;"></div>
+                </div>
+              </div>
+              <!-- Right Main Mock -->
+              <div class="col-12 col-md-9 ps-md-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <div class="skeleton-title" style="width: 40%;"></div>
+                  <div class="skeleton-line" style="width: 20%;"></div>
+                </div>
+                <div class="row g-3 mb-4">
+                  <div class="col-4"><div class="skeleton-card" style="height: 100px;"></div></div>
+                  <div class="col-4"><div class="skeleton-card" style="height: 100px;"></div></div>
+                  <div class="col-4"><div class="skeleton-card" style="height: 100px;"></div></div>
+                </div>
+                <div class="skeleton-card" style="height: 150px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Cards — sinusoidal bounce + tilt -->
+        <div class="floating-widget widget-1 shadow-lg-custom border p-3 rounded-4"
+             [style.transform]="'translateY(' + widget1Y() + 'px) rotate(' + widget1Rotate() + 'deg)'">
+          <div class="d-flex align-items-center gap-3">
+            <div class="widget-icon bg-success-soft text-success"><i class="bi bi-people-fill"></i></div>
+            <div>
+              <small class="text-uppercase text-muted fw-bold">TOTAL STUDENTS</small>
+              <h4 class="fw-bold mb-0">1,248</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="floating-widget widget-2 shadow-lg-custom border p-3 rounded-4"
+             [style.transform]="'translateY(' + widget2Y() + 'px) rotate(' + widget2Rotate() + 'deg)'">
+          <div class="d-flex align-items-center gap-3">
+            <div class="widget-icon bg-primary-soft text-primary"><i class="bi bi-calendar3"></i></div>
+            <div>
+              <small class="text-uppercase text-muted fw-bold">ACADEMIC YEAR</small>
+              <h4 class="fw-bold mb-0">2026-2027</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       FEATURES SECTION — Scroll-driven cinematic card reveals
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="features-section py-5 position-relative overflow-hidden">
+    <!-- Parallax Orbs -->
+    <div class="parallax-bg layer-4"
+         [style.transform]="'translateY(' + orb(-0.1, 2).y + 'px) rotate(' + orb(-0.1, 2).rotate + 'deg) scale(' + orb(-0.1, 2).scale + ')'"></div>
+    <div class="parallax-bg layer-5"
+         [style.transform]="'translateY(' + orb(0.12, 4).y + 'px) rotate(' + orb(0.12, 4).rotate + 'deg) scale(' + orb(0.12, 4).scale + ')'"></div>
+
+    <div class="container py-5 text-center">
+      <!-- Section Title — scales in as you scroll into view -->
+      <h2 class="fs-1 fw-bold mb-3 section-title reveal-item reveal-fade-up" style="--reveal-delay: 0s;"
+          [style.transform]="'scale(' + featuresTitleScale() + ')'"
+          [style.opacity]="featuresTitleOpacity()">
+        Comprehensive Suite of Tools
+      </h2>
+      <p class="text-secondary-custom mb-5 mx-auto reveal-item reveal-fade-up" style="max-width: 550px; --reveal-delay: 0.1s;">
+        Designed to handle all roles and tasks in your academic lifecycle.
+      </p>
+
+      <div class="row g-4 mt-2">
+        <!-- Card 1: Rotates in from left -->
+        <div class="col-md-4">
+          <div class="minimal-card p-4 h-100 text-start feature-card scroll-driven-card"
+               [style.transform]="'translateY(' + featureCard1().y + 'px) rotate(' + featureCard1().rotate + 'deg) scale(' + featureCard1().scale + ')'"
+               [style.opacity]="featureCard1().opacity">
+            <div class="feature-icon mb-4"><i class="bi bi-clock-fill"></i></div>
+            <h5 class="fw-bold mb-2">Flexible Timetabling</h5>
+            <p class="text-secondary-custom small mb-0">
+              Create, adjust, and view class and teacher schedules with automated validation to prevent subject conflicts.
+            </p>
+          </div>
+        </div>
+        <!-- Card 2: Rises up from center -->
+        <div class="col-md-4">
+          <div class="minimal-card p-4 h-100 text-start feature-card scroll-driven-card"
+               [style.transform]="'translateY(' + featureCard2().y + 'px) rotate(' + featureCard2().rotate + 'deg) scale(' + featureCard2().scale + ')'"
+               [style.opacity]="featureCard2().opacity">
+            <div class="feature-icon mb-4"><i class="bi bi-calendar-check-fill"></i></div>
+            <h5 class="fw-bold mb-2">Attendance & Leave Tracking</h5>
+            <p class="text-secondary-custom small mb-0">
+              Teachers can easily log daily class attendance. Students and parents get clear monthly attendance insights.
+            </p>
+          </div>
+        </div>
+        <!-- Card 3: Rotates in from right -->
+        <div class="col-md-4">
+          <div class="minimal-card p-4 h-100 text-start feature-card scroll-driven-card"
+               [style.transform]="'translateY(' + featureCard3().y + 'px) rotate(' + featureCard3().rotate + 'deg) scale(' + featureCard3().scale + ')'"
+               [style.opacity]="featureCard3().opacity">
+            <div class="feature-icon mb-4"><i class="bi bi-award-fill"></i></div>
+            <h5 class="fw-bold mb-2">Exams & Grading</h5>
+            <p class="text-secondary-custom small mb-0">
+              Schedule exams and post student grades. Lock exam edits dynamically once grades are submitted.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       PLATFORM HIGHLIGHTS — Public-safe social proof stats
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="stats-section py-5 bg-light-custom position-relative overflow-hidden">
+    <!-- Parallax Orbs -->
+    <div class="parallax-bg layer-6"
+         [style.transform]="'translateY(' + orb(-0.12, 5).y + 'px) rotate(' + orb(-0.12, 5).rotate + 'deg) scale(' + orb(-0.12, 5).scale + ')'"></div>
+    <div class="parallax-bg layer-7"
+         [style.transform]="'translateY(' + orb(0.15, 6.5).y + 'px) rotate(' + orb(0.15, 6.5).rotate + 'deg) scale(' + orb(0.15, 6.5).scale + ')'"></div>
+
+    <div class="container py-5 text-center">
+      <h2 class="fs-1 fw-bold mb-3 section-title reveal-item reveal-fade-up" style="--reveal-delay: 0s;">Built for Scale</h2>
+      <p class="text-secondary-custom mb-5 mx-auto reveal-item reveal-fade-up" style="max-width: 550px; --reveal-delay: 0.1s;">
+        Trusted by institutions to manage every aspect of academic operations.
+      </p>
+
+      <div class="row g-4 mt-2 justify-content-center">
+        <!-- Modules -->
+        <div class="col-6 col-md-3">
+          <div class="metric-box scroll-driven-card" style="background-color: rgba(59, 130, 246, 0.03); border: 1px solid rgba(59, 130, 246, 0.1) !important;"
+               [style.transform]="'translateY(' + metricCard(0).y + 'px) rotate(' + metricCard(0).rotate + 'deg) scale(' + metricCard(0).scale + ')'"
+               [style.opacity]="metricCard(0).opacity">
+            <div class="d-flex align-items-center justify-content-center rounded-circle mb-3 mx-auto" style="width: 48px; height: 48px; background-color: rgba(59, 130, 246, 0.08); color: #3b82f6;">
+              <i class="bi bi-grid-fill fs-4"></i>
+            </div>
+            <span class="metric-label text-center">Core Modules</span>
+            <span class="metric-value text-center" style="color: #3b82f6 !important;">12+</span>
+          </div>
+        </div>
+        <!-- User Roles -->
+        <div class="col-6 col-md-3">
+          <div class="metric-box scroll-driven-card" style="background-color: rgba(245, 158, 11, 0.03); border: 1px solid rgba(245, 158, 11, 0.1) !important;"
+               [style.transform]="'translateY(' + metricCard(1).y + 'px) rotate(' + metricCard(1).rotate + 'deg) scale(' + metricCard(1).scale + ')'"
+               [style.opacity]="metricCard(1).opacity">
+            <div class="d-flex align-items-center justify-content-center rounded-circle mb-3 mx-auto" style="width: 48px; height: 48px; background-color: rgba(245, 158, 11, 0.08); color: #f59e0b;">
+              <i class="bi bi-people-fill fs-4"></i>
+            </div>
+            <span class="metric-label text-center">User Roles</span>
+            <span class="metric-value text-center" style="color: #f59e0b !important;">4</span>
+          </div>
+        </div>
+        <!-- Uptime -->
+        <div class="col-6 col-md-3">
+          <div class="metric-box scroll-driven-card" style="background-color: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.1) !important;"
+               [style.transform]="'translateY(' + metricCard(2).y + 'px) rotate(' + metricCard(2).rotate + 'deg) scale(' + metricCard(2).scale + ')'"
+               [style.opacity]="metricCard(2).opacity">
+            <div class="d-flex align-items-center justify-content-center rounded-circle mb-3 mx-auto" style="width: 48px; height: 48px; background-color: rgba(16, 185, 129, 0.08); color: #10b981;">
+              <i class="bi bi-shield-check fs-4"></i>
+            </div>
+            <span class="metric-label text-center">Uptime</span>
+            <span class="metric-value text-center" style="color: #10b981 !important;">99.9%</span>
+          </div>
+        </div>
+        <!-- Real-time APIs -->
+        <div class="col-6 col-md-3">
+          <div class="metric-box scroll-driven-card" style="background-color: rgba(99, 91, 255, 0.03); border: 1px solid rgba(99, 91, 255, 0.1) !important;"
+               [style.transform]="'translateY(' + metricCard(3).y + 'px) rotate(' + metricCard(3).rotate + 'deg) scale(' + metricCard(3).scale + ')'"
+               [style.opacity]="metricCard(3).opacity">
+            <div class="d-flex align-items-center justify-content-center rounded-circle mb-3 mx-auto" style="width: 48px; height: 48px; background-color: rgba(99, 91, 255, 0.08); color: #635bff;">
+              <i class="bi bi-lightning-charge-fill fs-4"></i>
+            </div>
+            <span class="metric-label text-center">Real-time APIs</span>
+            <span class="metric-value text-center" style="color: #635bff !important;">30+</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       CTA SECTION — Perspective tilt flattens as you scroll in
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="cta-section py-5">
+    <div class="container py-5" style="perspective: 1200px;">
+      <div class="cta-card p-5 rounded-4 text-center text-white shadow-lg-custom position-relative overflow-hidden reveal-item reveal-fade-up" style="--reveal-delay: 0s; --reveal-duration: 0.8s;"
+           [style.transform]="'rotateX(' + ctaRotateX() + 'deg) scale(' + ctaScale() + ')'">
+        <div class="cta-bg-glow"></div>
+        <div class="position-relative z-1">
+          <h2 class="display-5 fw-bold mb-3">Your portal is ready</h2>
+          <p class="lead text-white-50 mb-4 mx-auto" style="max-width: 550px;">
+            Sign in to access timetables, attendance records, homework, grades, and everything you need in one place.
+          </p>
+          <a [routerLink]="['/login']" class="btn btn-light btn-lg rounded-pill px-5 py-3 fw-bold cta-btn">
+            Sign In Now
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Landing Footer -->
+  <footer class="py-4 border-top">
+    <div class="container text-center">
+      <p class="text-secondary-custom small mb-0">&copy; 2026 EduControl. All rights reserved. &middot; Powered by Advanced Institutional ERP</p>
+    </div>
+  </footer>
+</div>

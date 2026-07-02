@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
+import { environment } from '../../environments/environment';
 
 export interface SendNotificationDTO {
   title: string;
@@ -23,8 +24,8 @@ export interface UserNotificationResponseDTO {
   providedIn: 'root'
 })
 export class NotificationService {
-  private readonly baseUrl = 'http://localhost:5203/api/Notifications';
-  private readonly hubUrl = 'http://localhost:5203/hubs/notification';
+  private readonly baseUrl = `${environment.apiUrl}/Notifications`;
+  private readonly hubUrl = `${environment.hubUrl}/notification`;
   private http = inject(HttpClient);
   
   private hubConnection: signalR.HubConnection | null = null;
@@ -74,10 +75,10 @@ export class NotificationService {
   }
 
   markAsRead(userId: number, notificationId: number): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/user/${userId}/read/${notificationId}`, {});
+    return this.http.patch<any>(`${this.baseUrl}/user/${userId}/read/${notificationId}`, {});
   }
 
   markAllAsRead(userId: number): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/user/${userId}/readAll`, {});
+    return this.http.patch<any>(`${this.baseUrl}/user/${userId}/readAll`, {});
   }
 }

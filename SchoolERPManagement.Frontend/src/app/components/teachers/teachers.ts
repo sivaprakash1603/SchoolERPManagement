@@ -8,6 +8,7 @@ import { NotificationService } from '../../services/notification.service';
 import { ClassService } from '../../services/class.service';
 import { FilterStateService } from '../../services/filter-state.service';
 import { TimetableService, TeacherRequirementDTO } from '../../services/timetable.service';
+import { environment } from '../../../environments/environment';
 
 interface TeacherUI extends TeacherResponseDTO {
   email: string;
@@ -133,7 +134,7 @@ export class Teachers implements OnInit {
           ...dto,
           email: dto.email || '',
           avatarUrl: dto.profilePhotoUrl 
-            ? (dto.profilePhotoUrl.startsWith('http') ? dto.profilePhotoUrl : `http://localhost:5203${dto.profilePhotoUrl}`)
+            ? (dto.profilePhotoUrl.startsWith('http') ? dto.profilePhotoUrl : `${environment.baseUrl}${dto.profilePhotoUrl}`)
             : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(dto.name) + '&background=random'
         }));
         
@@ -141,6 +142,8 @@ export class Teachers implements OnInit {
         this.totalCount.set(response.totalCount);
         this.totalPages.set(response.totalPages);
         this.loading.set(false);
+        console.log("[DEBUG] Teachers Data:", mappedData);
+
       },
       error: (err) => {
         console.error('Failed to fetch teachers', err);

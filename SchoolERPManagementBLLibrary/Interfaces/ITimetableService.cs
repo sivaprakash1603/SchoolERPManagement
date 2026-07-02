@@ -11,4 +11,5 @@ public interface ITimetableService
     Task<IReadOnlyList<TeacherRequirementDTO>> GetTeacherRequirementsAsync(int periodsPerDay, int freePeriodsPerStaff, CancellationToken cancellationToken);
     Task<IReadOnlyList<TimetableResponseDTO>> GenerateTimetableAsync(GenerateTimetableRequestDTO request, CancellationToken cancellationToken);
     Task SaveGeneratedTimetableAsync(IReadOnlyList<TimetableResponseDTO> generatedTimetable, CancellationToken cancellationToken);
+    Task<TimetableResponseDTO> UpdateTimetableAsync(int id, UpdateTimetableDTO dto, CancellationToken cancellationToken);
 }

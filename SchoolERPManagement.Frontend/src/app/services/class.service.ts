@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface ClassResponseDTO {
   id: number;
@@ -16,7 +17,7 @@ export interface ClassResponseDTO {
   providedIn: 'root'
 })
 export class ClassService {
-  private readonly baseUrl = 'http://localhost:5203/api/Classes';
+  private readonly baseUrl = `${environment.apiUrl}/Classes`;
 
   constructor(private http: HttpClient) {}
 
@@ -30,7 +31,7 @@ export class ClassService {
   }
 
   updateClass(id: number, dto: { classname: string; section: string; classteacherId?: number; academicyearId?: number; subjectIds?: number[] }): Observable<ClassResponseDTO> {
-    return this.http.put<ClassResponseDTO>(`${this.baseUrl}/${id}`, dto);
+    return this.http.patch<ClassResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }
 
   deleteClass(id: number): Observable<any> {

@@ -349,7 +349,7 @@ public sealed class FeeService : IFeeService
             var feeStructure = await _feeStructureRepository.GetByIdAsync(feeStructureId);
             if (feeStructure != null)
             {
-                feeName = feeStructure.Feename;
+                feeName = feeStructure.Feename ?? "Unknown Fee";
             }
         }
 

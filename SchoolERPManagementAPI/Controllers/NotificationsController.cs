@@ -32,7 +32,7 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPut("user/{userId}/read/{notificationId}")]
+        [HttpPatch("user/{userId}/read/{notificationId}")]
         public async Task<IActionResult> MarkAsRead(int userId, int notificationId, CancellationToken cancellationToken)
         {
             var success = await _notificationService.MarkAsReadAsync(userId, notificationId, cancellationToken);
@@ -40,7 +40,7 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(new { success = true });
         }
 
-        [HttpPut("user/{userId}/readAll")]
+        [HttpPatch("user/{userId}/readAll")]
         public async Task<IActionResult> MarkAllAsRead(int userId, CancellationToken cancellationToken)
         {
             var success = await _notificationService.MarkAllAsReadAsync(userId, cancellationToken);

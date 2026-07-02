@@ -92,7 +92,7 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> UpdateParent(int id, [FromBody] UpdateParentDTO dto, CancellationToken cancellationToken)
         {

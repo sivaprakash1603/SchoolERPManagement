@@ -115,6 +115,11 @@ public sealed class TimetableService : ITimetableService
             .Include(s => s.Teachersubjects)
             .ToListAsync(cancellationToken);
 
+        var activeTeachers = await _teacherRepository.Query(false)
+            .Include(t => t.User)
+            .Where(t => t.User != null && t.User.Isactive == true)
+            .ToListAsync(cancellationToken);
+
         var requirements = new List<TeacherRequirementDTO>();
 
         foreach (var subject in subjects)
@@ -135,7 +140,7 @@ public sealed class TimetableService : ITimetableService
             }
 
             int requiredTeachers = (int)Math.Ceiling(totalRequiredPeriodsPerDay / maxPeriodsPerTeacher);
-            int availableTeachers = subject.Teachersubjects?.Select(ts => ts.Teacherid).Distinct().Count() ?? 0;
+            int availableTeachers = activeTeachers.Count(t => t.SubjectSpecialtyId == subject.Id || (subject.Teachersubjects != null && subject.Teachersubjects.Any(ts => ts.Teacherid == t.Id)));
 
             string status = availableTeachers >= requiredTeachers ? "Sufficient" : "Shortage";
 
@@ -178,9 +183,23 @@ public sealed class TimetableService : ITimetableService
         int teacherMaxPeriods = maxPeriodsPerDay - freePeriodsPerStaff;
 
         var teacherDailyPeriods = new Dictionary<string, Dictionary<int, int>>();
+        var teacherWeeklyPeriods = new Dictionary<int, int>();
+        var classSubjectDailyCount = new Dictionary<string, Dictionary<int, Dictionary<int, int>>>();
+        var classSubjectWeeklyCount = new Dictionary<int, Dictionary<int, int>>();
+
         foreach (var day in daysOfWeek)
         {
             teacherDailyPeriods[day] = new Dictionary<int, int>();
+            classSubjectDailyCount[day] = new Dictionary<int, Dictionary<int, int>>();
+            foreach (var classEntity in classes)
+            {
+                classSubjectDailyCount[day][classEntity.Id] = new Dictionary<int, int>();
+            }
+        }
+        
+        foreach (var classEntity in classes)
+        {
+            classSubjectWeeklyCount[classEntity.Id] = new Dictionary<int, int>();
         }
 
         int idCounter = -1;
@@ -194,20 +213,15 @@ public sealed class TimetableService : ITimetableService
 
                 var teachersForClass = classEntity.Teachersubjects?.ToList() ?? new List<Teachersubject>();
 
-                var shuffledSubjects = classSubjects.OrderBy(x => Guid.NewGuid()).ToList();
-                int subjectIndex = 0;
-
                 foreach (var timing in request.Timings.OrderBy(t => t.PeriodNumber))
                 {
-                    bool scheduled = false;
-                    for (int attempt = 0; attempt < classSubjects.Count; attempt++)
+                    // Find available subjects for this period
+                    var availableSubjects = new List<Subject>();
+                    
+                    foreach (var subject in classSubjects)
                     {
-                        var subject = shuffledSubjects[subjectIndex % shuffledSubjects.Count];
-                        subjectIndex++;
-
                         var ts = teachersForClass.FirstOrDefault(t => t.Subjectid == subject.Id);
                         int teacherId = ts?.Teacherid ?? 0;
-
                         if (teacherId == 0) continue;
 
                         bool isBusy = generatedTimetables.Any(t => 
@@ -215,34 +229,72 @@ public sealed class TimetableService : ITimetableService
                             t.Teacherid == teacherId && 
                             t.Starttime == TimeOnly.Parse(timing.StartTime)
                         );
-
                         if (isBusy) continue;
 
-                        if (!teacherDailyPeriods[day].ContainsKey(teacherId))
-                            teacherDailyPeriods[day][teacherId] = 0;
+                        if (!teacherDailyPeriods[day].ContainsKey(teacherId)) teacherDailyPeriods[day][teacherId] = 0;
+                        if (teacherDailyPeriods[day][teacherId] >= teacherMaxPeriods) continue;
 
-                        if (teacherDailyPeriods[day][teacherId] >= teacherMaxPeriods)
-                            continue;
-
-                        teacherDailyPeriods[day][teacherId]++;
-                        
-                        generatedTimetables.Add(new Timetable
-                        {
-                            Id = idCounter--,
-                            Classid = classEntity.Id,
-                            Class = classEntity,
-                            Subjectid = subject.Id,
-                            Subject = subject,
-                            Teacherid = teacherId,
-                            Teacher = allTeachers.FirstOrDefault(t => t.Id == teacherId),
-                            Dayofweek = day,
-                            Starttime = TimeOnly.Parse(timing.StartTime),
-                            Endtime = TimeOnly.Parse(timing.EndTime)
-                        });
-
-                        scheduled = true;
-                        break; 
+                        availableSubjects.Add(subject);
                     }
+
+                    if (!availableSubjects.Any()) continue; // No subject can be scheduled
+
+                    // Heuristic sorting:
+                    // 1. Least daily occurrences for this class
+                    // 2. Least weekly occurrences for this class
+                    // 3. Least daily periods for the teacher
+                    // 4. Least weekly periods for the teacher
+                    var bestSubject = availableSubjects.OrderBy(s => 
+                    {
+                        if (!classSubjectDailyCount[day][classEntity.Id].ContainsKey(s.Id)) classSubjectDailyCount[day][classEntity.Id][s.Id] = 0;
+                        return classSubjectDailyCount[day][classEntity.Id][s.Id];
+                    }).ThenBy(s => 
+                    {
+                        if (!classSubjectWeeklyCount[classEntity.Id].ContainsKey(s.Id)) classSubjectWeeklyCount[classEntity.Id][s.Id] = 0;
+                        return classSubjectWeeklyCount[classEntity.Id][s.Id];
+                    }).ThenBy(s => 
+                    {
+                        var ts = teachersForClass.FirstOrDefault(t => t.Subjectid == s.Id);
+                        int tId = ts?.Teacherid ?? 0;
+                        if (!teacherDailyPeriods[day].ContainsKey(tId)) return 0;
+                        return teacherDailyPeriods[day][tId];
+                    }).ThenBy(s => 
+                    {
+                        var ts = teachersForClass.FirstOrDefault(t => t.Subjectid == s.Id);
+                        int tId = ts?.Teacherid ?? 0;
+                        if (!teacherWeeklyPeriods.ContainsKey(tId)) return 0;
+                        return teacherWeeklyPeriods[tId];
+                    }).First();
+
+                    var selectedTs = teachersForClass.FirstOrDefault(t => t.Subjectid == bestSubject.Id);
+                    int selectedTeacherId = selectedTs?.Teacherid ?? 0;
+
+                    // Update tracking counts
+                    if (!classSubjectDailyCount[day][classEntity.Id].ContainsKey(bestSubject.Id)) classSubjectDailyCount[day][classEntity.Id][bestSubject.Id] = 0;
+                    classSubjectDailyCount[day][classEntity.Id][bestSubject.Id]++;
+
+                    if (!classSubjectWeeklyCount[classEntity.Id].ContainsKey(bestSubject.Id)) classSubjectWeeklyCount[classEntity.Id][bestSubject.Id] = 0;
+                    classSubjectWeeklyCount[classEntity.Id][bestSubject.Id]++;
+
+                    if (!teacherDailyPeriods[day].ContainsKey(selectedTeacherId)) teacherDailyPeriods[day][selectedTeacherId] = 0;
+                    teacherDailyPeriods[day][selectedTeacherId]++;
+
+                    if (!teacherWeeklyPeriods.ContainsKey(selectedTeacherId)) teacherWeeklyPeriods[selectedTeacherId] = 0;
+                    teacherWeeklyPeriods[selectedTeacherId]++;
+
+                    generatedTimetables.Add(new Timetable
+                    {
+                        Id = idCounter--,
+                        Classid = classEntity.Id,
+                        Class = classEntity,
+                        Subjectid = bestSubject.Id,
+                        Subject = bestSubject,
+                        Teacherid = selectedTeacherId,
+                        Teacher = allTeachers.FirstOrDefault(t => t.Id == selectedTeacherId)!,
+                        Dayofweek = day,
+                        Starttime = TimeOnly.Parse(timing.StartTime),
+                        Endtime = TimeOnly.Parse(timing.EndTime)
+                    });
                 }
             }
         }
@@ -292,5 +344,58 @@ public sealed class TimetableService : ITimetableService
         }
 
         await _timetableRepository.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<TimetableResponseDTO> UpdateTimetableAsync(int id, UpdateTimetableDTO dto, CancellationToken cancellationToken)
+    {
+        var slot = await _timetableRepository.GetByIdAsync(id);
+        if (slot is null)
+        {
+            throw new EntityNotFoundException("Timetable Slot", id.ToString());
+        }
+
+        if (await _subjectRepository.GetByIdAsync(dto.SubjectId) is null)
+        {
+            throw new EntityNotFoundException("Subject", dto.SubjectId.ToString());
+        }
+
+        if (await _teacherRepository.GetByIdAsync(dto.TeacherId) is null)
+        {
+            throw new EntityNotFoundException("Teacher", dto.TeacherId.ToString());
+        }
+
+        // Clash Detection (excluding current slot)
+        var hasTeacherClash = await _timetableRepository.Query(true)
+            .AnyAsync(item => item.Id != id && item.Teacherid == dto.TeacherId && item.Dayofweek == slot.Dayofweek && item.Starttime < slot.Endtime && slot.Starttime < item.Endtime, cancellationToken);
+
+        if (hasTeacherClash)
+        {
+            throw new BusinessRuleException($"Teacher is already assigned to another class during this time slot.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.RoomNo))
+        {
+            var hasRoomClash = await _timetableRepository.Query(true)
+                .AnyAsync(item => item.Id != id && item.Roomno == dto.RoomNo && item.Dayofweek == slot.Dayofweek && item.Starttime < slot.Endtime && slot.Starttime < item.Endtime, cancellationToken);
+
+            if (hasRoomClash)
+            {
+                throw new BusinessRuleException($"Room {dto.RoomNo} is already occupied during this time slot.");
+            }
+        }
+
+        slot.Subjectid = dto.SubjectId;
+        slot.Teacherid = dto.TeacherId;
+        slot.Roomno = dto.RoomNo;
+
+        await _timetableRepository.UpdateAsync(slot, save: true, ct: cancellationToken);
+
+        var updatedSlot = await _timetableRepository.Query(true)
+            .Include(t => t.Class)
+            .Include(t => t.Subject)
+            .Include(t => t.Teacher)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
+        return _mapper.Map<TimetableResponseDTO>(updatedSlot);
     }
 }

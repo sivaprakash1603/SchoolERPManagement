@@ -164,8 +164,10 @@ public class AppMappingProfile : Profile
                     : null,
                 src.Teachersubjects != null ? src.Teachersubjects.Count : 0,
                 src.SubjectSpecialtyId,
-                src.SubjectSpecialty != null ? src.SubjectSpecialty.Subjectname : null
+                src.SubjectSpecialty != null ? src.SubjectSpecialty.Subjectname : null,
+                null
             ));
+
         
         CreateMap<Teachersubject, TeacherSubjectResponseDTO>();
 

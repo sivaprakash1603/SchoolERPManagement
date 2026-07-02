@@ -33,7 +33,7 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id}/set-current")]
+        [HttpPatch("{id}/set-current")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> SetCurrentAcademicYear(int id, CancellationToken cancellationToken)
         {

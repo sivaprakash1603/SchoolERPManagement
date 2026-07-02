@@ -187,3 +187,39 @@
   color: var(--text-secondary);
   font-style: italic;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 767.98px) {
+  .day-row {
+    flex-direction: column;
+  }
+  
+  .day-header-col {
+    width: 100%;
+    min-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.65rem 1rem;
+    font-size: 0.75rem;
+  }
+  
+  .slots-col {
+    padding: 0.75rem;
+    flex-direction: column;
+  }
+  
+  .time-slot-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .slot-subject {
+    font-size: 0.85rem;
+  }
+
+  .slot-teacher, .slot-time {
+    font-size: 0.7rem;
+  }
+}

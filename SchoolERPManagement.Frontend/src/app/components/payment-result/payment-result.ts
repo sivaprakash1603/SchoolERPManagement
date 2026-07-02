@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FeeService, CheckoutSessionResultDTO } from '../../services/fee.service';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 
 @Component({
@@ -60,7 +61,7 @@ export class PaymentResultComponent implements OnInit {
 
     this.downloading.set(true);
     // Because this returns a file, we use HttpClient directly to get a Blob
-    const url = `http://localhost:5203/api/Fees/receipt/${details.transactionId}`;
+    const url = `${environment.apiUrl}/Fees/receipt/${details.transactionId}`;
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         const downloadUrl = window.URL.createObjectURL(blob);

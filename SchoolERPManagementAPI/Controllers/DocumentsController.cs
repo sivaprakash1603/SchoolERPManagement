@@ -42,7 +42,7 @@ namespace SchoolERPManagementAPI.Controllers
             return NoContent();
         }
 
-        [HttpPut("verify")]
+        [HttpPatch("verify")]
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> VerifyDocument([FromBody] SchoolERPManagementBLLibrary.DTOs.Document.VerifyDocumentDTO dto, CancellationToken cancellationToken)
         {

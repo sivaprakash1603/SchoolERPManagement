@@ -1,57 +1,104 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+/* ==========================================================================
+   Design Tokens — Refined Professional Palette
+   ========================================================================== */
 :root {
-  --font-sans: 'Inter', sans-serif;
-  --bg-canvas: #fafafa;
-  --bg-sidebar: #f5f6fa;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --bg-canvas: #f8f9fc;
+  --bg-sidebar: #ffffff;
   --bg-main: #ffffff;
-  --border-color: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --primary-accent: #3730a3; /* Deep Purple/Blue */
+  --border-color: #e8ecf1;
+  --text-primary: #1a1f36;
+  --text-secondary: #697386;
+  --primary-accent: #635bff;
+  --primary-accent-hover: #4b44d1;
+  --primary-accent-soft: rgba(99, 91, 255, 0.08);
+  --primary-accent-glow: rgba(99, 91, 255, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.03);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 }
 
 [data-bs-theme="dark"] {
-  --bg-canvas: #0f172a;
-  --bg-sidebar: #1e293b;
-  --bg-main: #0b0f19;
-  --border-color: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --primary-accent: #6366f1; /* Brighter purple for dark contrast */
+  --bg-canvas: #0a0e1a;
+  --bg-sidebar: #111827;
+  --bg-main: #151c2c;
+  --border-color: #1f2a3f;
+  --text-primary: #e8ecf0;
+  --text-secondary: #8892a4;
+  --primary-accent: #7c75ff;
+  --primary-accent-hover: #9590ff;
+  --primary-accent-soft: rgba(124, 117, 255, 0.1);
+  --primary-accent-glow: rgba(124, 117, 255, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+*, *::before, *::after {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-canvas);
   color: var(--text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  line-height: 1.6;
 }
 
 .sans-text { font-family: var(--font-sans); }
 
+/* ==========================================================================
+   Cards — Elevated Premium Design
+   ========================================================================== */
 .minimal-card {
   background-color: var(--bg-main);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.3s ease;
+  animation: cardEntrance 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.minimal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-accent-glow);
+}
+
+[data-bs-theme="dark"] .minimal-card:hover {
+  box-shadow: var(--shadow-lg);
 }
 
 .text-muted-custom {
   color: var(--text-secondary);
 }
 
-/* Mobile Sidebar Responsiveness */
+/* ==========================================================================
+   Layout — Sidebar & Main
+   ========================================================================== */
 .layout-wrapper {
   height: 100vh;
   overflow: hidden;
 }
 
 .sidebar-container {
-  width: 280px;
+  width: 270px;
   height: 100vh;
   background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   z-index: 1040;
 }
 
@@ -66,7 +113,7 @@ body {
   
   .sidebar-container.open {
     transform: translateX(0);
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.12);
   }
 
   .sidebar-backdrop {
@@ -75,9 +122,11 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     z-index: 1030;
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.3s ease;
   }
 }
 
@@ -88,12 +137,9 @@ body {
   }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Bootstrap 5 Theme Overrides to align with our premium design tokens */
+/* ==========================================================================
+   Bootstrap Theme Overrides
+   ========================================================================== */
 [data-bs-theme="light"], :root {
   --bs-body-bg: var(--bg-canvas);
   --bs-body-color: var(--text-primary);
@@ -109,43 +155,488 @@ body {
   --bs-tertiary-bg: var(--bg-sidebar);
 }
 
-/* Ensure form controls and tables match our theme variables */
+/* ==========================================================================
+   Form Controls — Refined & Polished
+   ========================================================================== */
 .form-control, .form-select {
   background-color: var(--bg-main) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
 }
 
 .form-control:focus, .form-select:focus {
   background-color: var(--bg-main) !important;
   color: var(--text-primary) !important;
   border-color: var(--primary-accent) !important;
-  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25) !important;
+  box-shadow: 0 0 0 3px var(--primary-accent-glow) !important;
 }
 
+.form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   Tables — Clean & Airy
+   ========================================================================== */
 .table {
   --bs-table-bg: transparent;
-  --bs-table-hover-bg: var(--bg-sidebar);
+  --bs-table-hover-bg: var(--primary-accent-soft);
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
+  font-size: 0.875rem;
 }
 
-.table th, .table td {
+.table th {
+  border-color: var(--border-color) !important;
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary) !important;
+}
+
+.table td {
   border-color: var(--border-color) !important;
 }
 
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+/* ==========================================================================
+   Modals — Premium Pop-in
+   ========================================================================== */
 .modal-content {
   background-color: var(--bg-main) !important;
-  border-color: var(--border-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
   color: var(--text-primary) !important;
+  box-shadow: var(--shadow-lg) !important;
+  overflow: hidden;
 }
 
-.modal-header, .modal-footer {
+.modal-header {
   border-color: var(--border-color) !important;
+  padding: 1.25rem 1.5rem;
 }
 
-/* Text Muted helper fallback */
+.modal-footer {
+  border-color: var(--border-color) !important;
+  padding: 1rem 1.5rem;
+}
+
+.modal.show .modal-dialog {
+  animation: modalScaleIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* ==========================================================================
+   Text Helpers
+   ========================================================================== */
 .text-muted {
   color: var(--text-secondary) !important;
 }
 
+/* ==========================================================================
+   Buttons — Tactile & Premium
+   ========================================================================== */
+.btn {
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+.btn:active {
+  transform: scale(0.97) !important;
+}
+
+.btn-primary {
+  background-color: var(--primary-accent) !important;
+  border-color: var(--primary-accent) !important;
+  color: #ffffff !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-accent-hover) !important;
+  border-color: var(--primary-accent-hover) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px var(--primary-accent-glow) !important;
+}
+
+.btn-outline-primary {
+  color: var(--primary-accent) !important;
+  border-color: var(--primary-accent) !important;
+  background-color: transparent !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-accent) !important;
+  color: #ffffff !important;
+  border-color: var(--primary-accent) !important;
+  box-shadow: 0 4px 12px var(--primary-accent-glow) !important;
+}
+
+.btn-outline-secondary {
+  color: var(--text-secondary) !important;
+  border-color: var(--border-color) !important;
+  background-color: transparent !important;
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--primary-accent-soft) !important;
+  color: var(--primary-accent) !important;
+  border-color: var(--primary-accent) !important;
+}
+
+.btn-secondary {
+  background-color: var(--bg-sidebar) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-canvas) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.btn-light {
+  background-color: var(--primary-accent-soft) !important;
+  border-color: transparent !important;
+  color: var(--primary-accent) !important;
+}
+
+.btn-light:hover {
+  background-color: var(--primary-accent) !important;
+  color: #ffffff !important;
+}
+
+.btn-light.text-danger {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+  color: #ef4444 !important;
+}
+
+.btn-light.text-danger:hover {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   Badge Refinements
+   ========================================================================== */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge.rounded-pill {
+  border-radius: 50rem !important;
+}
+
+/* ==========================================================================
+   Scrollbar — Subtle & Custom
+   ========================================================================== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ==========================================================================
+   Mobile Filter Bar Grid System
+   ========================================================================== */
+@media (max-width: 767.98px) {
+  .minimal-card.d-flex.flex-wrap.align-items-end {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    gap: 1rem 0.75rem !important;
+  }
+  
+  .minimal-card.d-flex.flex-wrap.align-items-end > div {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    grid-column: 1 / -1;
+    margin-bottom: 0 !important;
+  }
+  
+  .minimal-card.d-flex.flex-wrap.align-items-end > div:nth-last-child(2) {
+    grid-column: 1 / 2;
+  }
+  
+  .minimal-card.d-flex.flex-wrap.align-items-end > div:last-child,
+  .minimal-card.d-flex.flex-wrap.align-items-end > button:last-child {
+    grid-column: 2 / 3;
+    width: auto !important;
+    align-self: end;
+    justify-self: end;
+  }
+}
+
+/* ==========================================================================
+   Animations & Keyframes
+   ========================================================================== */
+
+/* Page/Card entrance - Framer Motion-style springy entrance */
+@keyframes cardEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(35px) scale(0.96);
+  }
+  60% {
+    opacity: 0.9;
+    transform: translateY(-6px) scale(1.015);
+  }
+  80% {
+    transform: translateY(2px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Reusable entrance class */
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Sidebar/Backdrop fade */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal pop-in */
+@keyframes modalScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Staggered card entrance delays */
+.row > [class*="col-"]:nth-child(1) > .minimal-card,
+.row > [class*="col-"]:nth-child(1) > .metric-box { animation-delay: 0s; }
+.row > [class*="col-"]:nth-child(2) > .minimal-card,
+.row > [class*="col-"]:nth-child(2) > .metric-box { animation-delay: 0.06s; }
+.row > [class*="col-"]:nth-child(3) > .minimal-card,
+.row > [class*="col-"]:nth-child(3) > .metric-box { animation-delay: 0.12s; }
+.row > [class*="col-"]:nth-child(4) > .minimal-card,
+.row > [class*="col-"]:nth-child(4) > .metric-box { animation-delay: 0.18s; }
+.row > [class*="col-"]:nth-child(5) > .minimal-card,
+.row > [class*="col-"]:nth-child(5) > .metric-box { animation-delay: 0.24s; }
+.row > [class*="col-"]:nth-child(6) > .minimal-card,
+.row > [class*="col-"]:nth-child(6) > .metric-box { animation-delay: 0.30s; }
+
+/* Toast entrance */
+.toast.show {
+  animation: slideUpFade 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVE DESIGN (< 768px)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+  /* --- Typography Scaling --- */
+  body {
+    font-size: 0.9rem;
+  }
+
+  h1, .fs-1 { font-size: 1.5rem !important; }
+  h2, .fs-2 { font-size: 1.3rem !important; }
+  h3, .fs-3 { font-size: 1.15rem !important; }
+  h4, .fs-4 { font-size: 1.05rem !important; }
+  h5, .fs-5 { font-size: 0.95rem !important; }
+  h6, .fs-6 { font-size: 0.875rem !important; }
+
+  /* --- Touch-Friendly Buttons --- */
+  .btn {
+    min-height: 44px;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.85rem;
+  }
+
+  .btn-sm {
+    min-height: 38px !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* --- Touch-Friendly Form Controls --- */
+  .form-control, .form-select {
+    min-height: 44px;
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+    padding: 0.5rem 0.75rem;
+  }
+
+  .form-label {
+    font-size: 0.75rem;
+  }
+
+  /* --- Cards: Tighter Padding --- */
+  .minimal-card {
+    border-radius: var(--radius-sm);
+  }
+
+  .minimal-card:hover {
+    transform: none; /* Disable hover lift on touch */
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* --- Tables: Better Mobile Readability --- */
+  .table {
+    font-size: 0.8rem;
+  }
+
+  .table th {
+    font-size: 0.65rem;
+    white-space: nowrap;
+  }
+
+  .table td, .table th {
+    padding: 0.5rem 0.4rem !important;
+  }
+
+  .table-responsive {
+    border-radius: var(--radius-sm);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- Modals: Near-Fullscreen on Mobile --- */
+  .modal-dialog {
+    margin: 0.5rem !important;
+    max-width: calc(100vw - 1rem) !important;
+  }
+
+  .modal-content {
+    border-radius: var(--radius-md) !important;
+  }
+
+  .modal-header {
+    padding: 1rem 1.25rem !important;
+  }
+
+  .modal-body {
+    padding: 1rem 1.25rem !important;
+  }
+
+  .modal-footer {
+    padding: 0.75rem 1.25rem !important;
+  }
+
+  /* Custom modals (modal-overlay pattern) */
+  .modal-card {
+    width: 95% !important;
+    max-width: 100% !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .modal-body-custom {
+    padding: 1rem !important;
+    max-height: 65vh;
+  }
+
+  .modal-header-custom {
+    padding: 1rem !important;
+  }
+
+  .modal-footer-custom {
+    padding: 0.75rem 1rem !important;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .modal-footer-custom .btn {
+    width: 100%;
+  }
+
+  /* --- Badge Sizing --- */
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.3em 0.55em;
+  }
+
+  /* --- Footer --- */
+  footer {
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+/* ==========================================================================
+   SMALL PHONE (< 576px) — Extra Tightening
+   ========================================================================== */
+@media (max-width: 575.98px) {
+
+  /* Stack filter controls vertically */
+  .minimal-card.d-flex.flex-wrap.align-items-end {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .minimal-card.d-flex.flex-wrap.align-items-end > div,
+  .minimal-card.d-flex.flex-wrap.align-items-end > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Dashboard stat cards — tighter padding */
+  .minimal-card.p-4 {
+    padding: 0.875rem !important;
+  }
+
+  /* Dashboard greeting */
+  .dashboard-wrapper h2.fs-2 {
+    font-size: 1.2rem !important;
+  }
+
+  /* Tighter container padding */
+  .container-fluid {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+}

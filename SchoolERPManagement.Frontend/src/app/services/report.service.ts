@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -7,7 +8,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 export class ReportService {
   private http = inject(HttpClient);
   // Base URL should match environment config. Assuming default local backend.
-  private apiUrl = 'http://localhost:5243/api/reports'; 
+  private apiUrl = `${environment.apiUrl}/reports`; 
 
   /**
    * Helper to trigger native browser download

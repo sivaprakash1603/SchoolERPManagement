@@ -94,7 +94,7 @@ public sealed class TeacherService : ITeacherService
                 teacher.Joiningdate, 
                 teacher.Qualifications,
                 null,
-                null,
+                teacher.User?.Username,
                 teacher.Classes?.FirstOrDefault()?.Classname,
                 teacher.Classes?.FirstOrDefault()?.Section,
                 teacher.User?.Email,
@@ -129,6 +129,8 @@ public sealed class TeacherService : ITeacherService
 
         var photoDoc = teacher.Teacherdocuments?.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo");
 
+        var assignments = teacher.Teachersubjects?.Select(ts => new SimpleTeacherAssignmentDTO(ts.Classid, ts.Subjectid)) ?? Array.Empty<SimpleTeacherAssignmentDTO>();
+
         return new TeacherResponseDTO(
             teacher.Id, 
             teacher.Userid, 
@@ -141,7 +143,11 @@ public sealed class TeacherService : ITeacherService
             teacher.Classes.FirstOrDefault()?.Classname, 
             teacher.Classes.FirstOrDefault()?.Section,
             teacher.User.Email,
-            photoDoc?.Bloburl
+            photoDoc?.Bloburl,
+            assignments.Count(),
+            null,
+            null,
+            assignments
         );
     }
 
@@ -161,6 +167,8 @@ public sealed class TeacherService : ITeacherService
 
         var photoDoc = teacher.Teacherdocuments?.FirstOrDefault(d => d.Documenttype == "Photo" || d.Documentname == "Photo");
 
+        var assignments = teacher.Teachersubjects?.Select(ts => new SimpleTeacherAssignmentDTO(ts.Classid, ts.Subjectid)) ?? Array.Empty<SimpleTeacherAssignmentDTO>();
+
         return new TeacherResponseDTO(
             teacher.Id, 
             teacher.Userid, 
@@ -173,7 +181,11 @@ public sealed class TeacherService : ITeacherService
             teacher.Classes.FirstOrDefault()?.Classname, 
             teacher.Classes.FirstOrDefault()?.Section,
             teacher.User.Email,
-            photoDoc?.Bloburl
+            photoDoc?.Bloburl,
+            assignments.Count(),
+            null,
+            null,
+            assignments
         );
     }
 
@@ -377,7 +389,7 @@ public sealed class TeacherService : ITeacherService
             updatedTeacher.Joiningdate,
             updatedTeacher.Qualifications,
             null,
-            null,
+            updatedTeacher.User?.Username,
             updatedTeacher.Classes?.FirstOrDefault()?.Classname,
             updatedTeacher.Classes?.FirstOrDefault()?.Section,
             updatedTeacher.User?.Email,

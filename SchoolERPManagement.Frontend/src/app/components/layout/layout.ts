@@ -6,6 +6,7 @@ import { Footer } from '../footer/footer';
 import { LayoutService } from '../../services/layout.service';
 import { ToastService } from '../../services/toast.service';
 import * as signalR from '@microsoft/signalr';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-layout',
@@ -24,7 +25,7 @@ export class Layout implements OnInit, OnDestroy {
     if (!token) return;
 
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5203/hubs/notification', {
+      .withUrl(`${environment.hubUrl}/notification`, {
         accessTokenFactory: () => token
       })
       .withAutomaticReconnect()

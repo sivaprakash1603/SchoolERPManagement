@@ -9,6 +9,7 @@ import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { ToastService } from '../../services/toast.service';
 import { TimetableService } from '../../services/timetable.service';
 import { FilterStateService } from '../../services/filter-state.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-documents',
@@ -575,7 +576,7 @@ export class Documents implements OnInit {
       url = this.selectedTeacher()?.profilePhotoUrl || '';
     }
     if (url && url.startsWith('/')) {
-      return `http://localhost:5203${url}`;
+      return `${environment.baseUrl}${url}`;
     }
     return url;
   }
@@ -587,14 +588,14 @@ export class Documents implements OnInit {
   getDirectoryPhotoUrl(item: any): string {
     const url = item.profilePhotoUrl || '';
     if (url && url.startsWith('/')) {
-      return `http://localhost:5203${url}`;
+      return `${environment.baseUrl}${url}`;
     }
     return url;
   }
 
   getFileUrl(blobUrl: string): string {
     if (blobUrl && blobUrl.startsWith('/')) {
-      return `http://localhost:5203${blobUrl}`;
+      return `${environment.baseUrl}${blobUrl}`;
     }
     return blobUrl;
   }

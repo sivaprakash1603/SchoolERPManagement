@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface FeeComponentDTO {
   id: number;
@@ -82,7 +83,7 @@ export interface CheckoutSessionResultDTO {
   providedIn: 'root'
 })
 export class FeeService {
-  private readonly baseUrl = 'http://localhost:5203/api/Fees';
+  private readonly baseUrl = `${environment.apiUrl}/Fees`;
 
   constructor(private http: HttpClient) {}
 

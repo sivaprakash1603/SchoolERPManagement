@@ -16,6 +16,7 @@ interface StudentUI extends StudentQueryResponseDTO {
 }
 
 import { RouterModule } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-students',
@@ -231,7 +232,7 @@ export class Students implements OnInit {
           ...dto,
           email: `${dto.name.split(' ')[0].toLowerCase()}@edupro.in`,
           avatarUrl: dto.profilePhotoUrl 
-            ? `http://localhost:5203${dto.profilePhotoUrl}` 
+            ? `${environment.baseUrl}${dto.profilePhotoUrl}` 
             : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(dto.name) + '&background=random'
         }));
         
@@ -496,7 +497,7 @@ export class Students implements OnInit {
 
   getDocumentUrl(type: string): string | null {
     const doc = this.currentDocuments().find(d => d.documentName === type);
-    return doc ? `http://localhost:5203${doc.blobUrl}` : null;
+    return doc ? `${environment.baseUrl}${doc.blobUrl}` : null;
   }
 
   isParentSelected(parentId: number): boolean {

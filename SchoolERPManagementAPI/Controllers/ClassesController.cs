@@ -32,7 +32,7 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateClass(int id, [FromBody] UpdateClassDTO dto, CancellationToken cancellationToken)
         {

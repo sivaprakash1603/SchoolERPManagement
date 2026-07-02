@@ -1,124 +1,182 @@
-<div class="login-wrapper min-vh-100 d-flex flex-row">
-    <!-- Left Side: Visual -->
-    <div class="visual-pane col-lg-7 d-none d-lg-flex flex-column justify-content-center align-items-start p-5">
-      <div class="brand-showcase ms-5">
-        <h1 class="display-3 fw-bold serif-text text-white mb-4">Elevate<br>Education.</h1>
-        <p class="lead text-white-50 sans-text w-75">
-          The complete ERP solution unifying students, teachers, and administration into one seamless experience.
-        </p>
-      </div>
-    </div>
-  
-    <!-- Right Side: Form -->
-    <div class="form-pane col-lg-5 col-12 d-flex flex-column align-items-center justify-content-center py-5">
-      
-      <!-- Mobile Branding (Hidden on Desktop) -->
-      <div class="mb-4 d-lg-none text-center">
-        <h1 class="display-4 fw-bold serif-text text-white mb-2">EduControl</h1>
-        <p class="text-white-50 sans-text small">Institutional ERP</p>
+<div class="login-split min-vh-100 d-flex">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       LEFT PANE — Brand, Parallax Orbs, Animated Quotes
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="left-pane d-none d-lg-flex flex-column position-relative overflow-hidden">
+    <!-- Grid Overlay -->
+    <div class="grid-overlay"></div>
+
+    <!-- Parallax Orbs -->
+    <div class="parallax-bg orb-1"></div>
+    <div class="parallax-bg orb-2"></div>
+    <div class="parallax-bg orb-3"></div>
+
+    <!-- Floating Decorative Shapes -->
+    <div class="floating-shape shape-1"></div>
+    <div class="floating-shape shape-2"></div>
+    <div class="floating-shape shape-3"></div>
+
+    <!-- Content -->
+    <div class="left-content d-flex flex-column justify-content-between h-100 p-5 position-relative z-2">
+      <!-- Brand Logo -->
+      <a [routerLink]="['/']" class="d-flex align-items-center gap-2 text-decoration-none">
+        <div class="d-flex align-items-center justify-content-center rounded-3 brand-logo">E</div>
+        <div>
+          <h5 class="fw-bold mb-0 logo-text">EduControl</h5>
+          <small class="logo-subtext">School ERP</small>
+        </div>
+      </a>
+
+      <!-- Quote Carousel -->
+      <div class="quote-section">
+        @for (quote of quotes; track $index) {
+          <div class="quote-item" [class.active]="activeQuoteIndex() === $index">
+            <div class="quote-icon mb-3">
+              <i class="bi bi-quote fs-1"></i>
+            </div>
+            <blockquote class="quote-text">{{ quote.text }}</blockquote>
+            <cite class="quote-author">— {{ quote.author }}</cite>
+          </div>
+        }
+
+        <!-- Dot Indicators -->
+        <div class="quote-dots d-flex gap-2 mt-4">
+          @for (quote of quotes; track $index) {
+            <button class="quote-dot" [class.active]="activeQuoteIndex() === $index"
+                    (click)="activeQuoteIndex.set($index)"></button>
+          }
+        </div>
       </div>
 
-      <div class="glass-card w-100 mx-3 mx-md-5 p-4 p-md-5" style="max-width: 450px;">
+      <!-- Footer -->
+      <p class="text-white-50 small mb-0">&copy; 2026 EduControl. All rights reserved.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       RIGHT PANE — Login Form
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="right-pane d-flex flex-column align-items-center justify-content-center position-relative">
+    <!-- Mobile Brand (hidden on desktop) -->
+    <div class="d-lg-none mb-4 text-center">
+      <a [routerLink]="['/']" class="d-flex align-items-center justify-content-center gap-2 text-decoration-none mb-3">
+        <div class="d-flex align-items-center justify-content-center rounded-3 brand-logo">E</div>
+        <div>
+          <h5 class="fw-bold mb-0" style="color: var(--text-primary);">EduControl</h5>
+        </div>
+      </a>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle-btn position-absolute"
+            (click)="themeService.toggleTheme()" aria-label="Toggle theme">
+      @if (themeService.isDarkMode()) {
+        <i class="bi bi-sun-fill text-warning" style="font-size: 1rem;"></i>
+      } @else {
+        <i class="bi bi-moon-fill" style="font-size: 0.9rem;"></i>
+      }
+    </button>
+
+    <!-- Login Card -->
+    <div class="login-card-wrapper reveal-item reveal-scale" style="--reveal-delay: 0.1s;">
+      <div class="login-card">
         @if (!isForgotPassword()) {
-          <div class="mb-4 mb-md-5 text-center text-lg-start">
-            <h2 class="serif-text text-white fw-semibold mb-2">Welcome Back</h2>
-            <p class="text-white-50 sans-text small">Please enter your credentials to access your portal.</p>
+          <div class="mb-4">
+            <h2 class="fw-bold mb-2 login-title">Welcome Back</h2>
+            <p class="text-secondary-custom small mb-0">Enter your credentials to access your portal.</p>
           </div>
-    
-          <form [formGroup]="loginForm" (ngSubmit)="handleLoginClick()" class="sans-text">
-            <!-- Error Alert -->
+
+          <form [formGroup]="loginForm" (ngSubmit)="handleLoginClick()">
             @if (errorMessage()) {
-              <div class="alert alert-danger custom-alert py-2 small mb-4" role="alert">
+              <div class="alert login-alert py-2 small mb-4" role="alert">
+                <i class="bi bi-exclamation-circle me-1"></i>
                 {{ errorMessage() }}
               </div>
             }
-    
-            <!-- Username Input -->
-            <div class="form-floating custom-floating mb-4">
-              <input type="text" class="form-control glass-input" id="username" placeholder="Username" formControlName="username"
-                     [class.is-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
-              <label for="username">Username</label>
-              @if (loginForm.get('username')?.hasError('required')) {
-                <div class="invalid-feedback text-warning small mt-1">
-                  Username is required.
-                </div>
+
+            <!-- Username -->
+            <div class="mb-3">
+              <label for="username" class="form-label small fw-semibold login-label">Username</label>
+              <div class="input-group">
+                <span class="input-group-text login-input-icon"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control login-input" id="username" placeholder="Enter username" formControlName="username"
+                       [class.is-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+              </div>
+              @if (loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched) {
+                <div class="text-danger small mt-1">Username is required.</div>
               }
-              @if (loginForm.get('username')?.hasError('pattern')) {
-                <div class="invalid-feedback text-warning small mt-1">
-                  Invalid username format.
-                </div>
-              }
-            </div>
-    
-            <!-- Password Input -->
-            <div class="form-floating custom-floating mb-5 position-relative">
-              <input [type]="showPassword() ? 'text' : 'password'" class="form-control glass-input pe-5" id="password" placeholder="Password" formControlName="password"
-                     [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-              <label for="password">Password</label>
-              <button type="button" class="btn btn-link password-toggle-btn text-white-50" (click)="togglePasswordVisibility()">
-                @if (!showPassword()) {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
-                    <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
-                    <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
-                  </svg>
-                } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
-                    <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7 7 0 0 0 2.79-.588M5.21 3.088A7 7 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474z"/>
-                    <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/>
-                  </svg>
-                }
-              </button>
-              @if (loginForm.get('password')?.hasError('required')) {
-                <div class="invalid-feedback text-warning small mt-1">
-                  Password is required.
-                </div>
+              @if (loginForm.get('username')?.hasError('pattern') && loginForm.get('username')?.touched) {
+                <div class="text-danger small mt-1">Invalid username format.</div>
               }
             </div>
-      
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary custom-btn w-100 py-3 fw-semibold" [disabled]="progress()">
+
+            <!-- Password -->
+            <div class="mb-4">
+              <label for="password" class="form-label small fw-semibold login-label">Password</label>
+              <div class="input-group">
+                <span class="input-group-text login-input-icon"><i class="bi bi-lock"></i></span>
+                <input [type]="showPassword() ? 'text' : 'password'" class="form-control login-input" id="password" placeholder="Enter password" formControlName="password"
+                       [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+                <button type="button" class="input-group-text login-input-icon login-eye-btn" (click)="togglePasswordVisibility()">
+                  @if (!showPassword()) {
+                    <i class="bi bi-eye"></i>
+                  } @else {
+                    <i class="bi bi-eye-slash"></i>
+                  }
+                </button>
+              </div>
+              @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+                <div class="text-danger small mt-1">Password is required.</div>
+              }
+            </div>
+
+            <button type="submit" class="btn login-submit-btn w-100 py-3 fw-semibold mb-3" [disabled]="progress()">
               @if (!progress()) {
-                <span>Sign In</span>
+                <span>Sign In <i class="bi bi-arrow-right ms-1"></i></span>
               } @else {
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
               }
             </button>
           </form>
-          
-          <div class="mt-4 text-center">
-            <button type="button" class="btn btn-link text-white-50 sans-text small text-decoration-none hover-white" (click)="isForgotPassword.set(true); errorMessage.set(null)">Forgot password?</button>
+
+          <div class="text-center">
+            <button type="button" class="btn btn-link text-secondary-custom small text-decoration-none p-0 login-forgot-link"
+                    (click)="isForgotPassword.set(true); errorMessage.set(null)">Forgot password?</button>
           </div>
         } @else {
-          <div class="mb-4 mb-md-5 text-center text-lg-start">
-            <h2 class="serif-text text-white fw-semibold mb-2">Forgot Password</h2>
-            <p class="text-white-50 sans-text small">Enter your email address and we'll send you a link to reset your password.</p>
+          <div class="mb-4">
+            <h2 class="fw-bold mb-2 login-title">Forgot Password</h2>
+            <p class="text-secondary-custom small mb-0">Enter your email and we'll send you a reset link.</p>
           </div>
-    
-          <form (ngSubmit)="handleForgotPasswordClick()" class="sans-text">
-            <!-- Error Alert -->
+
+          <form (ngSubmit)="handleForgotPasswordClick()">
             @if (errorMessage()) {
-              <div class="alert alert-danger custom-alert py-2 small mb-4" role="alert">
+              <div class="alert login-alert py-2 small mb-4" role="alert">
+                <i class="bi bi-exclamation-circle me-1"></i>
                 {{ errorMessage() }}
               </div>
             }
-    
-            <!-- Email Input -->
-            <div class="form-floating custom-floating mb-5">
-              <input type="email" class="form-control glass-input" id="forgotEmail" placeholder="Email Address" 
-                     [ngModel]="forgotPasswordEmail()" (ngModelChange)="forgotPasswordEmail.set($event)" name="forgotEmail" required>
-              <label for="forgotEmail">Email Address</label>
+
+            <div class="mb-4">
+              <label for="forgotEmail" class="form-label small fw-semibold login-label">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text login-input-icon"><i class="bi bi-envelope"></i></span>
+                <input type="email" class="form-control login-input" id="forgotEmail" placeholder="you@school.edu"
+                       [ngModel]="forgotPasswordEmail()" (ngModelChange)="forgotPasswordEmail.set($event)" name="forgotEmail" required>
+              </div>
             </div>
-      
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary custom-btn w-100 py-3 fw-semibold mb-3" [disabled]="progress() || !forgotPasswordEmail()">
+
+            <button type="submit" class="btn login-submit-btn w-100 py-3 fw-semibold mb-3" [disabled]="progress() || !forgotPasswordEmail()">
               @if (!progress()) {
                 <span>Send Reset Link</span>
               } @else {
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
               }
             </button>
-            
-            <button type="button" class="btn btn-outline-light w-100 py-3 fw-semibold" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;" (click)="isForgotPassword.set(false); errorMessage.set(null)" [disabled]="progress()">
+
+            <button type="button" class="btn btn-outline-secondary w-100 py-3 fw-semibold"
+                    (click)="isForgotPassword.set(false); errorMessage.set(null)" [disabled]="progress()">
               Back to Login
             </button>
           </form>
@@ -126,3 +184,4 @@
       </div>
     </div>
   </div>
+</div>

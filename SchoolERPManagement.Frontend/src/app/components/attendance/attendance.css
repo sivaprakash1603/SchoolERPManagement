@@ -26,19 +26,19 @@
 }
 
 .attendance-btn.active-present {
-  background-color: #10b981;
+  background-color: var(--color-success);
   color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
 }
 
 .attendance-btn.active-absent {
-  background-color: #ef4444;
+  background-color: var(--color-error);
   color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
 }
 
 .attendance-btn.active-late {
-  background-color: #f59e0b;
+  background-color: var(--color-warning);
   color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
 }
@@ -46,17 +46,17 @@
 /* Status Badges */
 .badge-present {
   background-color: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .badge-absent {
   background-color: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 .badge-late {
   background-color: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .remarks-input {
@@ -83,14 +83,14 @@
 
 /* Active Leave style */
 .attendance-btn.active-onleave {
-  background-color: #3b82f6;
+  background-color: var(--color-info);
   color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
 }
 
 .badge-onleave {
   background-color: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  color: var(--color-info);
 }
 
 /* =========================================
@@ -121,15 +121,15 @@
 }
 .stat-icon-present {
   background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+  color: var(--color-success);
 }
 .stat-icon-absent {
   background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  color: var(--color-error);
 }
 .stat-icon-leave {
   background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .stat-label {
@@ -210,7 +210,7 @@
 /* Calendar Status Colors */
 .cal-present {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--color-success);
 }
 .cal-present .calendar-date {
   color: #059669;
@@ -218,7 +218,7 @@
 
 .cal-absent {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--color-error);
 }
 .cal-absent .calendar-date {
   color: #dc2626;
@@ -226,7 +226,7 @@
 
 .cal-late {
   background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 .cal-late .calendar-date {
   color: #d97706;
@@ -234,7 +234,7 @@
 
 .cal-leave {
   background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  color: var(--color-info);
 }
 .cal-leave .calendar-date {
   color: #2563eb;
@@ -247,10 +247,10 @@
   border-radius: 50%;
   display: inline-block;
 }
-.legend-present { background: #10b981; }
-.legend-absent { background: #ef4444; }
-.legend-late { background: #f59e0b; }
-.legend-leave { background: #3b82f6; }
+.legend-present { background: var(--color-success); }
+.legend-absent { background: var(--color-error); }
+.legend-late { background: var(--color-warning); }
+.legend-leave { background: var(--color-info); }
 .legend-norecord {
   background: var(--bg-canvas, #f8f9fa);
   border: 1px solid var(--border-color, #dee2e6);
@@ -268,5 +268,35 @@
     width: 4px;
     height: 4px;
     margin-top: 2px;
+  }
+
+  /* Attendance toggle pills — larger for touch */
+  .attendance-toggle-group {
+    gap: 0.15rem;
+    padding: 0.2rem;
+  }
+
+  .attendance-btn {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.6rem;
+    min-height: 36px;
+  }
+
+  /* Stat cards — compact */
+  .stat-icon-circle {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  /* Remarks input */
+  .remarks-input {
+    font-size: 0.8rem;
+    min-height: 38px;
+  }
+
+  /* Tab buttons */
+  .active-tab, .btn.border-bottom {
+    font-size: 0.8rem !important;
   }
 }

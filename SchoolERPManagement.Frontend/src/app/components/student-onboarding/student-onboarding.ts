@@ -6,8 +6,8 @@ import { StudentService, ParentSelection } from '../../services/student.service'
 import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { ParentService, ParentResponseDTO } from '../../services/parent.service';
 import { DocumentService } from '../../services/document.service';
-
 import { AcademicYearService, AcademicYearResponseDTO } from '../../services/academic-year.service';
+import { ToastService } from '../../services/toast.service';
 
 interface SelectedParent {
   parentId: number;
@@ -35,10 +35,13 @@ export class StudentOnboarding implements OnInit {
   private parentService = inject(ParentService);
   private documentService = inject(DocumentService);
   private academicYearService = inject(AcademicYearService);
+  private toastService = inject(ToastService);
 
   // Wizard State
   currentStep = signal<number>(1);
   isSubmitting = signal(false);
+  isCancelled = false;
+  isSubmitted = false;
 
   // Data Loading
   classes = signal<ClassResponseDTO[]>([]);
@@ -260,14 +263,26 @@ export class StudentOnboarding implements OnInit {
         });
       }
 
-      // Done
-      this.isSubmitting.set(false);
+      this.isSubmitted = true;
+      this.toastService.success('Student, Parent, and Document records created successfully!');
       this.router.navigate(['/students']);
-      
-    } catch (err) {
-      console.error('Onboarding failed', err);
-      alert('Failed to complete onboarding. Please check inputs and try again.');
+
+    } catch (err: any) {
+      console.error('Student onboarding failed', err);
+      this.toastService.error(err.error?.message || 'Failed to complete student onboarding.');
+    } finally {
       this.isSubmitting.set(false);
     }
+  }
+
+  cancel() {
+    this.isCancelled = true;
+    this.router.navigate(['/students']);
+  }
+
+  canDeactivate(): boolean {
+    if (this.isCancelled || this.isSubmitted) return true;
+    this.toastService.warning('Please cancel or submit the form before navigating to another page.');
+    return false;
   }
 }

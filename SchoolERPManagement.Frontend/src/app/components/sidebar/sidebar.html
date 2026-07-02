@@ -1,22 +1,39 @@
-<aside class="sidebar-wrapper d-flex flex-column flex-shrink-0 p-4 position-relative h-100">
-  <div class="mb-5 mt-2 d-flex justify-content-between align-items-center">
-    <div>
-      <h3 class="fw-bold mb-0" style="color: var(--primary-accent);">EduControl</h3>
-      <small class="text-muted-custom" style="font-size: 0.75rem;">Institutional ERP</small>
+<aside class="sidebar-wrapper d-flex flex-column flex-shrink-0 p-3 position-relative h-100">
+  <!-- Brand Area -->
+  <div class="mb-4 mt-1 px-2 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center justify-content-center rounded-3" 
+           style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary-accent), #8b5cf6); color: white; font-weight: 800; font-size: 1rem;">
+        E
+      </div>
+      <div>
+        <h5 class="fw-bold mb-0" style="color: var(--text-primary); font-size: 1.05rem; letter-spacing: -0.01em;">EduControl</h5>
+        <small class="text-muted-custom" style="font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600;">School ERP</small>
+      </div>
     </div>
     <button class="btn btn-link text-muted-custom p-0 border-0 d-md-none" (click)="layoutService.closeSidebar()" aria-label="Close Sidebar">
-      <i class="bi bi-x-lg fs-4"></i>
+      <i class="bi bi-x-lg fs-5"></i>
     </button>
   </div>
+
+  <!-- Divider -->
+  <hr class="my-2 mx-2" style="border-color: var(--border-color); opacity: 0.5;">
   
-  <ul class="nav flex-column flex-nowrap mb-auto sidebar-nav pe-2 overflow-y-auto overflow-x-hidden">
-    @for (item of menuItems(); track item.route) {
-      <li class="nav-item">
-        <a [routerLink]="item.route" routerLinkActive="active" class="nav-link d-flex align-items-center gap-3 py-2 px-3 sans-text text-decoration-none" (click)="onMenuClick()">
-          <i class="bi {{ item.icon }} fs-5"></i>
-          <span>{{ item.label }}</span>
-        </a>
+  <ul class="nav flex-column flex-nowrap mb-auto sidebar-nav pe-1 overflow-y-auto overflow-x-hidden mt-2">
+    @for (group of groupedMenu(); track group.category) {
+      <li class="nav-item category-header mt-3 mb-1 px-3">
+        <span class="text-muted-custom fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.12em;">
+          {{ group.category }}
+        </span>
       </li>
+      @for (item of group.items; track item.route) {
+        <li class="nav-item">
+          <a [routerLink]="item.route" routerLinkActive="active" class="nav-link d-flex align-items-center gap-3 py-2 px-3 sans-text text-decoration-none" (click)="onMenuClick()">
+            <i class="bi {{ item.icon }}"></i>
+            <span>{{ item.label }}</span>
+          </a>
+        </li>
+      }
     }
   </ul>
 </aside>

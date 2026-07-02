@@ -206,6 +206,63 @@ public sealed class ExamService : IExamService
         return _mapper.Map<ExamScheduleResponseDTO>(savedSchedule);
     }
 
+    public async Task<ExamScheduleResponseDTO> UpdateExamScheduleAsync(int scheduleId, UpdateExamScheduleDTO dto, CancellationToken cancellationToken)
+    {
+        var schedule = await _examScheduleRepository.Query(true)
+            .FirstOrDefaultAsync(x => x.Id == scheduleId, cancellationToken);
+
+        if (schedule == null)
+        {
+            throw new EntityNotFoundException("ExamSchedule", scheduleId.ToString());
+        }
+
+        if (await _classRepository.GetByIdAsync(dto.ClassId) is null)
+        {
+            throw new EntityNotFoundException("Class", dto.ClassId.ToString());
+        }
+
+        if (await _subjectRepository.GetByIdAsync(dto.SubjectId) is null)
+        {
+            throw new EntityNotFoundException("Subject", dto.SubjectId.ToString());
+        }
+
+        // Check if subject or class is changed and results exist
+        if (schedule.Subjectid != dto.SubjectId || schedule.Classid != dto.ClassId)
+        {
+            var resultsExist = await _examResultRepository.Query(true)
+                .AnyAsync(r => r.Examid == schedule.Examid && r.Subjectid == schedule.Subjectid && r.Student.Studentenrollments.Any(se => se.Classid == schedule.Classid), cancellationToken);
+
+            if (resultsExist)
+            {
+                throw new BusinessRuleException("Cannot change the class or subject because marks have already been entered for the original schedule in this class.");
+            }
+
+            var existing = await _examScheduleRepository.Query(true)
+                .FirstOrDefaultAsync(x => x.Examid == schedule.Examid && x.Classid == dto.ClassId && x.Subjectid == dto.SubjectId && x.Id != scheduleId, cancellationToken);
+
+            if (existing != null)
+            {
+                throw new BusinessRuleException("This subject is already scheduled for the selected exam and class.");
+            }
+            
+            schedule.Subjectid = dto.SubjectId;
+            schedule.Classid = dto.ClassId;
+        }
+
+        schedule.Examdate = dto.ExamDate;
+        schedule.Durationminutes = dto.DurationMinutes;
+        schedule.Session = dto.Session;
+
+        await _examScheduleRepository.UpdateAsync(schedule, save: true, ct: cancellationToken);
+
+        var updatedSchedule = await _examScheduleRepository.Query(true)
+            .Include(x => x.Subject)
+            .Include(x => x.Class)
+            .FirstOrDefaultAsync(x => x.Id == schedule.Id, cancellationToken);
+
+        return _mapper.Map<ExamScheduleResponseDTO>(updatedSchedule);
+    }
+
     public async Task<IReadOnlyList<ExamScheduleResponseDTO>> GetExamSchedulesByExamIdAsync(int examId, CancellationToken cancellationToken)
     {
         var schedules = await _examScheduleRepository.Query(true)

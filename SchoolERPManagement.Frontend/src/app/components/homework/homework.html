@@ -257,7 +257,7 @@
                       Attachment
                     </p>
                     <a
-                      [href]="'http://localhost:5203' + hw.attachmentUrl"
+                      [href]="baseUrl + hw.attachmentUrl"
                       target="_blank"
                       class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
                     >
@@ -294,7 +294,7 @@
                     @if (hw.submission.uploadedFileUrl) {
                       <div class="mt-2">
                         <a
-                          [href]="'http://localhost:5203' + hw.submission.uploadedFileUrl"
+                          [href]="baseUrl + hw.submission.uploadedFileUrl"
                           target="_blank"
                           class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
                         >
@@ -534,7 +534,7 @@
                       <td class="px-4 py-3">
                         @if (hw.attachmentUrl) {
                           <a
-                            [href]="'http://localhost:5203' + hw.attachmentUrl"
+                            [href]="baseUrl + hw.attachmentUrl"
                             target="_blank"
                             class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
                           >
@@ -756,7 +756,7 @@
                               <div class="d-flex justify-content-end gap-1">
                                 @if (sub.uploadedFileUrl) {
                                   <a
-                                    [href]="'http://localhost:5203' + sub.uploadedFileUrl"
+                                    [href]="baseUrl + sub.uploadedFileUrl"
                                     target="_blank"
                                     class="btn btn-sm btn-light text-primary"
                                     title="Download File"

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface PagedResponse<T> {
   items: T[];
@@ -46,7 +47,7 @@ export interface ParentStatsDTO {
   providedIn: 'root'
 })
 export class ParentService {
-  private readonly baseUrl = 'http://localhost:5203/api/Parents';
+  private readonly baseUrl = `${environment.apiUrl}/Parents`;
 
   constructor(private http: HttpClient) {}
 
@@ -86,7 +87,7 @@ export class ParentService {
   }
 
   updateParent(id: number, dto: { name: string, email: string, phonenumber: string }): Observable<ParentResponseDTO> {
-    return this.http.put<ParentResponseDTO>(`${this.baseUrl}/${id}`, dto);
+    return this.http.patch<ParentResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }
 
   deleteParent(id: number): Observable<any> {

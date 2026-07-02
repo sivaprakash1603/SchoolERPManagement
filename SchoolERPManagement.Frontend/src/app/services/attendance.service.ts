@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AttendanceResponseDTO {
   id: number;
@@ -41,8 +42,8 @@ export interface StaffAttendanceRequestDTO {
   providedIn: 'root'
 })
 export class AttendanceService {
-  private readonly baseUrl = 'http://localhost:5203/api/Attendance';
-  private readonly staffBaseUrl = 'http://localhost:5203/api/StaffAttendance';
+  private readonly baseUrl = `${environment.apiUrl}/Attendance`;
+  private readonly staffBaseUrl = `${environment.apiUrl}/StaffAttendance`;
 
   constructor(private http: HttpClient) {}
 

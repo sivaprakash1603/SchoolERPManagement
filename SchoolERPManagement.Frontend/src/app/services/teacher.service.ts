@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface PagedResponse<T> {
   items: T[];
@@ -24,6 +25,7 @@ export interface TeacherResponseDTO {
   profilePhotoUrl?: string;
   subjectSpecialtyId?: number;
   subjectSpecialtyName?: string;
+  assignments?: { classId: number; subjectId: number }[];
 }
 
 export interface TeacherQueryRequest {
@@ -45,7 +47,7 @@ export interface TeacherStatsDTO {
   providedIn: 'root'
 })
 export class TeacherService {
-  private readonly baseUrl = 'http://localhost:5203/api/Teachers';
+  private readonly baseUrl = `${environment.apiUrl}/Teachers`;
 
   constructor(private http: HttpClient) {}
 
@@ -89,7 +91,7 @@ export class TeacherService {
   }
 
   getAllSubjects(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:5203/api/Subjects');
+    return this.http.get<any[]>(`${environment.apiUrl}/Subjects`);
   }
 
   getTeacherAssignments(teacherId: number): Observable<any[]> {
@@ -101,7 +103,7 @@ export class TeacherService {
   }
 
   updateTeacher(id: number, dto: { name: string, phonenumber?: string, qualifications?: string, subjectSpecialtyId?: number }): Observable<TeacherResponseDTO> {
-    return this.http.put<TeacherResponseDTO>(`${this.baseUrl}/${id}`, dto);
+    return this.http.patch<TeacherResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }
 
   deleteTeacher(id: number): Observable<void> {

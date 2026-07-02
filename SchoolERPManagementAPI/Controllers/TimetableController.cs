@@ -32,6 +32,14 @@ namespace SchoolERPManagementAPI.Controllers
             return Ok(result);
         }
 
+        [HttpPatch("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateTimetable(int id, [FromBody] UpdateTimetableDTO dto, CancellationToken cancellationToken)
+        {
+            var result = await _timetableService.UpdateTimetableAsync(id, dto, cancellationToken);
+            return Ok(result);
+        }
+
         [HttpGet("teacher/{teacherId}")]
         public async Task<IActionResult> GetTeacherTimetable(int teacherId, CancellationToken cancellationToken)
         {

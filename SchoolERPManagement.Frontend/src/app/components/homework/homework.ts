@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { Component, OnInit, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +21,7 @@ import { FilterStateService } from '../../services/filter-state.service';
   styleUrl: './homework.css',
 })
 export class Homework implements OnInit {
+  baseUrl = environment.baseUrl;
   private homeworkService = inject(HomeworkService);
   private academicYearService = inject(AcademicYearService);
   private classService = inject(ClassService);
@@ -219,6 +221,9 @@ export class Homework implements OnInit {
     this.fetchStudentHomeworks(studentId);
   }
 
+  teacherAssignments = signal<{classId: number, subjectId: number}[]>([]);
+  teacherTimetableSlots = signal<any[]>([]);
+
   fetchClasses(yearId: number) {
     this.classService.getAllClasses(yearId).subscribe({
       next: (res) => {
@@ -227,14 +232,20 @@ export class Homework implements OnInit {
           this.teacherService.getTeacherByUsername(username).subscribe({
             next: (teacher) => {
               this.resolvedTeacherId.set(teacher.id);
+              this.teacherAssignments.set(teacher.assignments || []);
+
               this.timetableService.getTeacherTimetable(teacher.id).subscribe({
                 next: (slots) => {
-                  const assignedClassIds = new Set<number>(slots.map(s => s.classId));
+                  this.teacherTimetableSlots.set(slots);
+                  const assignedClassIds = new Set<number>([
+                    ...slots.map(s => s.classId),
+                    ...(teacher.assignments || []).map(a => a.classId)
+                  ]);
+
                   const filtered = res.filter(c => 
-                    assignedClassIds.has(c.id) || 
-                    (teacher.className && c.classname.toLowerCase() === teacher.className.toLowerCase() && 
-                     (!teacher.section || c.section?.toLowerCase() === teacher.section.toLowerCase()))
+                    assignedClassIds.has(c.id)
                   );
+                  
                   this.classes.set(filtered);
                   if (filtered.length > 0) {
                     const savedId = this.selectedClassId();
@@ -252,10 +263,8 @@ export class Homework implements OnInit {
                 },
                 error: (err) => {
                   console.error('Failed to load teacher timetable', err);
-                  const filtered = res.filter(c => 
-                    teacher.className && c.classname.toLowerCase() === teacher.className.toLowerCase() && 
-                    (!teacher.section || c.section?.toLowerCase() === teacher.section.toLowerCase())
-                  );
+                  const assignedClassIds = new Set<number>((teacher.assignments || []).map(a => a.classId));
+                  const filtered = res.filter(c => assignedClassIds.has(c.id));
                   this.classes.set(filtered);
                   if (filtered.length > 0) {
                     const savedId = this.selectedClassId();
@@ -317,10 +326,20 @@ export class Homework implements OnInit {
 
     this.subjectService.getSubjectsByClass(classId).subscribe({
       next: (res) => {
-        this.subjects.set(res);
+        let filteredSubjects = res;
+        
+        if (this.userRole() === 'Teacher') {
+          const allowedSubjectIds = new Set<number>([
+            ...this.teacherTimetableSlots().filter(s => s.classId === classId).map(s => s.subjectId),
+            ...this.teacherAssignments().filter(a => a.classId === classId).map(a => a.subjectId)
+          ]);
+          filteredSubjects = res.filter(s => allowedSubjectIds.has(s.id));
+        }
+
+        this.subjects.set(filteredSubjects);
         // Reset selected subject filter if it's no longer available
         const currentSubId = this.selectedSubjectId();
-        if (currentSubId && !res.some((s) => s.id === currentSubId)) {
+        if (currentSubId && !filteredSubjects.some((s) => s.id === currentSubId)) {
           this.selectedSubjectId.set(null);
           this.fetchHomeworks();
         }

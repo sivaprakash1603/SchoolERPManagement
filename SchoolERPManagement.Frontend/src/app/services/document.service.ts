@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface DocumentResponseDTO {
   id: number;
@@ -29,7 +30,7 @@ export interface PendingDocumentDTO {
 })
 export class DocumentService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5203/api';
+  private apiUrl = environment.apiUrl;
 
   uploadStudentDocument(studentId: number, file: File, documentName?: string): Observable<DocumentResponseDTO> {
     const formData = new FormData();
@@ -63,7 +64,7 @@ export class DocumentService {
   }
 
   verifyDocument(dto: { documentType: string; documentId: number; status: string }): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/documents/verify`, dto);
+    return this.http.patch<any>(`${this.apiUrl}/documents/verify`, dto);
   }
 
   getPendingDocuments(): Observable<PendingDocumentDTO[]> {

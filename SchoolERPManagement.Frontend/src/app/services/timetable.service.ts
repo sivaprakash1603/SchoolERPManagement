@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface TimetableResponseDTO {
   id: number;
@@ -49,7 +50,7 @@ export interface GenerateTimetableRequestDTO {
   providedIn: 'root'
 })
 export class TimetableService {
-  private readonly baseUrl = 'http://localhost:5203/api/Timetable';
+  private readonly baseUrl = `${environment.apiUrl}/Timetable`;
 
   constructor(private http: HttpClient) {}
 
@@ -75,5 +76,9 @@ export class TimetableService {
 
   saveGeneratedTimetable(generatedTimetable: TimetableResponseDTO[]): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/save-generated`, generatedTimetable);
+  }
+
+  updateTimetableSlot(id: number, dto: { subjectId: number, teacherId: number, roomNo?: string }): Observable<TimetableResponseDTO> {
+    return this.http.patch<TimetableResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }
 }

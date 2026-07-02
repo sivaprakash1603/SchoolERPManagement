@@ -248,14 +248,23 @@
                             >
                           </td>
                           <td class="px-2 py-2 text-end">
-                            @if (isAdminOrTeacher()) {
-                              <button
-                                class="btn btn-sm btn-outline-primary fw-bold"
-                                (click)="selectSchedule(sch)"
-                              >
-                                Enter Grades
-                              </button>
-                            }
+                              @if (isAdminOrTeacher()) {
+                                <div class="d-flex justify-content-end gap-2">
+                                  <button
+                                    class="btn btn-sm btn-outline-secondary fw-bold d-flex align-items-center gap-1"
+                                    (click)="editSchedule(sch)"
+                                    title="Edit Schedule"
+                                  >
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                  </button>
+                                  <button
+                                    class="btn btn-sm btn-outline-primary fw-bold"
+                                    (click)="selectSchedule(sch)"
+                                  >
+                                    Enter Grades
+                                  </button>
+                                </div>
+                              }
                             @if (!isAdminOrTeacher()) {
                               <span
                                 class="fw-bold fs-6"
@@ -420,7 +429,9 @@
         <div class="modal-header-custom">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-calendar-plus fs-4" style="color: var(--primary-accent)"></i>
-            <h5 class="fw-bold mb-0" style="color: var(--text-primary)">Schedule Exam Subject</h5>
+            <h5 class="fw-bold mb-0" style="color: var(--text-primary)">
+              {{ editingScheduleId() ? 'Edit Exam Schedule' : 'Schedule Exam Subject' }}
+            </h5>
           </div>
           <button class="btn-close" (click)="closeScheduleModal()"></button>
         </div>
@@ -524,7 +535,7 @@
                 aria-hidden="true"
               ></span>
             }
-            {{ isSavingSchedule() ? 'Scheduling...' : 'Schedule' }}
+            {{ isSavingSchedule() ? (editingScheduleId() ? 'Updating...' : 'Scheduling...') : (editingScheduleId() ? 'Update' : 'Schedule') }}
           </button>
         </div>
       </div>

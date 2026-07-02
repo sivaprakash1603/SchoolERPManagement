@@ -139,3 +139,27 @@
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
 }
 
+/* Mobile Responsiveness */
+@media (max-width: 576px) {
+  .modal-card {
+    width: 98% !important;
+    max-width: 100% !important;
+  }
+
+  .detail-item {
+    padding: 0.5rem 0;
+  }
+
+  .detail-label {
+    font-size: 0.65rem;
+  }
+
+  .detail-val {
+    font-size: 0.85rem;
+  }
+
+  .bulk-action-bar-container {
+    bottom: 1rem;
+    width: 95%;
+  }
+}

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { Login } from './components/login/login';
+import { Landing } from './components/landing/landing';
 import { Dashboard } from './components/dashboard/dashboard';
 import { Students } from './components/students/students';
 import { Teachers } from './components/teachers/teachers';
@@ -24,9 +25,10 @@ import { PaymentResultComponent } from './components/payment-result/payment-resu
 import { NotificationsComponent } from './components/notifications/notifications';
 
 import { authGuard } from './guards/auth.guard';
+import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
 
 export const routes: Routes = [
-    { path: '', redirectTo: '/login', pathMatch: 'full' },
+    { path: '', component: Landing, pathMatch: 'full' },
     { path: 'login', component: Login },
     { path: 'reset-password', component: ResetPassword },
     { 
@@ -36,9 +38,9 @@ export const routes: Routes = [
         children: [
             { path: 'dashboard', component: Dashboard },
             { path: 'students', component: Students },
-            { path: 'students/onboarding', component: StudentOnboarding },
+            { path: 'students/onboarding', component: StudentOnboarding, canDeactivate: [unsavedChangesGuard] },
             { path: 'teachers', component: Teachers },
-            { path: 'teachers/onboarding', component: TeacherOnboarding },
+            { path: 'teachers/onboarding', component: TeacherOnboarding, canDeactivate: [unsavedChangesGuard] },
             { path: 'parents', component: Parents },
             { path: 'classes', component: Classes },
             { path: 'subjects', component: Subjects },

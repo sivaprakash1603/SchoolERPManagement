@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, AfterViewInit, ElementRef, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -8,18 +8,18 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { Auth } from '../../services/auth';
-import { Router, ActivatedRoute } from '@angular/router';
-
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { ThemeService } from '../../services/theme';
 import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.css',
 })
-export class ResetPassword implements OnInit {
+export class ResetPassword implements OnInit, AfterViewInit {
   resetForm!: FormGroup;
   progress = signal(false);
   errorMessage = signal<string | null>(null);
@@ -28,6 +28,9 @@ export class ResetPassword implements OnInit {
 
   email = '';
   token = '';
+
+  themeService = inject(ThemeService);
+  private el = inject(ElementRef);
 
   constructor(
     private fb: FormBuilder,
@@ -38,7 +41,6 @@ export class ResetPassword implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Extract query parameters
     this.email = this.route.snapshot.queryParamMap.get('email') || '';
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
 
@@ -61,6 +63,20 @@ export class ResetPassword implements OnInit {
       },
       { validators: this.passwordMatchValidator },
     );
+  }
+
+  ngAfterViewInit() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    const revealItems = this.el.nativeElement.querySelectorAll('.reveal-item');
+    revealItems.forEach((item: HTMLElement) => observer.observe(item));
   }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {

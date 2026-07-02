@@ -31,6 +31,8 @@ export class TeacherOnboarding implements OnInit {
   // Wizard State
   currentStep = signal<number>(1);
   isSubmitting = signal(false);
+  isCancelled = false;
+  isSubmitted = false;
 
   // Loaded Options
   classes = signal<ClassResponseDTO[]>([]);
@@ -213,14 +215,24 @@ export class TeacherOnboarding implements OnInit {
         });
       }
 
-      this.toastService.success(`Teacher ${this.teacherForm().name} onboarded successfully!`);
-      this.isSubmitting.set(false);
+      this.isSubmitted = true;
+      this.toastService.success('Teacher and document records created successfully!');
       this.router.navigate(['/teachers']);
-
-    } catch (err: any) {
-      console.error('Teacher onboarding failed', err);
-      this.toastService.error(err.error?.Message || 'Failed to complete teacher onboarding. Please try again.');
+    } catch (error: any) {
+      this.toastService.error(error?.error?.message || 'Failed to complete teacher onboarding.');
+    } finally {
       this.isSubmitting.set(false);
     }
+  }
+
+  cancel() {
+    this.isCancelled = true;
+    this.router.navigate(['/teachers']);
+  }
+
+  canDeactivate(): boolean {
+    if (this.isCancelled || this.isSubmitted) return true;
+    this.toastService.warning('Please cancel or submit the form before navigating to another page.');
+    return false;
   }
 }

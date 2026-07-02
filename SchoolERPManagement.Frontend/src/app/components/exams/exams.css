@@ -94,3 +94,21 @@
 .active-exam i {
   color: rgba(255, 255, 255, 0.8) !important;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 576px) {
+  .modal-card {
+    width: 98% !important;
+  }
+
+  /* Exam action buttons stack on very small screens */
+  .d-flex.justify-content-end.gap-2 {
+    flex-direction: column;
+    gap: 0.4rem !important;
+  }
+
+  .d-flex.justify-content-end.gap-2 .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

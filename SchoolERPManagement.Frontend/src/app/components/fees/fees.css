@@ -23,7 +23,7 @@
 }
 
 .card-paid {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%);
 }
 
 .card-pending {
@@ -76,7 +76,7 @@
 }
 
 .text-success {
-  color: #10b981 !important;
+  color: var(--color-success) !important;
 }
 
 .text-danger {
@@ -84,7 +84,7 @@
 }
 
 .text-warning {
-  color: #f59e0b !important;
+  color: var(--color-warning) !important;
 }
 
 .border-success-subtle {

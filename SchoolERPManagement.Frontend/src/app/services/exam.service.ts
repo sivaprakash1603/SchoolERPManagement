@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface ExamResponseDTO {
   id: number;
@@ -35,6 +36,14 @@ export interface CreateExamScheduleDTO {
   session: string;
 }
 
+export interface UpdateExamScheduleDTO {
+  classId: number;
+  subjectId: number;
+  examDate: string;
+  durationMinutes: number;
+  session: string;
+}
+
 export interface PublishResultDTO {
   examId: number;
   subjectId: number;
@@ -56,7 +65,7 @@ export interface ExamResultResponseDTO {
   providedIn: 'root'
 })
 export class ExamService {
-  private readonly baseUrl = 'http://localhost:5203/api/Exams';
+  private readonly baseUrl = `${environment.apiUrl}/Exams`;
 
   constructor(private http: HttpClient) {}
 
@@ -70,6 +79,10 @@ export class ExamService {
 
   createExamSchedule(dto: CreateExamScheduleDTO): Observable<ExamScheduleResponseDTO> {
     return this.http.post<ExamScheduleResponseDTO>(`${this.baseUrl}/schedule`, dto);
+  }
+
+  updateExamSchedule(scheduleId: number, dto: UpdateExamScheduleDTO): Observable<ExamScheduleResponseDTO> {
+    return this.http.put<ExamScheduleResponseDTO>(`${this.baseUrl}/schedules/${scheduleId}`, dto);
   }
 
   getExamSchedules(examId: number): Observable<ExamScheduleResponseDTO[]> {

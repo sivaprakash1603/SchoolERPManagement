@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface HomeworkResponseDTO {
   id: number;
@@ -55,7 +56,7 @@ export interface EvaluateHomeworkDTO {
   providedIn: 'root'
 })
 export class HomeworkService {
-  private readonly baseUrl = 'http://localhost:5203/api/Homework';
+  private readonly baseUrl = `${environment.apiUrl}/Homework`;
 
   constructor(private http: HttpClient) {}
 

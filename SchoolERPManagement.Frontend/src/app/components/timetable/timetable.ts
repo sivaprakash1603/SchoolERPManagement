@@ -65,6 +65,8 @@ export class Timetable implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   showCreateModal = signal(false);
+  showEditModal = signal(false);
+  editingSlotId = signal<number | null>(null);
   isSaving = signal(false);
   isAdmin = signal(false);
   userRole = signal<string>('Student');
@@ -97,6 +99,12 @@ export class Timetable implements OnInit {
     teacherId: null as number | null,
     startTime: '09:00',
     endTime: '10:00',
+    roomNo: '',
+  });
+
+  editForm = signal({
+    subjectId: null as number | null,
+    teacherId: null as number | null,
     roomNo: '',
   });
 
@@ -466,6 +474,55 @@ export class Timetable implements OnInit {
         console.error('Failed to create slot', err);
         this.isSaving.set(false);
         this.toastService.error(err.error?.message || 'Failed to add timetable slot.');
+      },
+    });
+  }
+
+
+  openEditModal(slot: TimetableResponseDTO) {
+    if (!this.isAdmin()) return;
+    this.editingSlotId.set(slot.id);
+    this.editForm.set({
+      subjectId: slot.subjectId,
+      teacherId: slot.teacherId,
+      roomNo: slot.roomNo || '',
+    });
+    this.showEditModal.set(true);
+  }
+
+  closeEditModal() {
+    this.showEditModal.set(false);
+    this.editingSlotId.set(null);
+  }
+
+  saveEditSlot() {
+    const slotId = this.editingSlotId();
+    if (!slotId) return;
+
+    const form = this.editForm();
+    if (!form.subjectId || !form.teacherId) {
+      this.toastService.warning('Subject and Teacher are required.');
+      return;
+    }
+
+    this.isSaving.set(true);
+    const payload = {
+      subjectId: form.subjectId,
+      teacherId: form.teacherId,
+      roomNo: form.roomNo || undefined,
+    };
+
+    this.timetableService.updateTimetableSlot(slotId, payload).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.toastService.success('Timetable slot updated successfully.');
+        this.closeEditModal();
+        this.fetchTimetable();
+      },
+      error: (err) => {
+        console.error('Failed to update slot', err);
+        this.isSaving.set(false);
+        this.toastService.error(err.error?.message || 'Failed to update timetable slot.');
       },
     });
   }

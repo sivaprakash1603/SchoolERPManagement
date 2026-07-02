@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AssetResponseDTO {
   id: number;
@@ -51,7 +52,7 @@ export interface AssetStatsDTO {
   providedIn: 'root'
 })
 export class AssetService {
-  private readonly baseUrl = 'http://localhost:5203/api/Assets';
+  private readonly baseUrl = `${environment.apiUrl}/Assets`;
 
   constructor(private http: HttpClient) {}
 

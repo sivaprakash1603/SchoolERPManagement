@@ -39,7 +39,7 @@ public class SubjectsController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut("{id}")]
+    [HttpPatch("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateSubject(int id, [FromBody] CreateSubjectDTO dto, CancellationToken cancellationToken)
     {

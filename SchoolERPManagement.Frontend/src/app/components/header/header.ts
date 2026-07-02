@@ -6,6 +6,7 @@ import { StudentService } from '../../services/student.service';
 import { TeacherService } from '../../services/teacher.service';
 import { ParentService } from '../../services/parent.service';
 import { NotificationService } from '../../services/notification.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-header',
@@ -23,6 +24,7 @@ export class Header implements OnInit {
 
   displayName = signal<string>('Loading...');
   displayPhotoUrl = signal<string | null>(null);
+  userRole = signal<string>('');
 
   notificationService = inject(NotificationService);
 
@@ -30,6 +32,7 @@ export class Header implements OnInit {
 
   ngOnInit() {
     const role = sessionStorage.getItem('role') || 'Admin';
+    this.userRole.set(role);
     const userIdStr = sessionStorage.getItem('userId');
     const userId = userIdStr ? parseInt(userIdStr, 10) : null;
     const username = sessionStorage.getItem('username') || '';
@@ -53,7 +56,7 @@ export class Header implements OnInit {
         next: (res) => {
           this.displayName.set(res.name);
           this.displayPhotoUrl.set(
-            res.profilePhotoUrl ? 'http://localhost:5203' + res.profilePhotoUrl : null,
+            res.profilePhotoUrl ? environment.baseUrl + res.profilePhotoUrl : null,
           );
         },
         error: () => this.displayName.set(username || 'Student'),
@@ -63,7 +66,7 @@ export class Header implements OnInit {
         next: (res) => {
           this.displayName.set(res.name);
           this.displayPhotoUrl.set(
-            res.profilePhotoUrl ? 'http://localhost:5203' + res.profilePhotoUrl : null,
+            res.profilePhotoUrl ? environment.baseUrl + res.profilePhotoUrl : null,
           );
         },
         error: () => this.displayName.set(username || 'Teacher'),

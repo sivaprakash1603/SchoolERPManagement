@@ -171,7 +171,9 @@
               </div>
               <div class="slots-col">
                 @for (slot of getSlotsForDay(day); track slot.id) {
-                  <div class="time-slot-card">
+                  <div class="time-slot-card"
+                       [class.cursor-pointer]="isAdmin()"
+                       (click)="openEditModal(slot)">
                     @if (slot.roomNo) {
                       <div class="slot-room">Rm {{ slot.roomNo }}</div>
                     }
@@ -415,4 +417,59 @@
       </div>
     </div>
   }
+}
+
+<!-- Edit Slot Modal -->
+@if (showEditModal()) {
+  <div class="modal-overlay" (click)="closeEditModal()">
+    <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header-custom">
+        <div class="d-flex align-items-center gap-2">
+          <div class="icon-circle bg-primary-subtle text-primary">
+            <i class="bi bi-pencil-square"></i>
+          </div>
+          <div>
+            <h4 class="mb-0 fw-bold" style="color: var(--primary-accent)">Edit Timetable Slot</h4>
+            <p class="text-muted-custom mb-0" style="font-size: 0.85rem">Update the subject, teacher, or room</p>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeEditModal()"></button>
+      </div>
+      <div class="modal-body-custom">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="modal-form-label"><i class="bi bi-book me-1"></i> Subject</label>
+            <select class="form-select" [(ngModel)]="editForm().subjectId">
+              <option [ngValue]="null" disabled>Select Subject</option>
+              @for (sub of subjects(); track sub.id) {
+                <option [ngValue]="sub.id">{{ sub.subjectName }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="modal-form-label"><i class="bi bi-person-badge me-1"></i> Teacher</label>
+            <select class="form-select" [(ngModel)]="editForm().teacherId">
+              <option [ngValue]="null" disabled>Select Teacher</option>
+              @for (teacher of teachers(); track teacher.id) {
+                <option [ngValue]="teacher.id">{{ teacher.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="modal-form-label"><i class="bi bi-door-open me-1"></i> Room / Location</label>
+            <input type="text" class="form-control" [(ngModel)]="editForm().roomNo" placeholder="Optional" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn btn-light px-4 rounded-3" (click)="closeEditModal()" [disabled]="isSaving()">Cancel</button>
+        <button class="btn btn-primary px-4 rounded-3 text-white fw-bold" (click)="saveEditSlot()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          }
+          {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
 }

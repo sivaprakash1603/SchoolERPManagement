@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { Component, signal, OnInit, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -36,6 +37,7 @@ interface TeacherAttendanceUI extends TeacherResponseDTO {
   styleUrl: './attendance.css',
 })
 export class Attendance implements OnInit {
+  baseUrl = environment.baseUrl;
   private attendanceService = inject(AttendanceService);
   private studentService = inject(StudentService);
   private teacherService = inject(TeacherService);

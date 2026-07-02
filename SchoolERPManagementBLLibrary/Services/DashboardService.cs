@@ -102,6 +102,12 @@ public sealed class DashboardService : IDashboardService
             ? await _classRepository.Query(true).Where(c => c.Academicyearid == targetYearId.Value).CountAsync(cancellationToken)
             : 0;
 
+        var totalSubjects = await _subjectRepository.Query(true).CountAsync(cancellationToken);
+        
+        var totalTimetables = targetYearId.HasValue
+            ? await _timetableRepository.Query(true).Where(t => t.Class.Academicyearid == targetYearId.Value).CountAsync(cancellationToken)
+            : 0;
+
         var feePaymentsQuery = _feePaymentRepository.Query(true);
         if (targetYearId.HasValue)
         {
@@ -185,6 +191,8 @@ public sealed class DashboardService : IDashboardService
             totalParents,
             totalRevenue,
             totalClasses,
+            totalSubjects,
+            totalTimetables,
             totalAssets,
             studentAttendanceRate,
             staffAttendanceRate,
