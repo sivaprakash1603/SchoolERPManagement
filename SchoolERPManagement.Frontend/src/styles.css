@@ -640,3 +640,21 @@ body {
     padding-right: 0.25rem !important;
   }
 }
+
+/* ==========================================================================
+   Global Loading Animation Styles
+   ========================================================================== */
+@keyframes loadingPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.loading-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: loadingPulse 1.8s ease-in-out infinite;
+  text-align: center;
+}

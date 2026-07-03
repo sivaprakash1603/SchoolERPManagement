@@ -1,9 +1,10 @@
 @if (loading()) {
   <div
-    class="d-flex justify-content-center align-items-center"
+    class="d-flex flex-column justify-content-center align-items-center gap-3"
     style="min-height: calc(100vh - 100px)"
   >
     <img src="/Book.svg" alt="Loading..." style="width: 100px; height: 100px" />
+    <div class="loading-text">Loading curriculum guides...</div>
   </div>
 } @else {
   <!-- Page Header -->
