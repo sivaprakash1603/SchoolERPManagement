@@ -21,7 +21,9 @@ public class StaffAttendanceServiceTests
         _staffAttendanceRepoMock = new Mock<IRepository<int, Staffattendance>>();
         _userRepoMock = new Mock<IRepository<int, User>>();
 
-        _staffAttendanceService = new StaffAttendanceService(_staffAttendanceRepoMock.Object, _userRepoMock.Object,
+        _staffAttendanceService = new StaffAttendanceService(
+            _staffAttendanceRepoMock.Object,
+            _userRepoMock.Object,
             SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }

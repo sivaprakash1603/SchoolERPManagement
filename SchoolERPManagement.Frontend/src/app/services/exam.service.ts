@@ -69,8 +69,9 @@ export class ExamService {
 
   constructor(private http: HttpClient) {}
 
-  getAllExams(): Observable<ExamResponseDTO[]> {
-    return this.http.get<ExamResponseDTO[]>(this.baseUrl);
+  getAllExams(classId?: number): Observable<ExamResponseDTO[]> {
+    const url = classId ? `${this.baseUrl}?classId=${classId}` : this.baseUrl;
+    return this.http.get<ExamResponseDTO[]>(url);
   }
 
   createExam(dto: CreateExamDTO): Observable<ExamResponseDTO> {

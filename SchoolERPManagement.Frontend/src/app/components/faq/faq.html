@@ -1,0 +1,92 @@
+<div class="faq-page position-relative overflow-hidden min-vh-100 d-flex flex-column">
+  <!-- Grid Overlay -->
+  <div class="grid-overlay"></div>
+
+  <!-- Parallax Orbs -->
+  <div class="parallax-bg orb-1"></div>
+  <div class="parallax-bg orb-2"></div>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar-faq d-flex align-items-center justify-content-between px-4 py-3 position-relative z-3">
+    <a [routerLink]="['/']" class="d-flex align-items-center gap-2 text-decoration-none">
+      <div class="d-flex align-items-center justify-content-center rounded-3 brand-logo">E</div>
+      <div>
+        <h5 class="fw-bold mb-0 logo-text">EduControl</h5>
+        <small class="logo-subtext">School ERP</small>
+      </div>
+    </a>
+
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-link p-0 border-0 d-flex align-items-center justify-content-center theme-toggle-btn"
+              (click)="themeService.toggleTheme()" aria-label="Toggle theme">
+        @if (themeService.isDarkMode()) {
+          <i class="bi bi-sun-fill text-warning" style="font-size: 1rem;"></i>
+        } @else {
+          <i class="bi bi-moon-fill" style="font-size: 0.9rem;"></i>
+        }
+      </button>
+
+      @if (isLoggedIn()) {
+        <a [routerLink]="['/dashboard']" class="btn btn-primary rounded-pill px-4 btn-nav">
+          <i class="bi bi-grid-fill me-1"></i> Dashboard
+        </a>
+      } @else {
+        <a [routerLink]="['/login']" class="btn btn-primary rounded-pill px-4 btn-nav">
+          Sign In
+        </a>
+      }
+    </div>
+  </nav>
+
+  <!-- Main FAQ Content -->
+  <div class="container flex-grow-1 position-relative z-2 py-5" style="max-width: 800px;">
+    <div class="text-center mb-5">
+      <div class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill mb-3">
+        🙋 HELP & DOCUMENTATION
+      </div>
+      <h1 class="display-5 fw-extrabold mb-3 text-gradient">Frequently Asked Questions</h1>
+      <p class="text-secondary-custom lead">Find quick answers to common questions about using the EduControl ERP system.</p>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="d-flex justify-content-center gap-2 flex-wrap mb-4">
+      @for (cat of categories; track cat.id) {
+        <button class="category-tab px-4 py-2 rounded-pill fw-semibold"
+                [class.active]="selectedCategory() === cat.id"
+                (click)="selectedCategory.set(cat.id); openIndex.set(null)">
+          {{ cat.name }}
+        </button>
+      }
+    </div>
+
+    <!-- Accordion List -->
+    <div class="faq-list d-flex flex-column gap-3">
+      @for (item of getFilteredFaqs(); track $index) {
+        <div class="faq-card border rounded-4 overflow-hidden" [class.open]="openIndex() === $index">
+          <button class="faq-trigger w-100 text-start d-flex align-items-center justify-content-between p-4 fw-bold"
+                  (click)="toggleAccordion($index)">
+            <span>{{ item.question }}</span>
+            <span class="faq-icon-wrapper d-flex align-items-center justify-content-center rounded-circle">
+              <i class="bi bi-chevron-down"></i>
+            </span>
+          </button>
+          <div class="faq-content">
+            <div class="p-4 pt-0 text-secondary-custom">
+              {{ item.answer }}
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="py-4 border-top text-center position-relative z-2 mt-auto" style="border-color: var(--border-color) !important;">
+    <div class="container">
+      <p class="text-secondary-custom small mb-0">
+        &copy; 2026 EduControl. All rights reserved. &middot; 
+        <a [routerLink]="isLoggedIn() ? ['/dashboard'] : ['/']" class="text-decoration-none hover-white">Return home</a>
+      </p>
+    </div>
+  </footer>
+</div>

@@ -27,6 +27,7 @@ export interface StudentQueryResponseDTO {
   dateofbirth?: string;
   parents?: ParentSelection[];
   classId?: number;
+  email?: string;
 }
 
 export interface ParentSelection {

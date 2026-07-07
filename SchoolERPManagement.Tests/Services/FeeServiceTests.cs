@@ -19,6 +19,8 @@ public class FeeServiceTests
     private readonly Mock<IRepository<int, Studentenrollment>> _studentEnrollmentRepoMock;
     private readonly Mock<IRepository<int, Feestructure>> _feeStructureRepoMock;
     private readonly Mock<IPaymentGatewayService> _paymentGatewayMock;
+    private readonly Mock<IEmailService> _emailServiceMock;
+    private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly FeeService _feeService;
 
     public FeeServiceTests()
@@ -28,13 +30,17 @@ public class FeeServiceTests
         _studentEnrollmentRepoMock = new Mock<IRepository<int, Studentenrollment>>();
         _feeStructureRepoMock = new Mock<IRepository<int, Feestructure>>();
         _paymentGatewayMock = new Mock<IPaymentGatewayService>();
+        _emailServiceMock = new Mock<IEmailService>();
+        _notificationServiceMock = new Mock<INotificationService>();
 
         _feeService = new FeeService(
             _feePaymentRepoMock.Object,
             _studentRepoMock.Object,
             _studentEnrollmentRepoMock.Object,
             _feeStructureRepoMock.Object,
-            new Mock<IConfiguration>().Object
+            new Mock<IConfiguration>().Object,
+            _emailServiceMock.Object,
+            _notificationServiceMock.Object
         );
     }
 

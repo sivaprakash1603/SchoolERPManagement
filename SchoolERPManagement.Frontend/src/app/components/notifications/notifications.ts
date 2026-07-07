@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { NotificationService, UserNotificationResponseDTO } from '../../services/notification.service';
 
@@ -16,7 +16,22 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   loading = signal(true);
   error = signal<string | null>(null);
   
+  // Filter and expansion state
+  activeFilter = signal<'all' | 'unread' | 'read'>('all');
+  expandedNotifications = signal<Set<number>>(new Set());
+  
   userId = Number(sessionStorage.getItem('userId'));
+
+  unreadCount = computed(() => this.notifications().filter(n => !n.isRead).length);
+  readCount = computed(() => this.notifications().filter(n => n.isRead).length);
+
+  filteredNotifications = computed(() => {
+    const list = this.notifications();
+    const filter = this.activeFilter();
+    if (filter === 'unread') return list.filter(n => !n.isRead);
+    if (filter === 'read') return list.filter(n => n.isRead);
+    return list;
+  });
 
   constructor() {
     // Listen for real-time notifications
@@ -45,8 +60,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // We do NOT disconnect SignalR here because the service maintains the connection 
-    // across the whole application lifecycle (for the sidebar badge).
   }
 
   loadNotifications(): void {
@@ -65,6 +78,46 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       }
     });
+  }
+
+  toggleExpand(notifId: number, notification: UserNotificationResponseDTO): void {
+    this.expandedNotifications.update(set => {
+      const newSet = new Set(set);
+      if (newSet.has(notifId)) {
+        newSet.delete(notifId);
+      } else {
+        newSet.add(notifId);
+      }
+      return newSet;
+    });
+
+    if (!notification.isRead) {
+      this.markAsRead(notification);
+    }
+  }
+
+  isExpanded(notifId: number): boolean {
+    return this.expandedNotifications().has(notifId);
+  }
+
+  getNotificationConfig(title: string): { icon: string, colorClass: string } {
+    const t = title.toLowerCase();
+    if (t.includes('homework') || t.includes('assignment')) {
+      return { icon: 'bi-journal-code', colorClass: 'homework-notif' };
+    }
+    if (t.includes('mark') || t.includes('result') || t.includes('grade') || t.includes('score')) {
+      return { icon: 'bi-award', colorClass: 'result-notif' };
+    }
+    if (t.includes('fee') || t.includes('payment') || t.includes('due')) {
+      return { icon: 'bi-credit-card', colorClass: 'fee-notif' };
+    }
+    if (t.includes('absent') || t.includes('attendance')) {
+      return { icon: 'bi-person-x', colorClass: 'attendance-notif' };
+    }
+    if (t.includes('document') || t.includes('verify') || t.includes('approved') || t.includes('rejected')) {
+      return { icon: 'bi-file-earmark-check', colorClass: 'document-notif' };
+    }
+    return { icon: 'bi-bell', colorClass: 'default-notif' };
   }
 
   markAsRead(notification: UserNotificationResponseDTO): void {

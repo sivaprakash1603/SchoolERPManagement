@@ -223,6 +223,10 @@ builder.Services.AddScoped<IDocumentVerificationStrategy, StudentDocumentVerific
 builder.Services.AddScoped<IDocumentVerificationStrategy, TeacherDocumentVerificationStrategy>();
 builder.Services.AddScoped<IDocumentVerificationStrategy, ParentDocumentVerificationStrategy>();
 
+// Register Automated Notification Background Services
+builder.Services.AddHostedService<HomeworkDueReminderService>();
+builder.Services.AddHostedService<FeesDueReminderService>();
+
 // Register FluentValidation Validators from the assembly containing our validators
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 #endregion
@@ -263,6 +267,7 @@ app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<UserLoggingMiddleware>();
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notification");

@@ -14,7 +14,7 @@
     <app-header></app-header>
     
     <main class="flex-grow-1 overflow-auto p-2 p-md-4" style="background-color: var(--bg-canvas);">
-      <div class="container-fluid py-2 px-0 px-md-3">
+      <div class="container-fluid py-2 px-0 px-md-3 position-relative" [@routeAnimation]="getRouteAnimationData()">
         <router-outlet></router-outlet>
       </div>
     </main>
@@ -25,18 +25,21 @@
   <!-- Toasts Container -->
   <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
     @for (toast of toastService.toasts(); track toast.id) {
-      <div class="toast show align-items-center text-white border-0 mb-2 p-2 d-flex" 
-           style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);"
-           [class.bg-success]="toast.type === 'success'" [class.bg-danger]="toast.type === 'danger'" [class.bg-warning]="toast.type === 'warning'" [class.bg-info]="toast.type === 'info'" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast show align-items-center mb-2 p-2 d-flex border" 
+           style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: all 0.3s ease;"
+           [style.background-color]="toast.type === 'success' ? 'var(--color-success)' : toast.type === 'danger' ? 'var(--color-error)' : toast.type === 'info' ? 'var(--color-info)' : '#fef3c7'"
+           [style.border-color]="toast.type === 'warning' ? '#fde047' : 'transparent'"
+           [style.color]="toast.type === 'warning' ? '#854d0e' : '#fff'"
+           role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex w-100 align-items-center justify-content-between">
           <div class="toast-body d-flex align-items-center gap-2 fw-semibold px-2" style="font-size: 0.875rem;">
             @if (toast.type === 'success') { <i class="bi bi-check-circle-fill fs-5"></i> }
             @if (toast.type === 'danger') { <i class="bi bi-exclamation-octagon-fill fs-5"></i> }
-            @if (toast.type === 'warning') { <i class="bi bi-exclamation-triangle-fill fs-5"></i> }
+            @if (toast.type === 'warning') { <i class="bi bi-exclamation-triangle-fill fs-5" style="color: #b45309;"></i> }
             @if (toast.type === 'info') { <i class="bi bi-info-circle-fill fs-5"></i> }
             {{ toast.message }}
           </div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" (click)="toastService.remove(toast.id)" aria-label="Close"></button>
+          <button type="button" class="btn-close me-2 m-auto" [class.btn-close-white]="toast.type !== 'warning'" (click)="toastService.remove(toast.id)" aria-label="Close"></button>
         </div>
       </div>
     }

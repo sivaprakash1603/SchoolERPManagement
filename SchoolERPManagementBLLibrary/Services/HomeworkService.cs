@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Homework;
+using SchoolERPManagementBLLibrary.DTOs.Notification;
 using SchoolERPManagementBLLibrary.Exceptions;
 using SchoolERPManagementBLLibrary.Interfaces;
 using SchoolERPManagementDALLibrary.Interfaces;
@@ -19,6 +20,7 @@ public sealed class HomeworkService : IHomeworkService
     private readonly IRepository<int, Teachersubject> _teacherSubjectRepository;
     private readonly IRepository<int, Timetable> _timetableRepository;
     private readonly IFileStorageService _fileStorageService;
+    private readonly INotificationService _notificationService;
     private readonly IMapper _mapper;
 
     public HomeworkService(
@@ -31,6 +33,7 @@ public sealed class HomeworkService : IHomeworkService
         IRepository<int, Teachersubject> teacherSubjectRepository,
         IRepository<int, Timetable> timetableRepository,
         IFileStorageService fileStorageService,
+        INotificationService notificationService,
         IMapper mapper)
     {
         _homeworkRepository = homeworkRepository;
@@ -42,6 +45,7 @@ public sealed class HomeworkService : IHomeworkService
         _teacherSubjectRepository = teacherSubjectRepository;
         _timetableRepository = timetableRepository;
         _fileStorageService = fileStorageService;
+        _notificationService = notificationService;
         _mapper = mapper;
     }
 
@@ -68,6 +72,27 @@ public sealed class HomeworkService : IHomeworkService
         };
 
         await _homeworkRepository.AddAsync(homework, save: true, ct: cancellationToken);
+
+        // Fetch enrolled student user IDs for the class
+        var studentUserIds = await _studentRepository.Query(true)
+            .Where(s => s.Studentenrollments.Any(e => e.Classid == dto.ClassId))
+            .Select(s => s.Userid)
+            .ToListAsync(cancellationToken);
+
+        if (studentUserIds.Any())
+        {
+            var teacherEntity = await _teacherRepository.GetByIdAsync(dto.TeacherId);
+            int? senderUserId = teacherEntity?.Userid;
+
+            var notificationDto = new SendNotificationDTO(
+                Title: "New Homework Posted",
+                Message: $"A new homework assignment '{dto.Title}' has been posted.",
+                CreatedByUserId: senderUserId,
+                TargetUserIds: studentUserIds
+            );
+            await _notificationService.SendNotificationAsync(notificationDto, cancellationToken);
+        }
+
         return _mapper.Map<HomeworkResponseDTO>(homework);
     }
 
@@ -119,7 +144,8 @@ public sealed class HomeworkService : IHomeworkService
                 Homeworkid = dto.HomeworkId,
                 Studentid = dto.StudentId,
                 Uploadedfileurl = uploadedFileUrl,
-                Submittedat = DateTime.UtcNow
+                Submittedat = DateTime.UtcNow,
+                Verificationstatus = "pending"
             };
 
             await _submissionRepository.AddAsync(submission, save: true, ct: cancellationToken);
@@ -132,6 +158,7 @@ public sealed class HomeworkService : IHomeworkService
                 submission.Uploadedfileurl = uploadedFileUrl;
             }
             submission.Submittedat = DateTime.UtcNow;
+            submission.Verificationstatus = "pending";
             await _submissionRepository.UpdateAsync(submission, save: true, ct: cancellationToken);
         }
 
@@ -161,6 +188,22 @@ public sealed class HomeworkService : IHomeworkService
         submission.Verificationstatus = dto.VerificationStatus?.ToLower();
 
         await _submissionRepository.UpdateAsync(submission, save: true, ct: cancellationToken);
+
+        // Fetch student user details and homework details to notify
+        var studentEntity = await _studentRepository.GetByIdAsync(submission.Studentid);
+        var homeworkEntity = await _homeworkRepository.GetByIdAsync(submission.Homeworkid);
+
+        if (studentEntity != null && homeworkEntity != null)
+        {
+            var notificationDto = new SendNotificationDTO(
+                Title: "Homework Graded",
+                Message: $"Your submission for homework '{homeworkEntity.Title}' has been graded. Status: {submission.Verificationstatus}. Marks: {submission.Marks}.",
+                CreatedByUserId: userId,
+                TargetUserIds: new[] { studentEntity.Userid }
+            );
+            await _notificationService.SendNotificationAsync(notificationDto, cancellationToken);
+        }
+
         return _mapper.Map<HomeworkSubmissionResponseDTO>(submission);
     }
 
@@ -274,5 +317,47 @@ public sealed class HomeworkService : IHomeworkService
         {
             throw new BusinessRuleException("The teacher is not assigned to teach this subject for this class.");
         }
+    }
+
+    public async Task<bool> DeleteSubmissionAsync(int submissionId, int? userId, string userRole, CancellationToken cancellationToken)
+    {
+        var submission = await _submissionRepository.GetByIdAsync(submissionId);
+        if (submission is null)
+        {
+            throw new EntityNotFoundException("Homework submission", submissionId.ToString());
+        }
+
+        // Only allow deletion if submission is pending/waiting for grading
+        var status = submission.Verificationstatus?.ToLower();
+        if (status != null && status != "pending")
+        {
+            throw new BusinessRuleException("Cannot unsubmit this homework assignment as it has already been evaluated.");
+        }
+
+        // Security check
+        if (userRole != "Admin")
+        {
+            if (!userId.HasValue)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            var student = await _studentRepository.Query(true)
+                .FirstOrDefaultAsync(s => s.Userid == userId.Value, cancellationToken);
+
+            if (student is null || submission.Studentid != student.Id)
+            {
+                throw new BusinessRuleException("You do not have permission to delete/unsubmit this homework.");
+            }
+        }
+
+        // Delete attachment if present
+        if (!string.IsNullOrEmpty(submission.Uploadedfileurl))
+        {
+            _fileStorageService.DeleteFile(submission.Uploadedfileurl);
+        }
+
+        await _submissionRepository.DeleteAsync(submission, save: true, ct: cancellationToken);
+        return true;
     }
 }

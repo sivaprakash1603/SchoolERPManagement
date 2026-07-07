@@ -230,7 +230,7 @@ export class Students implements OnInit {
       next: (response: PagedResponse<StudentQueryResponseDTO>) => {
         const mappedData = response.items.map(dto => ({
           ...dto,
-          email: `${dto.name.split(' ')[0].toLowerCase()}@edupro.in`,
+          email: dto.email || `${dto.name.replace(/\s+/g, '').toLowerCase()}@school.edu`,
           avatarUrl: dto.profilePhotoUrl 
             ? `${environment.baseUrl}${dto.profilePhotoUrl}` 
             : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(dto.name) + '&background=random'
@@ -521,6 +521,27 @@ export class Students implements OnInit {
   saveStudent() {
     const studentId = this.selectedStudent()?.id;
     if (!studentId) return;
+
+    if (this.editForm().admissiondate) {
+      const selectedDate = new Date(this.editForm().admissiondate);
+      const today = new Date();
+      selectedDate.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      if (selectedDate > today) {
+        this.toastService.warning('Admission date cannot be in the future.');
+        return;
+      }
+    }
+    if (this.editForm().dateofbirth) {
+      const selectedDate = new Date(this.editForm().dateofbirth);
+      const today = new Date();
+      selectedDate.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      if (selectedDate > today) {
+        this.toastService.warning('Date of birth cannot be in the future.');
+        return;
+      }
+    }
 
     this.isSaving.set(true);
     const updateDto = {

@@ -216,8 +216,11 @@ export class Timetable implements OnInit {
               next: (children) => {
                 this.parentChildren.set(children);
                 if (children.length > 0) {
-                  const child = children[0];
+                  const savedId = this.parentService.selectedChildId;
+                  const child = (savedId && children.find(c => c.studentId === savedId)) || children[0];
                   this.selectedChildId.set(child.studentId);
+                  this.parentService.selectedChildId = child.studentId;
+                  
                   if (child.classId) {
                     this.selectedClassId.set(child.classId);
                     this.fetchTimetable();
@@ -277,10 +280,12 @@ export class Timetable implements OnInit {
     });
   }
 
-  onChildChange(studentId: number) {
-    this.selectedChildId.set(studentId);
+  onChildChange(studentId: any) {
+    const parsedId = Number(studentId);
+    this.selectedChildId.set(parsedId);
+    this.parentService.selectedChildId = parsedId;
 
-    const child = this.parentChildren().find((c) => c.studentId === studentId);
+    const child = this.parentChildren().find((c) => c.studentId === parsedId);
     if (child && child.classId) {
       this.selectedClassId.set(child.classId);
       this.fetchTimetable();

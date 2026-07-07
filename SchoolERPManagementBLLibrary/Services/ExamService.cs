@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Exam;
+using SchoolERPManagementBLLibrary.DTOs.Notification;
 using SchoolERPManagementBLLibrary.Exceptions;
 using SchoolERPManagementBLLibrary.Interfaces;
 using SchoolERPManagementDALLibrary.Interfaces;
@@ -18,6 +19,7 @@ public sealed class ExamService : IExamService
     private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
     private readonly IRepository<int, Examschedule> _examScheduleRepository;
     private readonly IRepository<int, Class> _classRepository;
+    private readonly INotificationService _notificationService;
     private readonly IMapper _mapper;
 
     public ExamService(
@@ -29,6 +31,7 @@ public sealed class ExamService : IExamService
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
         IRepository<int, Examschedule> examScheduleRepository,
         IRepository<int, Class> classRepository,
+        INotificationService notificationService,
         IMapper mapper)
     {
         _examRepository = examRepository;
@@ -39,6 +42,7 @@ public sealed class ExamService : IExamService
         _studentEnrollmentRepository = studentEnrollmentRepository;
         _examScheduleRepository = examScheduleRepository;
         _classRepository = classRepository;
+        _notificationService = notificationService;
         _mapper = mapper;
     }
 
@@ -117,6 +121,33 @@ public sealed class ExamService : IExamService
             await _examResultRepository.UpdateAsync(result, save: true, ct: cancellationToken);
         }
 
+        // Fetch student and their parents' UserIds to notify them
+        var studentWithParents = await _studentRepository.Query(true)
+            .Include(s => s.Studentparents)
+            .ThenInclude(sp => sp.Parent)
+            .FirstOrDefaultAsync(s => s.Id == dto.StudentId, cancellationToken);
+
+        if (studentWithParents != null)
+        {
+            var targetUserIds = new List<int> { studentWithParents.Userid };
+            var parentUserIds = studentWithParents.Studentparents
+                .Where(sp => sp.Parent != null)
+                .Select(sp => sp.Parent.Userid)
+                .ToList();
+            targetUserIds.AddRange(parentUserIds);
+
+            var examEntity = await _examRepository.GetByIdAsync(dto.ExamId);
+            var subjectEntity = await _subjectRepository.GetByIdAsync(dto.SubjectId);
+
+            var notificationDto = new SendNotificationDTO(
+                Title: "New Subject Mark Published",
+                Message: $"Marks published for exam '{examEntity?.Examname}' - Subject: '{subjectEntity?.Subjectname}'. Marks: {dto.Marks}.",
+                CreatedByUserId: null,
+                TargetUserIds: targetUserIds
+            );
+            await _notificationService.SendNotificationAsync(notificationDto, cancellationToken);
+        }
+
         return _mapper.Map<ExamResultResponseDTO>(result);
     }
 
@@ -153,9 +184,22 @@ public sealed class ExamService : IExamService
         return _mapper.Map<IReadOnlyList<ExamResultResponseDTO>>(items);
     }
 
-    public async Task<IReadOnlyList<ExamResponseDTO>> GetAllExamsAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ExamResponseDTO>> GetAllExamsAsync(int? classId, CancellationToken cancellationToken)
     {
-        var exams = await _examRepository.Query(true)
+        var query = _examRepository.Query(true);
+        
+        if (classId.HasValue)
+        {
+            var examIdsWithSchedules = await _examScheduleRepository.Query(true)
+                .Where(s => s.Classid == classId.Value)
+                .Select(s => s.Examid)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+                
+            query = query.Where(x => examIdsWithSchedules.Contains(x.Id));
+        }
+
+        var exams = await query
             .OrderByDescending(x => x.Id)
             .ToListAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<ExamResponseDTO>>(exams);

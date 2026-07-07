@@ -11,4 +11,5 @@ public interface IHomeworkService
     Task<IReadOnlyList<HomeworkResponseDTO>> GetHomeworksByUserIdAsync(int userId, CancellationToken cancellationToken);
     Task<IReadOnlyList<HomeworkResponseDTO>> GetHomeworksByStudentIdAsync(int studentId, CancellationToken cancellationToken);
     Task<IReadOnlyList<HomeworkSubmissionDetailsDTO>> GetSubmissionsByHomeworkIdAsync(int homeworkId, CancellationToken cancellationToken);
+    Task<bool> DeleteSubmissionAsync(int submissionId, int? userId, string userRole, CancellationToken cancellationToken);
 }

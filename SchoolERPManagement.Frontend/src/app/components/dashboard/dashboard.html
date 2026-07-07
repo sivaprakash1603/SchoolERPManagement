@@ -564,8 +564,57 @@
         </div>
       </div>
 
-      <div class="row g-4">
-        <div class="col-lg-5">
+      <!-- Alerts & Upcoming Events Row -->
+      <div class="row g-4 mb-4">
+        <!-- System Alerts & Warnings -->
+        <div class="col-lg-6">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text-primary)">
+              <i class="bi bi-shield-exclamation text-danger"></i> System Alerts & Warnings
+            </h5>
+            <div class="d-flex flex-column gap-3">
+              @for (alert of systemAlerts(); track alert.message) {
+                <div class="alert d-flex align-items-center gap-3 mb-0 p-3 rounded-3" 
+                     [class.alert-danger]="alert.type === 'danger'"
+                     [class.alert-warning]="alert.type === 'warning'"
+                     [class.alert-info]="alert.type === 'info'"
+                     style="border: 1px solid rgba(0,0,0,0.05);">
+                  <i class="bi {{ alert.icon }} fs-5"></i>
+                  <div class="flex-grow-1 small fw-semibold">{{ alert.message }}</div>
+                  <a [routerLink]="[alert.route]" class="btn btn-sm btn-link p-0 text-decoration-none fw-bold">Resolve</a>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Events & Calendar Highlights -->
+        <div class="col-lg-6">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text-primary)">
+              <i class="bi bi-calendar-event text-primary"></i> Upcoming Events
+            </h5>
+            <div class="d-flex flex-column gap-3">
+              @for (event of upcomingEvents(); track event.title) {
+                <div class="d-flex align-items-center gap-3 p-2 rounded-3 border" style="border-color: var(--border-color) !important; background-color: var(--bg-sidebar);">
+                  <div class="text-center py-2 px-3 rounded text-white fw-bold bg-primary-soft text-primary" style="min-width: 75px; font-size: 0.85rem;">
+                    {{ event.date }}
+                  </div>
+                  <div class="flex-grow-1">
+                    <h6 class="mb-0 fw-bold small text-body">{{ event.title }}</h6>
+                    <span class="badge {{ event.badgeBg }} px-2 py-0.5 mt-1" style="font-size: 0.65rem; text-transform: uppercase;">{{ event.type }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Demographics, Revenue, and Academic Performance Charts Row -->
+      <div class="row g-4 mb-4">
+        <!-- Demographics Chart -->
+        <div class="col-lg-4">
           <div class="minimal-card p-4 h-100">
             <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary)">Demographics</h5>
             <div class="chart-container position-relative" style="height: 250px">
@@ -573,11 +622,87 @@
             </div>
           </div>
         </div>
-        <div class="col-lg-7">
+        <!-- Revenue Trends Chart -->
+        <div class="col-lg-4">
           <div class="minimal-card p-4 h-100">
             <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary)">Revenue Trends</h5>
             <div class="chart-container position-relative" style="height: 250px">
               <canvas #revenueChart></canvas>
+            </div>
+          </div>
+        </div>
+        <!-- Academic Performance Line Chart -->
+        <div class="col-lg-4">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-4" style="color: var(--text-primary)">Academic Performance</h5>
+            <div class="chart-container position-relative" style="height: 250px">
+              <canvas #performanceChart></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff Workload & Recent Activity Log Row -->
+      <div class="row g-4 mb-4">
+        <!-- Staff Workload Summary -->
+        <div class="col-lg-6">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text-primary)">
+              <i class="bi bi-people-fill text-success"></i> Staff Workload Summary
+            </h5>
+            <div class="d-flex flex-column gap-3">
+              @for (wl of staffWorkload(); track wl.subject) {
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold small text-body">{{ wl.subject }}</span>
+                    <span class="badge px-2 py-0.5" 
+                          [class.bg-success-soft]="wl.status === 'Optimal'" 
+                          [class.text-success]="wl.status === 'Optimal'"
+                          [class.bg-warning-soft]="wl.status.startsWith('Understaffed')" 
+                          [class.text-warning]="wl.status.startsWith('Understaffed')"
+                          [class.bg-danger-soft]="wl.status.startsWith('Overloaded')" 
+                          [class.text-danger]="wl.status.startsWith('Overloaded')"
+                          style="font-size: 0.65rem;">
+                      {{ wl.status }}
+                    </span>
+                  </div>
+                  <div class="progress" style="height: 8px; background-color: var(--bg-sidebar);">
+                    <div class="progress-bar rounded" role="progressbar" 
+                         [style.width]="wl.percent + '%'" 
+                         [class.bg-success]="wl.status === 'Optimal'"
+                         [class.bg-warning]="wl.status.startsWith('Understaffed')"
+                         [class.bg-danger]="wl.status.startsWith('Overloaded')"></div>
+                  </div>
+                  <div class="d-flex justify-content-between mt-1 text-secondary-custom" style="font-size: 0.7rem;">
+                    <span>Assigned: {{ wl.assignedPeriods }} periods</span>
+                    <span>Required: {{ wl.requiredPeriods }} periods</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent System Activity Log -->
+        <div class="col-lg-6">
+          <div class="minimal-card p-4 h-100">
+            <h5 class="fs-6 fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text-primary)">
+              <i class="bi bi-activity text-info"></i> Recent System Activity
+            </h5>
+            <div class="d-flex flex-column gap-3" style="max-height: 300px; overflow-y: auto;">
+              @for (act of recentActivities(); track act.action) {
+                <div class="d-flex align-items-start gap-3">
+                  <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px; flex-shrink: 0;" [class]="act.bg">
+                    <i class="bi {{ act.icon }}" style="font-size: 0.85rem;"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <p class="mb-0 small text-body">
+                      <strong class="text-primary">{{ act.user }}</strong> {{ act.action }}
+                    </p>
+                    <small class="text-secondary-custom" style="font-size: 0.7rem;"><i class="bi bi-clock me-1"></i>{{ act.time }}</small>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -785,18 +910,32 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (slot of teacherMetrics()!.todaySchedule; track slot.id) {
-                    <tr class="border-bottom" style="border-color: var(--border-color) !important">
+                  @for (slot of todaySchedule(); track slot.id) {
+                    <tr class="border-bottom text-muted-custom" style="border-color: var(--border-color) !important"
+                      [class.bg-light-success]="isSlotActive(slot)"
+                      [class.slot-over]="isSlotOver(slot)">
                       <td class="py-3 text-body fw-bold">
-                        <span class="badge bg-primary-subtle text-primary rounded px-2 py-1"
-                          >{{ slot.startTime }} - {{ slot.endTime }}</span
+                        <span class="badge rounded px-2 py-1"
+                          [class.bg-success]="isSlotActive(slot)"
+                          [class.text-white]="isSlotActive(slot)"
+                          [class.bg-secondary-subtle]="isSlotOver(slot)"
+                          [class.text-secondary]="isSlotOver(slot)"
+                          [class.bg-primary-subtle]="!isSlotActive(slot) && !isSlotOver(slot)"
+                          [class.text-primary]="!isSlotActive(slot) && !isSlotOver(slot)"
+                          >{{ slot.formattedStartTime }} - {{ slot.formattedEndTime }}</span
                         >
+                        @if (isSlotActive(slot)) {
+                          <span class="badge bg-success ms-2 animate-pulse">LIVE</span>
+                        }
+                        @if (isSlotOver(slot)) {
+                          <span class="badge bg-secondary-subtle text-secondary ms-2"><i class="bi bi-check2-all me-1"></i>Ended</span>
+                        }
                       </td>
-                      <td class="py-3 text-body">{{ slot.className }} - {{ slot.section }}</td>
+                      <td class="py-3 text-body">{{ slot.className }}</td>
                       <td class="py-3 text-end text-body fw-bold">{{ slot.subjectName }}</td>
                     </tr>
                   }
-                  @if (teacherMetrics()!.todaySchedule.length === 0) {
+                  @if (todaySchedule().length === 0) {
                     <tr>
                       <td colspan="3" class="text-center py-5 text-muted">
                         <i class="bi bi-emoji-smile fs-1 d-block mb-2 text-success"></i>

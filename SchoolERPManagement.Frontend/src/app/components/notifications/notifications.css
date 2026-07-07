@@ -1,85 +1,245 @@
+/* General Container Layout */
 .notifications-container {
-  max-width: 800px;
+  max-width: 850px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
+}
+
+/* Header Section styling */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .text-primary-custom {
-  color: #4361ee !important;
-}
-
-.btn-outline-primary-custom {
-  color: #4361ee;
-  border-color: #4361ee;
-}
-.btn-outline-primary-custom:hover {
-  background-color: #4361ee;
-  color: white;
+  color: var(--primary-accent) !important;
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+  background: linear-gradient(135deg, var(--primary-accent) 0%, #8b5cf6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.notification-card {
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  border: 1px solid rgba(0,0,0,0.04);
-}
-.notification-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
+.border-bottom-custom {
+  border-bottom: 1.5px solid var(--border-color) !important;
 }
 
-.notification-card.unread {
-  background-color: #f8faff !important;
-  border-left: 4px solid #4361ee;
+/* Tab Navigation Filter bar */
+.filter-tabs-container {
+  background: var(--bg-sidebar);
+  padding: 0.35rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  display: inline-block;
 }
 
-.unread-indicator {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  width: 10px;
-  height: 10px;
-  background-color: #ef233c;
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(239, 35, 60, 0.15);
-}
-
-.icon-circle {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
+.filter-tab {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
+  gap: 0.5rem;
+}
+
+.filter-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.filter-tab.active {
+  background: var(--primary-accent);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Count Badges */
+.badge-custom {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.unread-badge {
+  background: rgba(239, 35, 60, 0.15);
+  color: #ef233c;
+}
+.filter-tab.active .unread-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.read-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+.filter-tab.active .read-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Custom Gradient Button */
+.btn-gradient-custom {
+  background: linear-gradient(135deg, var(--primary-accent) 0%, #4f46e5 100%);
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+.btn-gradient-custom:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+  color: #ffffff;
+}
+
+/* Empty State styling */
+.empty-state {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  padding: 3rem 1.5rem;
 }
 
 .empty-icon-wrapper {
-  width: 80px;
-  height: 80px;
-  background-color: #f8f9fa;
+  width: 70px;
+  height: 70px;
+  background-color: var(--bg-sidebar);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1.5px dashed var(--border-color);
 }
 
-.action-btn {
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
-}
-.action-btn:hover {
-  background-color: #e9ecef;
+/* Notification Card */
+.notification-card {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  overflow: hidden;
 }
 
+.notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md) !important;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Glow bar on the left side of unread notification */
+.unread-glow-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--primary-accent), #8b5cf6);
+  box-shadow: 2px 0 10px rgba(99, 102, 241, 0.4);
+}
+
+.notification-card.unread {
+  background-color: rgba(99, 102, 241, 0.03) !important;
+}
+
+/* Icons circles customized by category colors */
+.icon-circle {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+/* Category Color Configs */
+.homework-notif {
+  background-color: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+}
+.result-notif {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+.fee-notif {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+.attendance-notif {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+.document-notif {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+.default-notif {
+  background-color: rgba(107, 114, 128, 0.12);
+  color: #6b7280;
+}
+
+/* Text & Message truncating */
+.notif-card-title {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+}
+
+.notif-message {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-secondary) !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: max-height 0.3s ease-out, opacity 0.2s ease;
+}
+
+.notif-message.expanded {
+  display: block !important;
+  overflow: visible !important;
+  -webkit-line-clamp: unset !important;
+}
+
+/* Expand chevron and footer layout inside card */
+.border-top-subtle {
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.text-primary-custom-subtle {
+  color: rgba(99, 102, 241, 0.7);
+}
+
+.expand-chevron {
+  font-size: 1rem;
+  transition: transform 0.25s ease;
+}
+
+.notification-card:hover .expand-chevron {
+  color: var(--primary-accent);
+}
+
+/* Animations */
 .fade-in {
   animation: fadeIn 0.4s ease-out;
 }
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }

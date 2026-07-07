@@ -16,6 +16,7 @@ public class TimetableServiceTests
     private readonly Mock<IRepository<int, Class>> _classRepoMock;
     private readonly Mock<IRepository<int, Subject>> _subjectRepoMock;
     private readonly Mock<IRepository<int, Teacher>> _teacherRepoMock;
+    private readonly Mock<IRepository<int, Staffattendance>> _staffAttendanceRepoMock;
     private readonly TimetableService _timetableService;
 
     public TimetableServiceTests()
@@ -24,13 +25,16 @@ public class TimetableServiceTests
         _classRepoMock = new Mock<IRepository<int, Class>>();
         _subjectRepoMock = new Mock<IRepository<int, Subject>>();
         _teacherRepoMock = new Mock<IRepository<int, Teacher>>();
+        _staffAttendanceRepoMock = new Mock<IRepository<int, Staffattendance>>();
+
+        _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(new List<Staffattendance>().BuildMockDbSet().Object);
 
         _timetableService = new TimetableService(
             _timetableRepoMock.Object,
             _classRepoMock.Object,
             _subjectRepoMock.Object,
-            _teacherRepoMock.Object
-        ,
+            _teacherRepoMock.Object,
+            _staffAttendanceRepoMock.Object,
             SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }

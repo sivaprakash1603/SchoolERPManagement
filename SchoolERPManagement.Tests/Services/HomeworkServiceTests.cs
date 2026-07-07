@@ -20,7 +20,10 @@ public class HomeworkServiceTests
     private readonly Mock<IRepository<int, Teacher>> _teacherRepoMock;
     private readonly Mock<IRepository<int, Class>> _classRepoMock;
     private readonly Mock<IRepository<int, Student>> _studentRepoMock;
+    private readonly Mock<IRepository<int, Teachersubject>> _teacherSubjectRepoMock;
+    private readonly Mock<IRepository<int, Timetable>> _timetableRepoMock;
     private readonly Mock<IFileStorageService> _fileStorageServiceMock;
+    private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly HomeworkService _homeworkService;
 
     public HomeworkServiceTests()
@@ -31,7 +34,10 @@ public class HomeworkServiceTests
         _teacherRepoMock = new Mock<IRepository<int, Teacher>>();
         _classRepoMock = new Mock<IRepository<int, Class>>();
         _studentRepoMock = new Mock<IRepository<int, Student>>();
+        _teacherSubjectRepoMock = new Mock<IRepository<int, Teachersubject>>();
+        _timetableRepoMock = new Mock<IRepository<int, Timetable>>();
         _fileStorageServiceMock = new Mock<IFileStorageService>();
+        _notificationServiceMock = new Mock<INotificationService>();
 
         _homeworkService = new HomeworkService(
             _homeworkRepoMock.Object,
@@ -40,8 +46,10 @@ public class HomeworkServiceTests
             _teacherRepoMock.Object,
             _classRepoMock.Object,
             _studentRepoMock.Object,
-            _fileStorageServiceMock.Object
-        ,
+            _teacherSubjectRepoMock.Object,
+            _timetableRepoMock.Object,
+            _fileStorageServiceMock.Object,
+            _notificationServiceMock.Object,
             SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
@@ -102,10 +110,10 @@ public class HomeworkServiceTests
 
         _submissionRepoMock.Setup(r => r.Query(true)).Returns(new List<Homeworksubmission>().BuildMockDbSet().Object);
 
-        
-        var result = await _homeworkService.SubmitHomeworkAsync(dto, CancellationToken.None);
+        // Act
+        var result = await _homeworkService.SubmitHomeworkAsync(dto, 1, "Student", CancellationToken.None);
 
-        
+        // Assert
         result.Should().NotBeNull();
         result.UploadedFileUrl.Should().Be("/uploads/homeworksubmissions/answer.pdf");
 
@@ -115,16 +123,16 @@ public class HomeworkServiceTests
     [Fact]
     public async Task EvaluateHomeworkAsync_ValidData_ShouldUpdateSubmission()
     {
-        
+        // Arrange
         var dto = new EvaluateHomeworkDTO(1, 90.5m, "Good job", "Reviewed");
 
         var submission = new Homeworksubmission { Id = 1, Homeworkid = 1, Studentid = 1 };
         _submissionRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(submission);
 
-        
-        var result = await _homeworkService.EvaluateHomeworkAsync(dto, CancellationToken.None);
+        // Act
+        var result = await _homeworkService.EvaluateHomeworkAsync(dto, 1, "Teacher", CancellationToken.None);
 
-        
+        // Assert
         result.Marks.Should().Be(90.5m);
         result.VerificationStatus.Should().Be("Reviewed");
         result.Remarks.Should().Be("Good job");
@@ -135,14 +143,14 @@ public class HomeworkServiceTests
     [Fact]
     public async Task EvaluateHomeworkAsync_InvalidSubmission_ShouldThrowEntityNotFoundException()
     {
-        
+        // Arrange
         var dto = new EvaluateHomeworkDTO(999, 90.5m, "Good job", "Reviewed");
         _submissionRepoMock.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Homeworksubmission?)null);
 
-        
-        Func<Task> action = async () => await _homeworkService.EvaluateHomeworkAsync(dto, CancellationToken.None);
+        // Act
+        Func<Task> action = async () => await _homeworkService.EvaluateHomeworkAsync(dto, 1, "Teacher", CancellationToken.None);
 
-        
+        // Assert
         await action.Should().ThrowAsync<EntityNotFoundException>().WithMessage("Homework submission with identifier '999' was not found.");
     }
 }

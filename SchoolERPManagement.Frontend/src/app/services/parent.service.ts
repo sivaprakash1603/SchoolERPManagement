@@ -101,4 +101,17 @@ export class ParentService {
   getParentChildren(parentId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/${parentId}/children`);
   }
+
+  get selectedChildId(): number | null {
+    const id = sessionStorage.getItem('selectedChildId');
+    return id ? parseInt(id, 10) : null;
+  }
+
+  set selectedChildId(val: number | null) {
+    if (val) {
+      sessionStorage.setItem('selectedChildId', val.toString());
+    } else {
+      sessionStorage.removeItem('selectedChildId');
+    }
+  }
 }

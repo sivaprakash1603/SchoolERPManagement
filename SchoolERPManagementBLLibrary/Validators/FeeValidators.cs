@@ -12,6 +12,9 @@ public class FeePaymentValidator : AbstractValidator<FeePaymentDTO>
         RuleFor(x => x.AmountPaid).GreaterThan(0).LessThanOrEqualTo(500000).WithMessage("Payment amount must be between 0 and 500,000.");
         RuleFor(x => x.PaymentMethod).NotEmpty();
         RuleFor(x => x.TransactionId).NotEmpty().When(x => x.PaymentMethod?.ToLower() == "credit card" || x.PaymentMethod?.ToLower() == "stripe");
+        RuleFor(x => x.PaymentDate)
+            .Must(date => date == null || date <= System.DateTime.UtcNow)
+            .WithMessage("Payment date cannot be in the future.");
     }
 }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FeeService, FeeSummaryDTO, FeeComponentDTO, FeePaymentResponseDTO, ClassFeeSummaryDTO } from '../../services/fee.service';
@@ -10,11 +10,13 @@ import { ToastService } from '../../services/toast.service';
 import { TeacherService } from '../../services/teacher.service';
 import { TimetableService } from '../../services/timetable.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FilterStateService } from '../../services/filter-state.service';
+import { DebounceClickDirective } from '../../directives/debounce-click.directive';
 
 @Component({
   selector: 'app-fees',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DebounceClickDirective],
   templateUrl: './fees.html',
   styleUrl: './fees.css',
 })
@@ -29,6 +31,28 @@ export class Fees implements OnInit {
   private timetableService = inject(TimetableService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private filterStateService = inject(FilterStateService);
+
+  constructor() {
+    const savedState = this.filterStateService.getState('fees');
+    if (savedState) {
+      if (savedState.selectedAcademicYearId !== undefined) this.selectedAcademicYearId.set(savedState.selectedAcademicYearId);
+      if (savedState.selectedClassId !== undefined) this.selectedClassId.set(savedState.selectedClassId);
+      if (savedState.selectedStudentId !== undefined) this.selectedStudentId.set(savedState.selectedStudentId);
+      if (savedState.feeStatusFilter !== undefined) this.feeStatusFilter.set(savedState.feeStatusFilter);
+      if (savedState.studentSearchQuery !== undefined) this.studentSearchQuery.set(savedState.studentSearchQuery);
+    }
+
+    effect(() => {
+      this.filterStateService.saveState('fees', {
+        selectedAcademicYearId: this.selectedAcademicYearId(),
+        selectedClassId: this.selectedClassId(),
+        selectedStudentId: this.selectedStudentId(),
+        feeStatusFilter: this.feeStatusFilter(),
+        studentSearchQuery: this.studentSearchQuery()
+      });
+    });
+  }
 
   // User Role Info
   userRole = signal<string>('Student');
@@ -144,10 +168,12 @@ export class Fees implements OnInit {
       next: (years) => {
         this.academicYears.set(years);
         this.loadingYears.set(false);
+        const savedYearId = this.selectedAcademicYearId();
         const currentYear = years.find((y) => y.isCurrent) || years[0];
-        if (currentYear) {
-          this.selectedAcademicYearId.set(currentYear.id);
-          this.fetchClasses(currentYear.id);
+        const yearIdToUse = savedYearId !== null ? savedYearId : (currentYear ? currentYear.id : null);
+        if (yearIdToUse) {
+          this.selectedAcademicYearId.set(yearIdToUse);
+          this.fetchClasses(yearIdToUse);
         }
       },
       error: (err) => {
@@ -175,9 +201,11 @@ export class Fees implements OnInit {
         }
         this.loadingClasses.set(false);
         const activeClasses = this.classes();
-        if (activeClasses.length > 0) {
-          this.selectedClassId.set(activeClasses[0].id);
-          this.fetchStudents(activeClasses[0].id);
+        const savedClassId = this.selectedClassId();
+        const classIdToUse = (savedClassId !== null && activeClasses.some(c => c.id === savedClassId)) ? savedClassId : (activeClasses.length > 0 ? activeClasses[0].id : null);
+        if (classIdToUse) {
+          this.selectedClassId.set(classIdToUse);
+          this.fetchStudents(classIdToUse);
         } else {
           this.selectedClassId.set(null);
           this.classStudentSummaries.set([]);
@@ -231,7 +259,12 @@ export class Fees implements OnInit {
     this.filteredStudentSummaries.set(list);
 
     if (resetSelection) {
-      if (list.length > 0) {
+      const savedStudentId = this.selectedStudentId();
+      const hasSavedStudent = savedStudentId !== null && list.some(s => s.studentId === savedStudentId);
+      if (hasSavedStudent) {
+        this.selectedStudentId.set(savedStudentId);
+        this.fetchFeeSummary(savedStudentId);
+      } else if (list.length > 0) {
         this.selectedStudentId.set(list[0].studentId);
         this.fetchFeeSummary(list[0].studentId);
       } else {
@@ -304,8 +337,11 @@ export class Fees implements OnInit {
           next: (kids) => {
             this.children.set(kids);
             if (kids.length > 0) {
-              this.selectedStudentId.set(kids[0].studentId);
-              this.fetchFeeSummary(kids[0].studentId);
+              const savedId = this.parentService.selectedChildId;
+              const child = (savedId && kids.find(k => k.studentId === savedId)) || kids[0];
+              this.selectedStudentId.set(child.studentId);
+              this.parentService.selectedChildId = child.studentId;
+              this.fetchFeeSummary(child.studentId);
             } else {
               this.loadingSummary.set(false);
             }
@@ -324,9 +360,11 @@ export class Fees implements OnInit {
     });
   }
 
-  onChildChange(studentId: number) {
-    this.selectedStudentId.set(studentId);
-    this.fetchFeeSummary(studentId);
+  onChildChange(studentId: any) {
+    const parsedId = Number(studentId);
+    this.selectedStudentId.set(parsedId);
+    this.parentService.selectedChildId = parsedId;
+    this.fetchFeeSummary(parsedId);
   }
 
   // --- FEE SUMMARY FETCH ---
@@ -378,7 +416,23 @@ export class Fees implements OnInit {
   saveFeeStructure() {
     const form = this.structureForm();
     const yearId = this.selectedAcademicYearId();
-    if (!form.classId || !yearId || !form.feeName.trim() || form.totalAmount <= 0) return;
+
+    if (!form.classId) {
+      this.toastService.warning('Please select a class.');
+      return;
+    }
+    if (!yearId) {
+      this.toastService.warning('Academic Session is missing.');
+      return;
+    }
+    if (!form.feeName || !form.feeName.trim()) {
+      this.toastService.warning('Please enter a Fee Name.');
+      return;
+    }
+    if (form.totalAmount <= 0) {
+      this.toastService.warning('Amount must be greater than zero.');
+      return;
+    }
 
     this.isSavingStructure.set(true);
     this.feeService.addFeeStructure({
@@ -406,13 +460,14 @@ export class Fees implements OnInit {
   }
 
   // --- RECORD MANUAL PAYMENT ---
-  openPaymentModal() {
+  openPaymentModal(comp?: FeeComponentDTO) {
     const today = new Date().toISOString().split('T')[0];
-    const defaultComponentId = this.feeComponents().length > 0 ? this.feeComponents()[0].id : null;
+    const defaultComponentId = comp ? comp.id : (this.feeComponents().length > 0 ? this.feeComponents()[0].id : null);
+    const defaultAmount = comp ? this.getOutstandingBalance(comp) : 0;
 
     this.paymentForm.set({
       feeStructureId: defaultComponentId,
-      amountPaid: 0,
+      amountPaid: defaultAmount,
       paymentDate: today,
       paymentMethod: 'cash',
       transactionId: '',
@@ -427,7 +482,38 @@ export class Fees implements OnInit {
   savePayment() {
     const studentId = this.selectedStudentId();
     const form = this.paymentForm();
-    if (!studentId || !form.feeStructureId || form.amountPaid <= 0) return;
+
+    if (!studentId) {
+      this.toastService.warning('Please select a student.');
+      return;
+    }
+    if (!form.feeStructureId) {
+      this.toastService.warning('Please select a fee component.');
+      return;
+    }
+    if (form.amountPaid <= 0) {
+      this.toastService.warning('Payment amount must be greater than zero.');
+      return;
+    }
+    if (form.paymentDate) {
+      const selectedDate = new Date(form.paymentDate);
+      const today = new Date();
+      selectedDate.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      if (selectedDate > today) {
+        this.toastService.warning('Payment date cannot be in the future.');
+        return;
+      }
+    }
+
+    const selectedComp = this.feeComponents().find(c => c.id === form.feeStructureId);
+    if (selectedComp) {
+      const balance = this.getOutstandingBalance(selectedComp);
+      if (form.amountPaid > balance) {
+        this.toastService.warning(`Payment amount exceeds the outstanding balance of ₹${balance}.`);
+        return;
+      }
+    }
 
     this.isSavingPayment.set(true);
     this.feeService.payFees({

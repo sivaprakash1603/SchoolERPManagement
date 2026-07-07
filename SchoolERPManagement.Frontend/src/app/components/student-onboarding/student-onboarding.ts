@@ -209,6 +209,27 @@ export class StudentOnboarding implements OnInit {
   // --- Submission ---
 
   async completeOnboarding() {
+    if (this.studentForm().admissiondate) {
+      const selectedDate = new Date(this.studentForm().admissiondate);
+      const today = new Date();
+      selectedDate.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      if (selectedDate > today) {
+        this.toastService.warning('Admission date cannot be in the future.');
+        return;
+      }
+    }
+    if (this.studentForm().dateofbirth) {
+      const selectedDate = new Date(this.studentForm().dateofbirth);
+      const today = new Date();
+      selectedDate.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      if (selectedDate > today) {
+        this.toastService.warning('Date of birth cannot be in the future.');
+        return;
+      }
+    }
+
     this.isSubmitting.set(true);
 
     try {

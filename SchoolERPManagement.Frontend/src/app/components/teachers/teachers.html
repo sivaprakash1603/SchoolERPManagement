@@ -85,14 +85,14 @@
     </div>
 
     @if (showTeacherRequirements()) {
-      <div class="row g-3 align-items-end bg-light p-3 rounded mb-3">
+      <div class="row g-3 align-items-end p-3 rounded mb-3" style="background-color: var(--bg-sidebar); border: 1px solid var(--border-color);">
         <div class="col-md-4">
           <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem">Periods per Day</label>
-          <input type="number" class="form-control" [ngModel]="periodsPerDay()" (ngModelChange)="periodsPerDay.set($event)" min="1" max="10">
+          <input type="number" class="form-control" [ngModel]="periodsPerDay()" (ngModelChange)="periodsPerDay.set($event)" (keypress)="($event.charCode >= 48 && $event.charCode <= 57) ? null : $event.preventDefault()" min="1" max="10">
         </div>
         <div class="col-md-4">
           <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem">Free Periods per Staff</label>
-          <input type="number" class="form-control" [ngModel]="freePeriodsPerStaff()" (ngModelChange)="freePeriodsPerStaff.set($event)" min="0" max="8">
+          <input type="number" class="form-control" [ngModel]="freePeriodsPerStaff()" (ngModelChange)="freePeriodsPerStaff.set($event)" (keypress)="($event.charCode >= 48 && $event.charCode <= 57) ? null : $event.preventDefault()" min="0" max="8">
         </div>
         <div class="col-md-4">
           <button class="btn btn-primary w-100" (click)="fetchTeacherRequirements()" [disabled]="isLoadingRequirements()">
@@ -114,13 +114,13 @@
       @if (teacherRequirements().length > 0) {
         <div class="table-responsive">
           <table class="table table-sm table-bordered align-middle">
-            <thead class="table-light">
+            <thead style="background-color: var(--bg-sidebar)">
               <tr>
-                <th class="text-uppercase text-muted-custom" style="font-size: 0.75rem">Subject</th>
-                <th class="text-uppercase text-muted-custom text-center" style="font-size: 0.75rem">Total Classes</th>
-                <th class="text-uppercase text-muted-custom text-center" style="font-size: 0.75rem">Required Staff</th>
-                <th class="text-uppercase text-muted-custom text-center" style="font-size: 0.75rem">Available Staff</th>
-                <th class="text-uppercase text-muted-custom text-center" style="font-size: 0.75rem">Status</th>
+                <th class="text-uppercase text-muted-custom py-2 ps-3" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Subject</th>
+                <th class="text-uppercase text-muted-custom text-center py-2" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Total Classes</th>
+                <th class="text-uppercase text-muted-custom text-center py-2" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Required Staff</th>
+                <th class="text-uppercase text-muted-custom text-center py-2" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Available Staff</th>
+                <th class="text-uppercase text-muted-custom text-center py-2 pe-3" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -280,13 +280,13 @@
           </thead>
           <tbody>
             @for (teacher of teachers(); track teacher.id) {
-              <tr>
+              <tr style="cursor: pointer" (click)="openViewModal(teacher)">
                 <td class="ps-4 py-3">
                   <input
                     class="form-check-input"
                     type="checkbox"
                     [checked]="isTeacherSelected(teacher.id)"
-                    (change)="toggleSelectTeacher(teacher.id)"
+                    (change)="toggleSelectTeacher(teacher.id); $event.stopPropagation()"
                   />
                 </td>
                 <td class="px-4 py-3">
@@ -330,16 +330,9 @@
                     <button
                       class="btn btn-sm btn-light text-primary"
                       title="Manage Assignments"
-                      (click)="openAssignmentsModal(teacher)"
+                      (click)="openAssignmentsModal(teacher); $event.stopPropagation()"
                     >
                       <i class="bi bi-book"></i>
-                    </button>
-                    <button
-                      class="btn btn-sm btn-light text-primary"
-                      title="View Profile"
-                      (click)="openViewModal(teacher); $event.stopPropagation()"
-                    >
-                      <i class="bi bi-eye"></i>
                     </button>
                     <button
                       class="btn btn-sm btn-light text-warning"
@@ -725,35 +718,35 @@
               (click)="closeAssignmentsModal()"
             ></button>
           </div>
-          <div class="modal-body p-4 bg-light">
-            <h6 class="fw-bold mb-3 text-secondary">Current Assignments</h6>
+          <div class="modal-body p-4" style="background-color: var(--bg-canvas);">
+            <h6 class="fw-bold mb-3 text-muted-custom">Current Assignments</h6>
             @if (selectedTeacherAssignments().length === 0) {
-              <div class="text-center py-4 text-muted">
+              <div class="text-center py-4 text-muted-custom">
                 <i class="bi bi-inbox fs-2 mb-2 d-block"></i>
                 <p class="mb-0">No classes assigned to this teacher yet.</p>
               </div>
             } @else {
               <div class="table-responsive mb-4">
-                <table class="table table-bordered bg-white table-hover align-middle mb-0">
-                  <thead class="table-light">
+                <table class="table table-bordered table-hover align-middle mb-0" style="border-color: var(--border-color) !important;">
+                  <thead style="background-color: var(--bg-sidebar);">
                     <tr>
-                      <th>Class</th>
-                      <th>Section</th>
-                      <th>Subject</th>
-                      <th class="text-end">Action</th>
+                      <th class="py-2 px-3 text-muted-custom text-uppercase fw-bold" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Class</th>
+                      <th class="py-2 px-3 text-muted-custom text-uppercase fw-bold" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Section</th>
+                      <th class="py-2 px-3 text-muted-custom text-uppercase fw-bold" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Subject</th>
+                      <th class="py-2 px-3 text-muted-custom text-uppercase fw-bold text-end" style="font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (assignment of selectedTeacherAssignments(); track assignment.classId + '-' + assignment.subjectId) {
                       <tr>
-                        <td class="fw-bold">{{ assignment.className }}</td>
-                        <td>{{ assignment.section || 'N/A' }}</td>
-                        <td>
-                          <span class="badge bg-info text-dark">{{ assignment.subjectName }}</span>
+                        <td class="fw-bold py-2 px-3" style="color: var(--text-primary);">{{ assignment.className }}</td>
+                        <td class="py-2 px-3" style="color: var(--text-primary);">{{ assignment.section || 'N/A' }}</td>
+                        <td class="py-2 px-3">
+                          <span class="badge bg-primary-soft text-primary">{{ assignment.subjectName }}</span>
                         </td>
-                        <td class="text-end">
+                        <td class="text-end py-2 px-3">
                           <button
-                            class="btn btn-sm btn-outline-danger border-0"
+                            class="btn btn-sm btn-outline-danger border-0 p-1"
                             title="Remove Assignment"
                             (click)="removeAssignment(assignment.classId, assignment.subjectId)"
                           >
@@ -767,10 +760,10 @@
               </div>
             }
 
-            <h6 class="fw-bold mb-3 text-secondary border-top pt-4">Assign New Subject</h6>
-            <div class="row g-3 align-items-end p-3 bg-white border rounded-3">
+            <h6 class="fw-bold mb-3 text-muted-custom border-top pt-4" style="border-color: var(--border-color) !important;">Assign New Subject</h6>
+            <div class="row g-3 align-items-end p-3 border rounded-3" style="background-color: var(--bg-sidebar); border-color: var(--border-color) !important;">
               <div class="col-md-5">
-                <label class="form-label fw-bold" style="font-size: 0.85rem">Select Class</label>
+                <label class="form-label fw-bold text-muted-custom" style="font-size: 0.85rem">Select Class</label>
                 <select class="form-select shadow-sm" [ngModel]="assignmentForm().classId" (ngModelChange)="assignmentForm.update(f => ({ ...f, classId: $event }))">
                   <option [ngValue]="null" disabled selected>-- Choose Class --</option>
                   @for (cls of availableClasses(); track cls.id) {
@@ -779,7 +772,7 @@
                 </select>
               </div>
               <div class="col-md-5">
-                <label class="form-label fw-bold" style="font-size: 0.85rem">Select Subject</label>
+                <label class="form-label fw-bold text-muted-custom" style="font-size: 0.85rem">Select Subject</label>
                 <select class="form-select shadow-sm" [ngModel]="assignmentForm().subjectId" (ngModelChange)="assignmentForm.update(f => ({ ...f, subjectId: $event }))">
                   <option [ngValue]="null" disabled selected>-- Choose Subject --</option>
                   @for (sub of availableSubjects(); track sub.id) {
@@ -803,7 +796,7 @@
               </div>
             </div>
           </div>
-          <div class="modal-footer border-0 bg-light rounded-bottom-4">
+          <div class="modal-footer border-0 rounded-bottom-4" style="background-color: var(--bg-sidebar);">
             <button
               type="button"
               class="btn btn-secondary px-4 fw-bold shadow-sm"

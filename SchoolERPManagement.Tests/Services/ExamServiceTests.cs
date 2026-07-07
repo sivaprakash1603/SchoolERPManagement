@@ -3,6 +3,7 @@ using MockQueryable.Moq;
 using Moq;
 using SchoolERPManagementBLLibrary.DTOs.Exam;
 using SchoolERPManagementBLLibrary.Exceptions;
+using SchoolERPManagementBLLibrary.Interfaces;
 using SchoolERPManagementBLLibrary.Services;
 using SchoolERPManagementDALLibrary.Interfaces;
 using SchoolERPManagementModelLibrary.Models;
@@ -17,6 +18,10 @@ public class ExamServiceTests
     private readonly Mock<IRepository<int, Academicyear>> _academicYearRepoMock;
     private readonly Mock<IRepository<int, Subject>> _subjectRepoMock;
     private readonly Mock<IRepository<int, Student>> _studentRepoMock;
+    private readonly Mock<IRepository<int, Studentenrollment>> _studentEnrollmentRepoMock;
+    private readonly Mock<IRepository<int, Examschedule>> _examScheduleRepoMock;
+    private readonly Mock<IRepository<int, Class>> _classRepoMock;
+    private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly ExamService _examService;
 
     public ExamServiceTests()
@@ -26,14 +31,21 @@ public class ExamServiceTests
         _academicYearRepoMock = new Mock<IRepository<int, Academicyear>>();
         _subjectRepoMock = new Mock<IRepository<int, Subject>>();
         _studentRepoMock = new Mock<IRepository<int, Student>>();
+        _studentEnrollmentRepoMock = new Mock<IRepository<int, Studentenrollment>>();
+        _examScheduleRepoMock = new Mock<IRepository<int, Examschedule>>();
+        _classRepoMock = new Mock<IRepository<int, Class>>();
+        _notificationServiceMock = new Mock<INotificationService>();
 
         _examService = new ExamService(
             _examRepoMock.Object,
             _examResultRepoMock.Object,
             _academicYearRepoMock.Object,
             _subjectRepoMock.Object,
-            _studentRepoMock.Object
-        ,
+            _studentRepoMock.Object,
+            _studentEnrollmentRepoMock.Object,
+            _examScheduleRepoMock.Object,
+            _classRepoMock.Object,
+            _notificationServiceMock.Object,
             SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
@@ -122,10 +134,10 @@ public class ExamServiceTests
 
         _examResultRepoMock.Setup(r => r.Query(true)).Returns(results.BuildMockDbSet().Object);
 
-        
-        var result = await _examService.GetStudentResultsAsync(1, CancellationToken.None);
+        // Act
+        var result = await _examService.GetStudentResultsAsync(1, 1, "Admin", CancellationToken.None);
 
-        
+        // Assert
         result.Should().HaveCount(2);
         result.First().Marks.Should().Be(90.0m); 
     }

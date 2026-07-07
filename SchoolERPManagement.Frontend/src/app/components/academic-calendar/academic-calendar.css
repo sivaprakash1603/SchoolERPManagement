@@ -140,3 +140,24 @@
 .metric-highlight .metric-label {
   color: var(--primary-accent);
 }
+
+/* High visibility Form Switch overrides */
+.form-switch .form-check-input {
+  cursor: pointer;
+  background-color: rgba(120, 120, 120, 0.15);
+  border: 2px solid var(--border-color);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%239ca3af'/%3e%3c/svg%3e") !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, background-position 0.15s ease-in-out;
+}
+
+.form-switch .form-check-input:focus {
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%236366f1'/%3e%3c/svg%3e") !important;
+}
+
+.form-switch .form-check-input:checked {
+  background-color: var(--primary-accent) !important;
+  border-color: var(--primary-accent) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e") !important;
+}

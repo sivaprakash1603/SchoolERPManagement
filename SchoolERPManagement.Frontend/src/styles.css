@@ -15,6 +15,10 @@
   --primary-accent-hover: #4b44d1;
   --primary-accent-soft: rgba(99, 91, 255, 0.08);
   --primary-accent-glow: rgba(99, 91, 255, 0.15);
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.03);
@@ -34,6 +38,10 @@
   --primary-accent-hover: #9590ff;
   --primary-accent-soft: rgba(124, 117, 255, 0.1);
   --primary-accent-glow: rgba(124, 117, 255, 0.2);
+  --color-success: #34d399;
+  --color-error: #f87171;
+  --color-warning: #fbbf24;
+  --color-info: #60a5fa;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -505,10 +513,16 @@ body {
   }
 
   /* --- Touch-Friendly Form Controls --- */
-  .form-control, .form-select {
+  .form-control {
     min-height: 44px;
     font-size: 16px !important; /* Prevents iOS zoom on focus */
     padding: 0.5rem 0.75rem;
+  }
+
+  .form-select {
+    min-height: 44px;
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+    padding: 0.5rem 2.25rem 0.5rem 0.75rem !important;
   }
 
   .form-label {

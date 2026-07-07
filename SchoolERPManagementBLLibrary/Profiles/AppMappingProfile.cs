@@ -83,7 +83,8 @@ public class AppMappingProfile : Profile
                         src.Homeworksubmissions.First().Submittedat) 
                     : null
             ));
-        CreateMap<Homeworksubmission, HomeworkSubmissionResponseDTO>();
+        CreateMap<Homeworksubmission, HomeworkSubmissionResponseDTO>()
+            .ForMember(dest => dest.VerificationStatus, opt => opt.MapFrom(src => src.Verificationstatus ?? "pending"));
         CreateMap<Homeworksubmission, HomeworkSubmissionDetailsDTO>()
             .ConstructUsing(src => new HomeworkSubmissionDetailsDTO(
                 src.Id,
@@ -91,7 +92,7 @@ public class AppMappingProfile : Profile
                 src.Studentid,
                 src.Student != null ? src.Student.Name : string.Empty,
                 src.Uploadedfileurl,
-                src.Verificationstatus,
+                src.Verificationstatus ?? "pending",
                 src.Marks,
                 src.Remarks,
                 src.Submittedat
@@ -139,7 +140,8 @@ public class AppMappingProfile : Profile
                     : null,
                 src.Studentdocuments != null && src.Studentdocuments.Any(d => d.Documentname == "Photo")
                     ? src.Studentdocuments.First(d => d.Documentname == "Photo").Bloburl
-                    : null
+                    : null,
+                src.User != null ? src.User.Email : null
             ));
 
         

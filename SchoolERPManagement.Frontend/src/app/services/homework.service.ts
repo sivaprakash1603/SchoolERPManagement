@@ -31,6 +31,7 @@ export interface HomeworkSubmissionResponseDTO {
   marks?: number;
   remarks?: string;
   verificationStatus?: string; // 'pending', 'approved', 'rejected'
+  verificationstatus?: string;
 }
 
 export interface HomeworkSubmissionDetailsDTO {
@@ -40,6 +41,7 @@ export interface HomeworkSubmissionDetailsDTO {
   studentName: string;
   uploadedFileUrl?: string;
   verificationStatus?: string;
+  verificationstatus?: string;
   marks?: number;
   remarks?: string;
   submittedAt?: string;
@@ -90,5 +92,9 @@ export class HomeworkService {
 
   evaluateHomework(dto: EvaluateHomeworkDTO): Observable<HomeworkSubmissionResponseDTO> {
     return this.http.post<HomeworkSubmissionResponseDTO>(`${this.baseUrl}/evaluate`, dto);
+  }
+
+  unsubmitHomework(submissionId: number): Observable<boolean> {
+    return this.http.delete<boolean>(`${this.baseUrl}/submissions/${submissionId}`);
   }
 }

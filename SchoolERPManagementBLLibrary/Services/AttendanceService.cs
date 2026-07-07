@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Attendance;
+using SchoolERPManagementBLLibrary.DTOs.Notification;
 using SchoolERPManagementBLLibrary.Exceptions;
 using SchoolERPManagementBLLibrary.Interfaces;
 using SchoolERPManagementDALLibrary.Interfaces;
@@ -16,6 +17,7 @@ public sealed class AttendanceService : IAttendanceService
     private readonly IRepository<int, Studentenrollment> _studentEnrollmentRepository;
     private readonly IRepository<int, Academiccalendar> _calendarRepository;
     private readonly IRepository<int, Academicyear> _academicYearRepository;
+    private readonly INotificationService _notificationService;
     private readonly IMapper _mapper;
 
     public AttendanceService(
@@ -25,6 +27,7 @@ public sealed class AttendanceService : IAttendanceService
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
         IRepository<int, Academiccalendar> calendarRepository,
         IRepository<int, Academicyear> academicYearRepository,
+        INotificationService notificationService,
         IMapper mapper)
     {
         _attendanceRepository = attendanceRepository;
@@ -33,6 +36,7 @@ public sealed class AttendanceService : IAttendanceService
         _studentEnrollmentRepository = studentEnrollmentRepository;
         _calendarRepository = calendarRepository;
         _academicYearRepository = academicYearRepository;
+        _notificationService = notificationService;
         _mapper = mapper;
     }
 
@@ -117,6 +121,34 @@ public sealed class AttendanceService : IAttendanceService
             attendance.Markedbyteacherid = dto.MarkedByTeacherId;
             attendance.Remarks = dto.Remarks;
             await _attendanceRepository.UpdateAsync(attendance, save: true, ct: cancellationToken);
+        }
+
+        // If student is marked absent, notify their parents immediately
+        if (attendance.Status == "absent")
+        {
+            var studentWithParents = await _studentRepository.Query(true)
+                .Include(s => s.Studentparents)
+                .ThenInclude(sp => sp.Parent)
+                .FirstOrDefaultAsync(s => s.Id == dto.StudentId, cancellationToken);
+
+            if (studentWithParents != null && studentWithParents.Studentparents.Any())
+            {
+                var parentUserIds = studentWithParents.Studentparents
+                    .Where(sp => sp.Parent != null)
+                    .Select(sp => sp.Parent.Userid)
+                    .ToList();
+
+                if (parentUserIds.Any())
+                {
+                    var notificationDto = new SendNotificationDTO(
+                        Title: "Student Absent Alert",
+                        Message: $"Your child {studentWithParents.Name} has been marked Absent on {dto.Date:yyyy-MM-dd}.",
+                        CreatedByUserId: null,
+                        TargetUserIds: parentUserIds
+                    );
+                    await _notificationService.SendNotificationAsync(notificationDto, cancellationToken);
+                }
+            }
         }
 
         return _mapper.Map<AttendanceResponseDTO>(attendance);

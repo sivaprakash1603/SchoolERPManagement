@@ -45,9 +45,9 @@ namespace SchoolERPManagementAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllExams(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAllExams([FromQuery] int? classId, CancellationToken cancellationToken)
         {
-            var result = await _examService.GetAllExamsAsync(cancellationToken);
+            var result = await _examService.GetAllExamsAsync(classId, cancellationToken);
             return Ok(result);
         }
 

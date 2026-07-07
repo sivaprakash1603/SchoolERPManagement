@@ -54,12 +54,43 @@
 }
 
 .payment-card {
-  background-color: var(--bg-secondary, #fafafa);
+  background-color: var(--bg-canvas);
+  border-color: var(--border-color) !important;
+  color: var(--text-primary);
   transition: background-color 0.2s ease;
 }
 
 .payment-card:hover {
-  background-color: var(--bg-hover, #f1f3f5);
+  background-color: var(--bg-sidebar);
+}
+
+thead.bg-light {
+  background-color: var(--bg-canvas) !important;
+  color: var(--text-secondary) !important;
+}
+
+.modal-content {
+  background-color: var(--bg-sidebar) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.modal-header.bg-light {
+  background-color: var(--bg-canvas) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.modal-footer.bg-light {
+  background-color: var(--bg-canvas) !important;
+  border-top: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.input-group-text.bg-light {
+  background-color: var(--bg-main) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-color) !important;
 }
 
 /* Badge customizations */

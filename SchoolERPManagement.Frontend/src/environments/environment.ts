@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://1rcbx5bk-5203.inc1.devtunnels.ms/api',
-  baseUrl: 'https://1rcbx5bk-5203.inc1.devtunnels.ms',
-  hubUrl: 'https://1rcbx5bk-5203.inc1.devtunnels.ms/hubs',
+  apiUrl: 'http://localhost:5203/api',
+  baseUrl: 'http://localhost:5203',
+  hubUrl: 'http://localhost:5203/hubs',
 };

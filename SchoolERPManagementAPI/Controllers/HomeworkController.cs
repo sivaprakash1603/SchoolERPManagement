@@ -109,5 +109,17 @@ namespace SchoolERPManagementAPI.Controllers
             var result = await _homeworkService.GetSubmissionsByHomeworkIdAsync(homeworkId, cancellationToken);
             return Ok(result);
         }
+
+        [HttpDelete("submissions/{id}")]
+        [Authorize(Roles = "Admin,Student")]
+        public async Task<IActionResult> UnsubmitHomework(int id, CancellationToken cancellationToken)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            int? userId = int.TryParse(userIdStr, out var uid) ? uid : null;
+            var userRole = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+            var result = await _homeworkService.DeleteSubmissionAsync(id, userId, userRole, cancellationToken);
+            return Ok(result);
+        }
     }
 }

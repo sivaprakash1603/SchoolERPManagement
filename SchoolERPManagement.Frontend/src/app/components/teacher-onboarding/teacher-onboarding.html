@@ -260,19 +260,19 @@
                 <h6 class="mb-0 fw-bold" style="color: var(--text-primary)">
                   Aadhaar Card Identification
                 </h6>
-                @if (getFileName('Aadhaar')) {
+                @if (getFileName('Identity Proof')) {
                   <i class="bi bi-check-circle-fill text-success"></i>
                 }
               </div>
-              @if (getFileName('Aadhaar')) {
+              @if (getFileName('Identity Proof')) {
                 <p class="text-success small mb-3">
-                  <i class="bi bi-file-earmark-arrow-up"></i> {{ getFileName('Aadhaar') }}
+                  <i class="bi bi-file-earmark-arrow-up"></i> {{ getFileName('Identity Proof') }}
                 </p>
               }
               <input
                 type="file"
                 class="form-control form-control-sm"
-                (change)="onFileSelected($event, 'Aadhaar')"
+                (change)="onFileSelected($event, 'Identity Proof')"
               />
             </div>
           </div>
@@ -286,19 +286,19 @@
                 <h6 class="mb-0 fw-bold" style="color: var(--text-primary)">
                   Highest Degree / Certificate
                 </h6>
-                @if (getFileName('Degree')) {
+                @if (getFileName('Degree / Educational Certificate')) {
                   <i class="bi bi-check-circle-fill text-success"></i>
                 }
               </div>
-              @if (getFileName('Degree')) {
+              @if (getFileName('Degree / Educational Certificate')) {
                 <p class="text-success small mb-3">
-                  <i class="bi bi-file-earmark-arrow-up"></i> {{ getFileName('Degree') }}
+                  <i class="bi bi-file-earmark-arrow-up"></i> {{ getFileName('Degree / Educational Certificate') }}
                 </p>
               }
               <input
                 type="file"
                 class="form-control form-control-sm"
-                (change)="onFileSelected($event, 'Degree')"
+                (change)="onFileSelected($event, 'Degree / Educational Certificate')"
               />
             </div>
           </div>

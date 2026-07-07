@@ -7,7 +7,8 @@ public record CreateCalendarEventDTO(
     DateOnly Date,
     string Description,
     bool IsHoliday,
-    int AcademicYearId
+    int AcademicYearId,
+    DateOnly? EndDate = null
 );
 
 public record CalendarEventResponseDTO(

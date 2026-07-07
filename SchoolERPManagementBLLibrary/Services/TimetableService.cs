@@ -14,6 +14,7 @@ public sealed class TimetableService : ITimetableService
     private readonly IRepository<int, Class> _classRepository;
     private readonly IRepository<int, Subject> _subjectRepository;
     private readonly IRepository<int, Teacher> _teacherRepository;
+    private readonly IRepository<int, Staffattendance> _staffAttendanceRepository;
     private readonly IMapper _mapper;
 
     public TimetableService(
@@ -21,12 +22,14 @@ public sealed class TimetableService : ITimetableService
         IRepository<int, Class> classRepository,
         IRepository<int, Subject> subjectRepository,
         IRepository<int, Teacher> teacherRepository,
+        IRepository<int, Staffattendance> staffAttendanceRepository,
         IMapper mapper)
     {
         _timetableRepository = timetableRepository;
         _classRepository = classRepository;
         _subjectRepository = subjectRepository;
         _teacherRepository = teacherRepository;
+        _staffAttendanceRepository = staffAttendanceRepository;
         _mapper = mapper;
     }
 
@@ -82,20 +85,218 @@ public sealed class TimetableService : ITimetableService
     {
         var items = await _timetableRepository.Query(true)
             .Where(timetable => timetable.Classid == classId)
-            .OrderBy(timetable => timetable.Dayofweek)
-            .ThenBy(timetable => timetable.Starttime)
             .ToListAsync(cancellationToken);
-        return _mapper.Map<IReadOnlyList<TimetableResponseDTO>>(items);
+
+        var resolved = await ResolveSubstitutionsAsync(items, cancellationToken);
+        var sorted = resolved.OrderBy(timetable => timetable.Dayofweek)
+            .ThenBy(timetable => timetable.Starttime)
+            .ToList();
+
+        return _mapper.Map<IReadOnlyList<TimetableResponseDTO>>(sorted);
     }
 
     public async Task<IReadOnlyList<TimetableResponseDTO>> GetTeacherTimetableAsync(int teacherId, CancellationToken cancellationToken)
     {
-        var items = await _timetableRepository.Query(true)
+        var date = DateOnly.FromDateTime(DateTime.UtcNow);
+        var dayOfWeekName = date.ToDateTime(TimeOnly.MinValue).DayOfWeek.ToString().ToLower();
+
+        // 1. Get static weekly slots for this teacher
+        var mySlots = await _timetableRepository.Query(true)
             .Where(timetable => timetable.Teacherid == teacherId)
-            .OrderBy(timetable => timetable.Dayofweek)
-            .ThenBy(timetable => timetable.Starttime)
             .ToListAsync(cancellationToken);
-        return _mapper.Map<IReadOnlyList<TimetableResponseDTO>>(items);
+
+        // 2. Resolve substitutions on my own slots (if I am absent today, remove my today-slots)
+        var me = await _teacherRepository.GetByIdAsync(teacherId);
+        var absentUserIds = await _staffAttendanceRepository.Query(true)
+            .Where(a => a.Date == date && a.Status == "absent")
+            .Select(a => a.Userid)
+            .ToListAsync(cancellationToken);
+
+        var myFinalSlots = new List<Timetable>();
+        foreach (var slot in mySlots)
+        {
+            if (slot.Dayofweek.ToLower() == dayOfWeekName && me != null && absentUserIds.Contains(me.Userid))
+            {
+                continue;
+            }
+            myFinalSlots.Add(slot);
+        }
+
+        // 3. Find absent teachers' slots today where I am the chosen substitute
+        if (me != null && !absentUserIds.Contains(me.Userid))
+        {
+            var otherTeachers = await _teacherRepository.Query(true)
+                .Where(t => t.Id != teacherId)
+                .ToListAsync(cancellationToken);
+
+            var absentTeachers = otherTeachers.Where(t => absentUserIds.Contains(t.Userid)).ToList();
+            if (absentTeachers.Any())
+            {
+                var absentTeacherIds = absentTeachers.Select(t => t.Id).ToList();
+
+                var absentSlots = await _timetableRepository.Query(true)
+                    .Where(t => absentTeacherIds.Contains(t.Teacherid) && t.Dayofweek.ToLower() == dayOfWeekName)
+                    .OrderBy(t => t.Starttime)
+                    .ToListAsync(cancellationToken);
+
+                // Track all substitution assignments (teacherId -> list of time ranges) to prevent double-booking
+                var substitutionAssignments = new Dictionary<int, List<(TimeOnly Start, TimeOnly End)>>();
+                var presentTeachers = otherTeachers.Where(t => !absentUserIds.Contains(t.Userid)).Concat(new[] { me }).OrderBy(t => t.Id).ToList();
+
+                foreach (var slot in absentSlots)
+                {
+                    Teacher? chosenSub = null;
+
+                    foreach (var candidate in presentTeachers)
+                    {
+                        // Check DB for original timetable conflicts
+                        var hasDbOverlap = await _timetableRepository.Query(true)
+                            .AnyAsync(t => t.Teacherid == candidate.Id && t.Dayofweek.ToLower() == dayOfWeekName &&
+                                           t.Starttime < slot.Endtime && slot.Starttime < t.Endtime,
+                                      cancellationToken);
+
+                        if (hasDbOverlap) continue;
+
+                        // Check already-assigned substitutions for this candidate
+                        var hasSubOverlap = false;
+                        if (substitutionAssignments.TryGetValue(candidate.Id, out var assignedRanges))
+                        {
+                            hasSubOverlap = assignedRanges.Any(r => r.Start < slot.Endtime && slot.Starttime < r.End);
+                        }
+
+                        if (!hasSubOverlap)
+                        {
+                            chosenSub = candidate;
+                            break;
+                        }
+                    }
+
+                    if (chosenSub != null)
+                    {
+                        // Record this assignment
+                        if (!substitutionAssignments.ContainsKey(chosenSub.Id))
+                            substitutionAssignments[chosenSub.Id] = new List<(TimeOnly, TimeOnly)>();
+                        substitutionAssignments[chosenSub.Id].Add((slot.Starttime, slot.Endtime));
+
+                        if (chosenSub.Id == teacherId)
+                        {
+                            var subSlot = new Timetable
+                            {
+                                Id = slot.Id,
+                                Classid = slot.Classid,
+                                Subjectid = slot.Subjectid,
+                                Teacherid = teacherId,
+                                Dayofweek = slot.Dayofweek,
+                                Starttime = slot.Starttime,
+                                Endtime = slot.Endtime,
+                                Roomno = slot.Roomno,
+                                Class = slot.Class,
+                                Subject = slot.Subject,
+                                Teacher = me
+                            };
+                            myFinalSlots.Add(subSlot);
+                        }
+                    }
+                }
+            }
+        }
+
+        var sorted = myFinalSlots.OrderBy(s => s.Dayofweek).ThenBy(s => s.Starttime).ToList();
+        return _mapper.Map<IReadOnlyList<TimetableResponseDTO>>(sorted);
+    }
+
+    private async Task<List<Timetable>> ResolveSubstitutionsAsync(List<Timetable> slots, CancellationToken cancellationToken)
+    {
+        var date = DateOnly.FromDateTime(DateTime.UtcNow);
+        var dayOfWeekName = date.ToDateTime(TimeOnly.MinValue).DayOfWeek.ToString().ToLower();
+
+        var absentUserIds = await _staffAttendanceRepository.Query(true)
+            .Where(a => a.Date == date && a.Status == "absent")
+            .Select(a => a.Userid)
+            .ToListAsync(cancellationToken);
+
+        if (!absentUserIds.Any()) return slots;
+
+        var allTeachers = await _teacherRepository.Query(true).ToListAsync(cancellationToken);
+        var substitutedSlots = new List<Timetable>();
+
+        // Track substitution assignments (teacherId -> list of time ranges) to prevent double-booking
+        var substitutionAssignments = new Dictionary<int, List<(TimeOnly Start, TimeOnly End)>>();
+
+        foreach (var slot in slots)
+        {
+            if (slot.Dayofweek.ToLower() != dayOfWeekName)
+            {
+                substitutedSlots.Add(slot);
+                continue;
+            }
+
+            var assignedTeacher = allTeachers.FirstOrDefault(t => t.Id == slot.Teacherid);
+            if (assignedTeacher != null && absentUserIds.Contains(assignedTeacher.Userid))
+            {
+                Teacher? substituteTeacher = null;
+                foreach (var otherTeacher in allTeachers)
+                {
+                    if (otherTeacher.Id == assignedTeacher.Id) continue;
+                    if (absentUserIds.Contains(otherTeacher.Userid)) continue;
+
+                    // Check DB for original timetable conflicts
+                    var hasDbOverlap = await _timetableRepository.Query(true)
+                        .AnyAsync(t => t.Teacherid == otherTeacher.Id && t.Dayofweek.ToLower() == dayOfWeekName &&
+                                       t.Starttime < slot.Endtime && slot.Starttime < t.Endtime,
+                                  cancellationToken);
+
+                    if (hasDbOverlap) continue;
+
+                    // Check already-assigned substitutions for this candidate
+                    var hasSubOverlap = false;
+                    if (substitutionAssignments.TryGetValue(otherTeacher.Id, out var assignedRanges))
+                    {
+                        hasSubOverlap = assignedRanges.Any(r => r.Start < slot.Endtime && slot.Starttime < r.End);
+                    }
+
+                    if (!hasSubOverlap)
+                    {
+                        substituteTeacher = otherTeacher;
+                        break;
+                    }
+                }
+
+                if (substituteTeacher != null)
+                {
+                    // Record this assignment
+                    if (!substitutionAssignments.ContainsKey(substituteTeacher.Id))
+                        substitutionAssignments[substituteTeacher.Id] = new List<(TimeOnly, TimeOnly)>();
+                    substitutionAssignments[substituteTeacher.Id].Add((slot.Starttime, slot.Endtime));
+
+                    var clone = new Timetable
+                    {
+                        Id = slot.Id,
+                        Classid = slot.Classid,
+                        Subjectid = slot.Subjectid,
+                        Teacherid = substituteTeacher.Id,
+                        Dayofweek = slot.Dayofweek,
+                        Starttime = slot.Starttime,
+                        Endtime = slot.Endtime,
+                        Roomno = slot.Roomno,
+                        Class = slot.Class,
+                        Subject = slot.Subject,
+                        Teacher = substituteTeacher
+                    };
+                    substitutedSlots.Add(clone);
+                }
+                else
+                {
+                    substitutedSlots.Add(slot);
+                }
+            }
+            else
+            {
+                substitutedSlots.Add(slot);
+            }
+        }
+
+        return substitutedSlots;
     }
 
     public async Task<IReadOnlyList<TeacherRequirementDTO>> GetTeacherRequirementsAsync(int periodsPerDay, int freePeriodsPerStaff, CancellationToken cancellationToken)

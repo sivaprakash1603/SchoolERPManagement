@@ -248,7 +248,7 @@
                     <td class="ps-4 fw-bold text-light-custom">{{ asset.assetname }}</td>
                     <td>
                       <span
-                        class="badge bg-secondary-subtle text-secondary-custom px-2.5 py-1.5 rounded-pill text-xs fw-semibold"
+                        class="badge bg-secondary-subtle text-secondary-custom px-3 py-2 rounded-pill text-xs fw-semibold"
                       >
                         {{ getTypeName(asset.assettypeId) }}
                       </span>
@@ -265,7 +265,7 @@
                     <td>
                       @if (asset.status?.toLowerCase() === 'active') {
                         <span
-                          class="badge bg-success-subtle text-success px-2.5 py-1.5 rounded-pill text-xs fw-semibold"
+                          class="badge bg-success-subtle text-success px-3 py-2 rounded-pill text-xs fw-semibold"
                         >
                           <i class="bi bi-circle-fill text-xs me-1"></i> Active
                         </span>
@@ -274,19 +274,19 @@
                         asset.status?.toLowerCase() === 'under_repair'
                       ) {
                         <span
-                          class="badge bg-warning-subtle text-warning px-2.5 py-1.5 rounded-pill text-xs fw-semibold"
+                          class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill text-xs fw-semibold"
                         >
                           <i class="bi bi-tools text-xs me-1"></i> Repairing
                         </span>
                       } @else if (asset.status?.toLowerCase() === 'broken') {
                         <span
-                          class="badge bg-danger-subtle text-danger px-2.5 py-1.5 rounded-pill text-xs fw-semibold"
+                          class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill text-xs fw-semibold"
                         >
                           <i class="bi bi-exclamation-triangle-fill text-xs me-1"></i> Broken
                         </span>
                       } @else {
                         <span
-                          class="badge bg-light text-dark px-2.5 py-1.5 rounded-pill text-xs fw-semibold"
+                          class="badge bg-light text-dark px-3 py-2 rounded-pill text-xs fw-semibold"
                         >
                           {{ asset.status }}
                         </span>
@@ -296,14 +296,14 @@
                       @if (userRole() === 'Teacher' || userRole() === 'Student') {
                         <button
                           (click)="openReportIssueModal(asset)"
-                          class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1.5 fw-semibold py-1.5 px-3 rounded-2"
+                          class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1.5 fw-semibold py-2 px-3 rounded-2"
                         >
                           <i class="bi bi-flag-fill"></i> Report Issue
                         </button>
                       } @else if (userRole() === 'Admin') {
                         <button
                           (click)="openResolveModal(asset)"
-                          class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1.5 fw-semibold py-1.5 px-3 rounded-2"
+                          class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1.5 fw-semibold py-2 px-3 rounded-2"
                         >
                           <i class="bi bi-check2-circle"></i> Address / Resolve
                         </button>

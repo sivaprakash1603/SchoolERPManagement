@@ -292,7 +292,11 @@
   <!-- Landing Footer -->
   <footer class="py-4 border-top">
     <div class="container text-center">
-      <p class="text-secondary-custom small mb-0">&copy; 2026 EduControl. All rights reserved. &middot; Powered by Advanced Institutional ERP</p>
+      <p class="text-secondary-custom small mb-0">
+        &copy; 2026 EduControl. All rights reserved. &middot; 
+        Powered by Advanced ERP &middot; 
+        <a [routerLink]="['/faq']" [queryParams]="{ from: 'landing' }" class="text-decoration-none fw-semibold" style="color: var(--primary-accent);">FAQ & Help</a>
+      </p>
     </div>
   </footer>
 </div>

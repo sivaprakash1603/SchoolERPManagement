@@ -337,17 +337,17 @@
             <div class="card border-1 shadow-sm rounded-3 p-3">
               <div class="d-flex align-items-center justify-content-between mb-2">
                 <h6 class="mb-0 fw-bold">Student Aadhaar Card</h6>
-                @if (getFileName('Aadhaar')) {
+                @if (getFileName('Identity Proof / Aadhaar Card')) {
                   <i class="bi bi-check-circle-fill text-success"></i>
                 }
               </div>
-              @if (getFileName('Aadhaar')) {
-                <p class="text-muted-custom small mb-3">{{ getFileName('Aadhaar') }}</p>
+              @if (getFileName('Identity Proof / Aadhaar Card')) {
+                <p class="text-muted-custom small mb-3">{{ getFileName('Identity Proof / Aadhaar Card') }}</p>
               }
               <input
                 type="file"
                 class="form-control form-control-sm"
-                (change)="onFileSelected($event, 'Aadhaar')"
+                (change)="onFileSelected($event, 'Identity Proof / Aadhaar Card')"
               />
             </div>
           </div>

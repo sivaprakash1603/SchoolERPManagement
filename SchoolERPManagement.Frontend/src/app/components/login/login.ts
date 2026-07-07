@@ -52,7 +52,7 @@ export class Login implements OnInit, OnDestroy, AfterViewInit {
         '',
         [
           Validators.required,
-          Validators.pattern(/^(admin|ST\d{3}[a-zA-Z0-9]+|T\d{3}\d{4}|P\d{7,15})$/),
+          Validators.pattern(/^(admin|ST\d{3}[a-zA-Z0-9]+|T\d{3}\d{4}|(P|PT)\d{7,15})$/),
         ],
       ],
       password: ['', [Validators.required]],

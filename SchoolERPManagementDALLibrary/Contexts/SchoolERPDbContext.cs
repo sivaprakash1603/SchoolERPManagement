@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SchoolERPManagementModelLibrary.Models;
@@ -972,6 +976,110 @@ public partial class SchoolERPDbContext : DbContext
         });
 
         OnModelCreatingPartial(modelBuilder);
+    }
+
+    public override int SaveChanges()
+    {
+        LogChanges();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        LogChanges();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void LogChanges()
+    {
+        try
+        {
+            var username = CurrentUserContext.Username ?? "System/Anonymous";
+            var entries = ChangeTracker.Entries()
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted)
+                .ToList();
+
+            if (!entries.Any()) return;
+
+            var logLines = new List<string>();
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+            foreach (var entry in entries)
+            {
+                var entityName = entry.Entity.GetType().Name;
+                var state = entry.State.ToString();
+                var primaryKey = string.Empty;
+
+                try
+                {
+                    var keyValues = entry.Properties
+                        .Where(p => p.Metadata.IsPrimaryKey())
+                        .Select(p => $"{p.Metadata.Name}={p.CurrentValue}")
+                        .ToList();
+                    primaryKey = string.Join(",", keyValues);
+                }
+                catch
+                {
+                    primaryKey = "Unknown";
+                }
+
+                var changeDetails = new List<string>();
+
+                if (entry.State == EntityState.Added)
+                {
+                    foreach (var prop in entry.CurrentValues.Properties)
+                    {
+                        var val = entry.CurrentValues[prop];
+                        if (val != null)
+                        {
+                            changeDetails.Add($"{prop.Name}: '{val}'");
+                        }
+                    }
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    foreach (var prop in entry.OriginalValues.Properties)
+                    {
+                        var originalVal = entry.OriginalValues[prop];
+                        var currentVal = entry.CurrentValues[prop];
+
+                        if (!Equals(originalVal, currentVal))
+                        {
+                            changeDetails.Add($"{prop.Name}: '{originalVal}' -> '{currentVal}'");
+                        }
+                    }
+                }
+                else if (entry.State == EntityState.Deleted)
+                {
+                    foreach (var prop in entry.OriginalValues.Properties)
+                    {
+                        var val = entry.OriginalValues[prop];
+                        if (val != null)
+                        {
+                            changeDetails.Add($"{prop.Name}: '{val}'");
+                        }
+                    }
+                }
+
+                var changesString = string.Join(", ", changeDetails);
+                logLines.Add($"[{timestamp}] [CRUD] User: {username} | Action: {state} | Entity: {entityName} | Key: {primaryKey} | Changes: [{changesString}]");
+            }
+
+            if (logLines.Any())
+            {
+                var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+                if (!Directory.Exists(logDirectory))
+                {
+                    Directory.CreateDirectory(logDirectory);
+                }
+                var logFilePath = Path.Combine(logDirectory, $"changelog-{DateTime.UtcNow:yyyyMMdd}.txt");
+                File.AppendAllLines(logFilePath, logLines);
+            }
+        }
+        catch
+        {
+            // Fail-safe
+        }
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

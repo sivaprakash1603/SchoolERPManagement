@@ -172,9 +172,12 @@ export class Attendance implements OnInit {
             next: (children) => {
               this.parentChildren.set(children);
               if (children.length > 0) {
-                this.selectedChildId.set(children[0].studentId);
-                this.resolvedStudentId.set(children[0].studentId);
-                this.fetchStudentAttendance(children[0].studentId);
+                const savedId = this.parentService.selectedChildId;
+                const child = (savedId && children.find(c => c.studentId === savedId)) || children[0];
+                this.selectedChildId.set(child.studentId);
+                this.resolvedStudentId.set(child.studentId);
+                this.parentService.selectedChildId = child.studentId;
+                this.fetchStudentAttendance(child.studentId);
               }
             },
             error: (err) => console.error('Failed to load parent children', err)
@@ -216,17 +219,21 @@ export class Attendance implements OnInit {
     });
   }
 
-  onChildChange(studentId: number) {
-    this.selectedChildId.set(studentId);
-    this.resolvedStudentId.set(studentId);
+  onChildChange(studentId: any) {
+    const parsedId = Number(studentId);
+    this.selectedChildId.set(parsedId);
+    this.resolvedStudentId.set(parsedId);
+    this.parentService.selectedChildId = parsedId;
     
-    const child = this.parentChildren().find(c => c.studentId === studentId);
-    this.fetchStudentAttendance(studentId);
+    const child = this.parentChildren().find(c => c.studentId === parsedId);
+    this.fetchStudentAttendance(parsedId);
   }
 
   loadYearDetails(year: AcademicYearResponseDTO) {
     const min = this.formatDateForInput(year.startDate);
-    const max = this.formatDateForInput(year.endDate);
+    const maxDateString = this.formatDateForInput(year.endDate);
+    const todayString = new Date().toISOString().split('T')[0];
+    const max = maxDateString < todayString ? maxDateString : todayString;
     this.minDate.set(min);
     this.maxDate.set(max);
 

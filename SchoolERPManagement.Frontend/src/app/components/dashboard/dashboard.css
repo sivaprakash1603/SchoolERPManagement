@@ -119,3 +119,40 @@
     height: 2px;
   }
 }
+
+/* Live status styles for timetable tracker */
+.bg-light-success {
+  background-color: rgba(25, 135, 84, 0.08) !important;
+  border-left: 3px solid #198754;
+}
+
+.animate-pulse {
+  animation: pulse-animation 1.5s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Style for completed slots */
+.slot-over {
+  opacity: 0.55;
+  transition: opacity 0.25s ease;
+}
+
+.slot-over td {
+  text-decoration: line-through;
+  text-decoration-color: var(--text-secondary);
+}
+
+.slot-over .badge {
+  text-decoration: none !important;
+}

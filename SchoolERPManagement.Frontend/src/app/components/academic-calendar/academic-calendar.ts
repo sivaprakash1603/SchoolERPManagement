@@ -41,6 +41,7 @@ export class AcademicCalendar implements OnInit {
   // Form State
   createForm = signal({
     date: '',
+    endDate: '',
     description: '',
     isHoliday: true
   });
@@ -121,6 +122,7 @@ export class AcademicCalendar implements OnInit {
 
     this.createForm.set({
       date: defaultDate,
+      endDate: '',
       description: '',
       isHoliday: true
     });
@@ -142,9 +144,15 @@ export class AcademicCalendar implements OnInit {
       return;
     }
 
+    if (form.endDate && new Date(form.endDate) < new Date(form.date)) {
+      this.toastService.warning('End date cannot be earlier than start date.');
+      return;
+    }
+
     this.isSaving.set(true);
     const dto = {
       date: form.date,
+      endDate: form.endDate || undefined,
       description: form.description.trim(),
       isHoliday: form.isHoliday,
       academicYearId: yearId

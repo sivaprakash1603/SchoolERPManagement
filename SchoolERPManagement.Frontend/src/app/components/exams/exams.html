@@ -327,6 +327,7 @@
                                 class="form-control form-control-sm text-center mx-auto"
                                 style="width: 80px"
                                 [(ngModel)]="student.marks"
+                                (keypress)="($event.charCode >= 48 && $event.charCode <= 57 || $event.charCode === 46) ? null : $event.preventDefault()"
                                 min="0"
                                 max="100"
                                 [disabled]="!isAdminOrTeacher()"
@@ -492,6 +493,7 @@
                 class="form-control"
                 [ngModel]="scheduleForm().durationMinutes"
                 (ngModelChange)="scheduleForm.set({ ...scheduleForm(), durationMinutes: $event })"
+                (keypress)="($event.charCode >= 48 && $event.charCode <= 57) ? null : $event.preventDefault()"
                 min="15"
                 required
               />

@@ -3,6 +3,7 @@ using MockQueryable.Moq;
 using Moq;
 using SchoolERPManagementBLLibrary.DTOs.Attendance;
 using SchoolERPManagementBLLibrary.Exceptions;
+using SchoolERPManagementBLLibrary.Interfaces;
 using SchoolERPManagementBLLibrary.Services;
 using SchoolERPManagementDALLibrary.Interfaces;
 using SchoolERPManagementModelLibrary.Models;
@@ -16,6 +17,9 @@ public class AttendanceServiceTests
     private readonly Mock<IRepository<int, Student>> _studentRepoMock;
     private readonly Mock<IRepository<int, Teacher>> _teacherRepoMock;
     private readonly Mock<IRepository<int, Studentenrollment>> _studentEnrollmentRepoMock;
+    private readonly Mock<IRepository<int, Academiccalendar>> _calendarRepoMock;
+    private readonly Mock<IRepository<int, Academicyear>> _academicYearRepoMock;
+    private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly AttendanceService _attendanceService;
 
     public AttendanceServiceTests()
@@ -24,13 +28,18 @@ public class AttendanceServiceTests
         _studentRepoMock = new Mock<IRepository<int, Student>>();
         _teacherRepoMock = new Mock<IRepository<int, Teacher>>();
         _studentEnrollmentRepoMock = new Mock<IRepository<int, Studentenrollment>>();
+        _calendarRepoMock = new Mock<IRepository<int, Academiccalendar>>();
+        _academicYearRepoMock = new Mock<IRepository<int, Academicyear>>();
+        _notificationServiceMock = new Mock<INotificationService>();
 
         _attendanceService = new AttendanceService(
             _attendanceRepoMock.Object,
             _studentRepoMock.Object,
             _teacherRepoMock.Object,
-            _studentEnrollmentRepoMock.Object
-        ,
+            _studentEnrollmentRepoMock.Object,
+            _calendarRepoMock.Object,
+            _academicYearRepoMock.Object,
+            _notificationServiceMock.Object,
             SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }

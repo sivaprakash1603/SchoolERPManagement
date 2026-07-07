@@ -38,6 +38,8 @@ public class DocumentServiceTests
         _teacherRepoMock = new Mock<IRepository<int, Teacher>>();
         _strategyMock = new Mock<IDocumentVerificationStrategy>();
 
+        var notificationServiceMock = new Mock<INotificationService>();
+
         _documentService = new DocumentService(
             _studentDocRepoMock.Object,
             _teacherDocRepoMock.Object,
@@ -47,8 +49,8 @@ public class DocumentServiceTests
             _classRepoMock.Object,
             _fileStorageServiceMock.Object,
             _teacherRepoMock.Object,
-            new List<IDocumentVerificationStrategy> { _strategyMock.Object }
-        ,
+            new List<IDocumentVerificationStrategy> { _strategyMock.Object },
+            notificationServiceMock.Object,
             SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
@@ -66,7 +68,7 @@ public class DocumentServiceTests
             .ReturnsAsync("/uploads/studentdocuments/doc.pdf");
 
         // Act
-        var result = await _documentService.UploadStudentDocumentAsync(mockFile.Object, 1, null, CancellationToken.None);
+        var result = await _documentService.UploadStudentDocumentAsync(mockFile.Object, 1, null, "Student", CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -85,7 +87,7 @@ public class DocumentServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<EntityNotFoundException>(() => 
-            _documentService.UploadStudentDocumentAsync(fileMock.Object, studentId, null, CancellationToken.None));
+            _documentService.UploadStudentDocumentAsync(fileMock.Object, studentId, null, "Student", CancellationToken.None));
     }
 
     [Fact]

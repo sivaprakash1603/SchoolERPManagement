@@ -17,5 +17,6 @@ public record StudentQueryResponseDTO(
     string? Bloodgroup = null,
     DateOnly? Dateofbirth = null,
     System.Collections.Generic.IEnumerable<ParentSelectionDTO>? Parents = null,
-    int? ClassId = null
+    int? ClassId = null,
+    string? Email = null
 );

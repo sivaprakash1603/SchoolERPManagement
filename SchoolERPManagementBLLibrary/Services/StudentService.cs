@@ -145,7 +145,8 @@ public sealed class StudentService : IStudentService
                 s.Bloodgroup,
                 s.Dateofbirth,
                 parentsInfo,
-                enrollment?.Classid
+                enrollment?.Classid,
+                s.User?.Email
             );
         }).ToList();
 
@@ -162,6 +163,7 @@ public sealed class StudentService : IStudentService
     public async Task<StudentResponseDTO> GetStudentByIdAsync(int id, CancellationToken cancellationToken)
     {
         var student = await _studentRepository.Query(true)
+            .Include(x => x.User)
             .Include(x => x.Studentenrollments)
             .Include(x => x.Studentdocuments)
             .Include(x => x.Studentparents)

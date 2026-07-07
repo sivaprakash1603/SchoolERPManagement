@@ -23,6 +23,7 @@ import { Assets } from './components/assets/assets';
 import { Documents } from './components/documents/documents';
 import { PaymentResultComponent } from './components/payment-result/payment-result';
 import { NotificationsComponent } from './components/notifications/notifications';
+import { FAQ } from './components/faq/faq';
 
 import { authGuard } from './guards/auth.guard';
 import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
@@ -31,6 +32,7 @@ export const routes: Routes = [
     { path: '', component: Landing, pathMatch: 'full' },
     { path: 'login', component: Login },
     { path: 'reset-password', component: ResetPassword },
+    { path: 'faq', component: FAQ },
     { 
         path: '', 
         component: Layout,

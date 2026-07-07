@@ -38,22 +38,51 @@ public class AcademicCalendarService : IAcademicCalendarService
         if (dto.Date < academicYear.Startdate || dto.Date > academicYear.Enddate)
             throw new BusinessRuleException("The event date must fall within the selected academic year start and end dates.");
 
-        var existing = await _calendarRepository.Query(true)
-            .FirstOrDefaultAsync(x => x.Academicyearid == dto.AcademicYearId && x.Date == dto.Date, cancellationToken);
-
-        if (existing != null)
-            throw new DuplicateEntityException("AcademicCalendar", "Date", dto.Date.ToString("yyyy-MM-dd"));
-
-        var calendarEvent = new Academiccalendar
+        if (dto.EndDate.HasValue)
         {
-            Academicyearid = dto.AcademicYearId,
-            Date = dto.Date,
-            Description = dto.Description,
-            Isholiday = dto.IsHoliday
-        };
+            if (dto.EndDate.Value < academicYear.Startdate || dto.EndDate.Value > academicYear.Enddate)
+                throw new BusinessRuleException("The event end date must fall within the selected academic year start and end dates.");
+            if (dto.EndDate.Value < dto.Date)
+                throw new BusinessRuleException("The event end date cannot be earlier than the start date.");
+        }
 
-        await _calendarRepository.AddAsync(calendarEvent, save: true, ct: cancellationToken);
-        return _mapper.Map<CalendarEventResponseDTO>(calendarEvent);
+        var startDate = dto.Date;
+        var endDate = dto.EndDate ?? dto.Date;
+        var eventList = new List<Academiccalendar>();
+
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            var existingOnDate = await _calendarRepository.Query(true)
+                .FirstOrDefaultAsync(x => x.Academicyearid == dto.AcademicYearId && x.Date == date, cancellationToken);
+
+            if (existingOnDate != null)
+            {
+                // If it's a single date, throw duplicate error
+                if (!dto.EndDate.HasValue)
+                {
+                    throw new DuplicateEntityException("AcademicCalendar", "Date", dto.Date.ToString("yyyy-MM-dd"));
+                }
+                // For ranges, skip to prevent crash
+                continue;
+            }
+
+            var calendarEvent = new Academiccalendar
+            {
+                Academicyearid = dto.AcademicYearId,
+                Date = date,
+                Description = dto.Description,
+                Isholiday = dto.IsHoliday
+            };
+            await _calendarRepository.AddAsync(calendarEvent, save: true, ct: cancellationToken);
+            eventList.Add(calendarEvent);
+        }
+
+        if (!eventList.Any())
+        {
+            throw new BusinessRuleException("All dates in the specified range already have registered events/holidays.");
+        }
+
+        return _mapper.Map<CalendarEventResponseDTO>(eventList.First());
     }
 
     public async Task DeleteCalendarEventAsync(int id, CancellationToken cancellationToken)

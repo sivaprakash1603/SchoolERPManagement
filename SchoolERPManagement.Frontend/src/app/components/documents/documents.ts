@@ -196,8 +196,11 @@ export class Documents implements OnInit {
           next: (children) => {
             this.parentChildren.set(children);
             if (children.length > 0) {
-              this.selectedChildId.set(children[0].studentId);
-              this.loadDocumentsForStudent(children[0].studentId);
+              const savedId = this.parentService.selectedChildId;
+              const child = (savedId && children.find(c => c.studentId === savedId)) || children[0];
+              this.selectedChildId.set(child.studentId);
+              this.parentService.selectedChildId = child.studentId;
+              this.loadDocumentsForStudent(child.studentId);
             } else {
               this.isLoading.set(false);
             }
@@ -216,9 +219,11 @@ export class Documents implements OnInit {
     });
   }
 
-  onChildChange(childId: number) {
-    this.selectedChildId.set(childId);
-    this.loadDocumentsForStudent(childId);
+  onChildChange(childId: any) {
+    const parsedId = Number(childId);
+    this.selectedChildId.set(parsedId);
+    this.parentService.selectedChildId = parsedId;
+    this.loadDocumentsForStudent(parsedId);
   }
 
   loadDocumentsForStudent(studentId: number) {
@@ -426,10 +431,43 @@ export class Documents implements OnInit {
     this.pendingDocsCount.set(docs.filter(d => d.status?.toLowerCase() === 'pending').length);
   }
 
+  getRequiredDocuments(): { name: string, key: string }[] {
+    const role = this.userRole();
+    if (this.selectedStudent() || role === 'Student' || role === 'Parent') {
+      return [
+        { name: 'Profile Photo', key: 'photo' },
+        { name: 'Birth Certificate', key: 'birth' },
+        { name: 'Identity Proof / Aadhaar Card', key: 'id' },
+        { name: 'Transfer Certificate', key: 'tc' }
+      ];
+    }
+    if (this.selectedTeacher() || (role === 'Teacher' && this.teacherViewMode() === 'self')) {
+      return [
+        { name: 'Profile Photo', key: 'photo' },
+        { name: 'Identity Proof', key: 'id' },
+        { name: 'Degree / Educational Certificate', key: 'degree' },
+        { name: 'Experience Letter', key: 'exp' }
+      ];
+    }
+    return [];
+  }
+
+  getUploadedDocument(name: string): DocumentResponseDTO | undefined {
+    const searchNames = name === 'Profile Photo' ? ['Photo', 'Profile Photo'] : [name];
+    const docs = this.activeDocumentsList().filter(d => searchNames.includes(d.documentName));
+    if (docs.length === 0) return undefined;
+    return docs.sort((a, b) => b.id - a.id)[0]; // return latest
+  }
+
+  getAdditionalDocuments(): DocumentResponseDTO[] {
+    const reqNames = ['Profile Photo', 'Photo', 'Birth Certificate', 'Identity Proof / Aadhaar Card', 'Transfer Certificate', 'Identity Proof', 'Degree / Educational Certificate', 'Experience Letter'];
+    return this.activeDocumentsList().filter(d => !reqNames.includes(d.documentName));
+  }
+
   // --- UPLOAD FLOW ---
-  openUploadModal() {
+  openUploadModal(preselectedName?: string) {
     this.uploadForm.set({
-      documentName: '',
+      documentName: preselectedName || '',
       selectedFile: null
     });
     this.showUploadModal.set(true);
@@ -452,8 +490,19 @@ export class Documents implements OnInit {
       this.toastService.warning('Please select a file to upload.');
       return;
     }
+    if (!form.documentName) {
+      this.toastService.warning('Please select the document type.');
+      return;
+    }
 
-    const docName = form.documentName.trim() || form.selectedFile.name;
+    // Overwrite prevention: warning if already verified or pending
+    const existing = this.getUploadedDocument(form.documentName);
+    if (existing && existing.status.toLowerCase() !== 'rejected') {
+      this.toastService.warning(`A document of type '${form.documentName}' has already been uploaded.`);
+      return;
+    }
+
+    const docName = form.documentName === 'Profile Photo' ? 'Photo' : form.documentName;
     this.isUploading.set(true);
 
     const role = this.userRole();

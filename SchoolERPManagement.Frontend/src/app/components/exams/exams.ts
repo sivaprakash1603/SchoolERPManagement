@@ -136,6 +136,7 @@ export class Exams implements OnInit {
           this.studentId.set(student.id);
           this.studentClassId.set(student.classId);
           this.fetchStudentResults(student.id);
+          this.fetchExams();
         },
         error: (err) => console.error('Failed to resolve student profile', err)
       });
@@ -146,13 +147,16 @@ export class Exams implements OnInit {
             next: (children) => {
               this.parentChildren.set(children);
               if (children.length > 0) {
-                const child = children[0];
+                const savedId = this.parentService.selectedChildId;
+                const child = (savedId && children.find(c => c.studentId === savedId)) || children[0];
                 this.selectedChildId.set(child.studentId);
                 this.studentId.set(child.studentId);
+                this.parentService.selectedChildId = child.studentId;
                 
                 if (child.classId) {
                   this.studentClassId.set(child.classId);
                   this.fetchStudentResults(child.studentId);
+                  this.fetchExams();
                 }
               }
             },
@@ -214,7 +218,9 @@ export class Exams implements OnInit {
         if (currentYear) {
           this.selectedAcademicYearId.set(currentYear.id);
           this.fetchClasses(currentYear.id);
-          this.fetchExams();
+          if (this.userRole() !== 'Student' && this.userRole() !== 'Parent') {
+            this.fetchExams();
+          }
         }
       },
       error: (err) => {
@@ -224,17 +230,21 @@ export class Exams implements OnInit {
     });
   }
 
-  onChildChange(studentId: number) {
-    this.selectedChildId.set(studentId);
-    this.studentId.set(studentId);
+  onChildChange(studentId: any) {
+    const parsedId = Number(studentId);
+    this.selectedChildId.set(parsedId);
+    this.studentId.set(parsedId);
+    this.parentService.selectedChildId = parsedId;
     
-    const child = this.parentChildren().find(c => c.studentId === studentId);
+    const child = this.parentChildren().find(c => c.studentId === parsedId);
     if (child && child.classId) {
       this.studentClassId.set(child.classId);
-      this.fetchStudentResults(studentId);
+      this.fetchStudentResults(parsedId);
+      this.fetchExams();
     } else {
       this.studentClassId.set(null);
       this.studentResults.set([]);
+      this.exams.set([]);
     }
   }
 
@@ -261,7 +271,11 @@ export class Exams implements OnInit {
 
   fetchExams() {
     this.loadingExams.set(true);
-    this.examService.getAllExams().subscribe({
+    const classId = (this.userRole() === 'Student' || this.userRole() === 'Parent')
+      ? (this.studentClassId() || undefined)
+      : undefined;
+
+    this.examService.getAllExams(classId).subscribe({
       next: (res) => {
         // Filter exams based on current academic year (if applicable)
         const yearId = this.selectedAcademicYearId();
@@ -304,7 +318,7 @@ export class Exams implements OnInit {
     this.loadingSchedules.set(true);
     this.examService.getExamSchedules(examId).subscribe({
       next: (res) => {
-        if (this.userRole() === 'Student' && this.studentClassId()) {
+        if ((this.userRole() === 'Student' || this.userRole() === 'Parent') && this.studentClassId()) {
           this.schedules.set(res.filter(s => s.classId === this.studentClassId()));
         } else if (this.userRole() === 'Teacher') {
           const map = this.teacherSubjectClassMap();

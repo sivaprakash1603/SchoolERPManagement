@@ -23,7 +23,7 @@
   <!-- Teacher Tab Switcher -->
   @if (userRole() === 'Teacher') {
     <div class="minimal-card p-2 mb-4 d-inline-flex gap-2" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px;">
-      <button (click)="switchTeacherViewMode('verify')" class="btn btn-sm px-4 py-2.5 rounded-3 fw-bold transition-all d-flex align-items-center gap-2" 
+      <button (click)="switchTeacherViewMode('verify')" class="btn btn-sm px-4 py-3 rounded-3 fw-bold transition-all d-flex align-items-center gap-2" 
         [class.btn-primary]="teacherViewMode() === 'verify'" 
         [class.btn-outline-secondary]="teacherViewMode() !== 'verify'" 
         [style.background-color]="teacherViewMode() === 'verify' ? 'var(--primary-accent)' : 'transparent'" 
@@ -31,7 +31,7 @@
         [style.color]="teacherViewMode() === 'verify' ? '#fff' : 'var(--text-muted)'">
         <i class="bi bi-shield-fill-check"></i> Verify Class Documents
       </button>
-      <button (click)="switchTeacherViewMode('self')" class="btn btn-sm px-4 py-2.5 rounded-3 fw-bold transition-all d-flex align-items-center gap-2" 
+      <button (click)="switchTeacherViewMode('self')" class="btn btn-sm px-4 py-3 rounded-3 fw-bold transition-all d-flex align-items-center gap-2" 
         [class.btn-primary]="teacherViewMode() === 'self'" 
         [class.btn-outline-secondary]="teacherViewMode() !== 'self'" 
         [style.background-color]="teacherViewMode() === 'self' ? 'var(--primary-accent)' : 'transparent'" 
@@ -114,53 +114,58 @@
         <table class="table table-hover align-middle mb-0">
           <thead class="table-header-custom">
             <tr>
-              <th scope="col" class="ps-4">Document Name</th>
-              <th scope="col">File Type</th>
-              <th scope="col">Uploaded At</th>
+              <th scope="col" class="ps-4">Required Document</th>
               <th scope="col">Status</th>
+              <th scope="col">Uploaded At</th>
               <th scope="col" class="text-end pe-4">Action</th>
             </tr>
           </thead>
           <tbody>
-            @if (activeDocumentsList().length === 0) {
-              <tr>
-                <td colspan="5" class="text-center py-5 text-muted-custom">
-                  <i class="bi bi-folder2-open fs-1 d-block mb-2"></i>
-                  No documents uploaded yet.
-                </td>
-              </tr>
-            } @else {
-              @for (doc of activeDocumentsList(); track doc.id) {
-                <tr class="table-row-hover">
-                  <td class="ps-4 fw-bold text-light-custom">{{ doc.documentName }}</td>
-                  <td>
-                    <span class="badge bg-secondary-subtle text-secondary-custom px-2 py-1 rounded">
-                      {{ doc.documentType }}
-                    </span>
-                  </td>
-                  <td>{{ doc.uploadedAt | date:'mediumDate' }}</td>
-                  <td>
+            @for (reqDoc of getRequiredDocuments(); track reqDoc.name) {
+              @let doc = getUploadedDocument(reqDoc.name);
+              <tr class="table-row-hover">
+                <td class="ps-4 fw-bold text-light-custom">{{ reqDoc.name }}</td>
+                <td>
+                  @if (doc) {
                     @if (doc.status.toLowerCase() === 'verified') {
-                      <span class="badge bg-success-subtle text-success px-2.5 py-1 rounded-pill text-xs fw-semibold">
+                      <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill text-xs fw-semibold">
                         <i class="bi bi-patch-check-fill me-1"></i> Verified
                       </span>
                     } @else if (doc.status.toLowerCase() === 'rejected') {
-                      <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill text-xs fw-semibold">
+                      <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill text-xs fw-semibold">
                         <i class="bi bi-x-circle-fill me-1"></i> Rejected
                       </span>
                     } @else {
-                      <span class="badge bg-warning-subtle text-warning px-2.5 py-1 rounded-pill text-xs fw-semibold">
+                      <span class="badge bg-warning-subtle text-warning px-3 py-1 rounded-pill text-xs fw-semibold">
                         <i class="bi bi-clock-fill me-1"></i> Pending
                       </span>
                     }
-                  </td>
-                  <td class="text-end pe-4">
-                    <a [href]="getFileUrl(doc.blobUrl)" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1.5 fw-semibold py-1.5 px-3 rounded-2">
-                      <i class="bi bi-eye-fill"></i> View File
-                    </a>
-                  </td>
-                </tr>
-              }
+                  } @else {
+                    <span class="badge bg-secondary-subtle text-muted-custom px-3 py-1 rounded-pill text-xs fw-semibold">
+                      <i class="bi bi-dash-circle me-1"></i> Missing
+                    </span>
+                  }
+                </td>
+                <td>{{ doc ? (doc.uploadedAt | date:'mediumDate') : '—' }}</td>
+                <td class="text-end pe-4">
+                  <div class="d-inline-flex gap-2">
+                    @if (doc) {
+                      <a [href]="getFileUrl(doc.blobUrl)" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1.5 fw-semibold py-2 px-3 rounded-2">
+                        <i class="bi bi-eye-fill"></i> View File
+                      </a>
+                      @if (doc.status.toLowerCase() === 'rejected') {
+                        <button (click)="openUploadModal(reqDoc.name)" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5 fw-bold py-2 px-3 rounded-2" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
+                          <i class="bi bi-cloud-arrow-up-fill"></i> Re-upload
+                        </button>
+                      }
+                    } @else {
+                      <button (click)="openUploadModal(reqDoc.name)" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5 fw-bold py-2 px-3 rounded-2" style="background-color: var(--primary-accent); border-color: var(--primary-accent);">
+                        <i class="bi bi-cloud-arrow-up-fill"></i> Upload
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
             }
           </tbody>
         </table>
@@ -295,71 +300,67 @@
                 <table class="table table-hover align-middle mb-0">
                   <thead class="table-header-custom">
                     <tr>
-                      <th scope="col" class="ps-4">Document Name</th>
-                      <th scope="col">File Type</th>
-                      <th scope="col">Uploaded At</th>
+                      <th scope="col" class="ps-4">Required Document</th>
                       <th scope="col">Status</th>
+                      <th scope="col">Uploaded At</th>
                       <th scope="col" class="text-end pe-4">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @if (activeDocumentsList().length === 0) {
-                      <tr>
-                        <td colspan="5" class="text-center py-5 text-muted-custom">
-                          <i class="bi bi-file-earmark-lock fs-2 d-block mb-2"></i>
-                          No documents have been uploaded for this profile yet.
-                        </td>
-                      </tr>
-                    } @else {
-                      @for (doc of activeDocumentsList(); track doc.id) {
-                        <tr class="table-row-hover">
-                          <td class="ps-4 fw-bold text-light-custom">{{ doc.documentName }}</td>
-                          <td>
-                            <span class="badge bg-secondary-subtle text-secondary-custom px-2 py-1 rounded">
-                              {{ doc.documentType }}
-                            </span>
-                          </td>
-                          <td>{{ doc.uploadedAt | date:'mediumDate' }}</td>
-                          <td>
+                    @for (reqDoc of getRequiredDocuments(); track reqDoc.name) {
+                      @let doc = getUploadedDocument(reqDoc.name);
+                      <tr class="table-row-hover">
+                        <td class="ps-4 fw-bold text-light-custom">{{ reqDoc.name }}</td>
+                        <td>
+                          @if (doc) {
                             @if (doc.status.toLowerCase() === 'verified') {
-                              <span class="badge bg-success-subtle text-success px-2.5 py-1.5 rounded-pill text-xs fw-semibold">
+                              <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill text-xs fw-semibold">
                                 <i class="bi bi-patch-check-fill me-1"></i> Verified
                               </span>
                             } @else if (doc.status.toLowerCase() === 'rejected') {
-                              <span class="badge bg-danger-subtle text-danger px-2.5 py-1.5 rounded-pill text-xs fw-semibold">
+                              <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill text-xs fw-semibold">
                                 <i class="bi bi-x-circle-fill me-1"></i> Rejected
                               </span>
                             } @else {
-                              <span class="badge bg-warning-subtle text-warning px-2.5 py-1.5 rounded-pill text-xs fw-semibold">
+                              <span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill text-xs fw-semibold">
                                 <i class="bi bi-clock-fill me-1"></i> Pending
                               </span>
                             }
-                          </td>
-                          <td class="text-end pe-4">
-                            <div class="d-inline-flex gap-2">
+                          } @else {
+                            <span class="badge bg-secondary-subtle text-muted-custom px-3 py-2 rounded-pill text-xs fw-semibold">
+                              <i class="bi bi-dash-circle me-1"></i> Missing
+                            </span>
+                          }
+                        </td>
+                        <td>{{ doc ? (doc.uploadedAt | date:'mediumDate') : '—' }}</td>
+                        <td class="text-end pe-4">
+                          <div class="d-inline-flex gap-2">
+                            @if (doc) {
                               <!-- View Link -->
-                              <a [href]="getFileUrl(doc.blobUrl)" target="_blank" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 py-1.5 px-3 rounded-2 fw-semibold">
+                              <a [href]="getFileUrl(doc.blobUrl)" target="_blank" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 py-2 px-3 rounded-2 fw-semibold">
                                 <i class="bi bi-box-arrow-up-right"></i> Open File
                               </a>
                               <!-- Verification Buttons (Admin / Teacher, only if pending) -->
                               @if (doc.status.toLowerCase() === 'pending') {
-                                <button (click)="updateVerificationStatus(doc, 'Verified')" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-2 fw-bold text-white">
+                                <button (click)="updateVerificationStatus(doc, 'Verified')" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 py-2 px-3 rounded-2 fw-bold text-white">
                                   <i class="bi bi-check-lg"></i> Verify
                                 </button>
-                                <button (click)="updateVerificationStatus(doc, 'Rejected')" class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-2 fw-bold text-white">
+                                <button (click)="updateVerificationStatus(doc, 'Rejected')" class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1 py-2 px-3 rounded-2 fw-bold text-white">
                                   <i class="bi bi-x-lg"></i> Reject
                                 </button>
                               }
                               <!-- Delete Button (Admin Only) -->
                               @if (userRole() === 'Admin') {
-                                <button (click)="deleteDocument(doc)" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center p-1.5 rounded-2" title="Delete File">
-                                  <i class="bi bi-trash-fill"></i>
+                                <button (click)="deleteDocument(doc)" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 py-2 px-3 rounded-2 fw-semibold">
+                                  <i class="bi bi-trash-fill"></i> Delete
                                 </button>
                               }
-                            </div>
-                          </td>
-                        </tr>
-                      }
+                            } @else {
+                              <span class="text-muted-custom text-xs">No upload available</span>
+                            }
+                          </div>
+                        </td>
+                      </tr>
                     }
                   </tbody>
                 </table>
@@ -377,14 +378,19 @@
         <div class="modal-content custom-modal-content border-0 shadow-lg">
           <div class="modal-header border-bottom-custom p-4">
             <h5 class="modal-title fw-bold" style="color: var(--primary-accent);">
-              <i class="bi bi-cloud-arrow-up-fill me-2"></i> Upload New Document
+              <i class="bi bi-cloud-arrow-up-fill me-2"></i> Upload Required Document
             </h5>
             <button type="button" class="btn-close" (click)="closeUploadModal()" aria-label="Close"></button>
           </div>
           <div class="modal-body p-4">
             <div class="mb-3">
-              <label class="form-label text-muted-custom fw-semibold mb-1">Document Display Name *</label>
-              <input type="text" class="form-control" placeholder="e.g. Birth Certificate, Identity Proof" [(ngModel)]="uploadForm().documentName">
+              <label class="form-label text-muted-custom fw-semibold mb-1">Document Type *</label>
+              <select class="form-select" [(ngModel)]="uploadForm().documentName">
+                <option value="" disabled selected>-- Select Document Type --</option>
+                @for (doc of getRequiredDocuments(); track doc.name) {
+                  <option [value]="doc.name">{{ doc.name }}</option>
+                }
+              </select>
             </div>
             <div class="mb-3">
               <label class="form-label text-muted-custom fw-semibold mb-1">Select File *</label>

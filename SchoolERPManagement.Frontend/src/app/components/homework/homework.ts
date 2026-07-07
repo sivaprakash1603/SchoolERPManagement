@@ -12,11 +12,12 @@ import { ToastService } from '../../services/toast.service';
 import { TimetableService } from '../../services/timetable.service';
 import { ParentService } from '../../services/parent.service';
 import { FilterStateService } from '../../services/filter-state.service';
+import { DebounceClickDirective } from '../../directives/debounce-click.directive';
 
 @Component({
   selector: 'app-homework',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DebounceClickDirective],
   templateUrl: './homework.html',
   styleUrl: './homework.css',
 })
@@ -100,6 +101,10 @@ export class Homework implements OnInit {
   isSubmitting = signal(false);
   expandedHomeworkId = signal<number | null>(null);
 
+  // Unsubmit Confirmation Modal Signals
+  showUnsubmitConfirm = signal(false);
+  submissionIdToUnsubmit = signal<number | null>(null);
+
   // View UI Helpers
   get pageTitle(): string {
     if (this.userRole() === 'Student') return 'My Homework';
@@ -161,9 +166,12 @@ export class Homework implements OnInit {
             next: (children) => {
               this.parentChildren.set(children);
               if (children.length > 0) {
-                this.selectedChildId.set(children[0].studentId);
-                this.resolvedStudentId.set(children[0].studentId);
-                this.fetchStudentHomeworks(children[0].studentId);
+                const savedId = this.parentService.selectedChildId;
+                const child = (savedId && children.find(c => c.studentId === savedId)) || children[0];
+                this.selectedChildId.set(child.studentId);
+                this.resolvedStudentId.set(child.studentId);
+                this.parentService.selectedChildId = child.studentId;
+                this.fetchStudentHomeworks(child.studentId);
               }
             },
             error: (err) => console.error('Failed to load parent children', err)
@@ -213,12 +221,14 @@ export class Homework implements OnInit {
     });
   }
 
-  onChildChange(studentId: number) {
-    this.selectedChildId.set(studentId);
-    this.resolvedStudentId.set(studentId);
+  onChildChange(studentId: any) {
+    const parsedId = Number(studentId);
+    this.selectedChildId.set(parsedId);
+    this.resolvedStudentId.set(parsedId);
+    this.parentService.selectedChildId = parsedId;
     
-    const child = this.parentChildren().find(c => c.studentId === studentId);
-    this.fetchStudentHomeworks(studentId);
+    const child = this.parentChildren().find(c => c.studentId === parsedId);
+    this.fetchStudentHomeworks(parsedId);
   }
 
   teacherAssignments = signal<{classId: number, subjectId: number}[]>([]);
@@ -498,8 +508,11 @@ export class Homework implements OnInit {
   }
 
   updateSubmissionMetrics(subs: HomeworkSubmissionDetailsDTO[]) {
-    const pending = subs.filter(s => s.verificationStatus?.toLowerCase() === 'pending').length;
-    const completed = subs.filter(s => s.verificationStatus?.toLowerCase() === 'approved' || s.verificationStatus?.toLowerCase() === 'rejected').length;
+    const pending = subs.filter(s => (s.verificationStatus || s.verificationstatus)?.toLowerCase() === 'pending').length;
+    const completed = subs.filter(s => {
+      const vs = (s.verificationStatus || s.verificationstatus)?.toLowerCase();
+      return vs === 'approved' || vs === 'rejected';
+    }).length;
     this.pendingEvaluations.set(pending);
     this.completedEvaluations.set(completed);
   }
@@ -509,7 +522,7 @@ export class Homework implements OnInit {
       submissionId: sub.id,
       marks: sub.marks || 0,
       remarks: sub.remarks || '',
-      verificationStatus: sub.verificationStatus?.toLowerCase() === 'rejected' ? 'rejected' : 'approved'
+      verificationStatus: (sub.verificationStatus || sub.verificationstatus)?.toLowerCase() === 'rejected' ? 'rejected' : 'approved'
     });
   }
 
@@ -547,6 +560,38 @@ export class Homework implements OnInit {
         const errMsg = this.getErrorMessage(err, 'Failed to save evaluation.');
         this.toastService.error(errMsg);
         this.isEvaluating.set(false);
+      }
+    });
+  }
+
+  confirmUnsubmit(submissionId: number) {
+    this.submissionIdToUnsubmit.set(submissionId);
+    this.showUnsubmitConfirm.set(true);
+  }
+
+  cancelUnsubmit() {
+    this.submissionIdToUnsubmit.set(null);
+    this.showUnsubmitConfirm.set(false);
+  }
+
+  executeUnsubmit() {
+    const id = this.submissionIdToUnsubmit();
+    if (!id) return;
+    
+    this.homeworkService.unsubmitHomework(id).subscribe({
+      next: () => {
+        this.toastService.success('Assignment unsubmitted successfully.');
+        this.cancelUnsubmit();
+        const studentId = this.resolvedStudentId();
+        if (studentId) {
+          this.fetchStudentHomeworks(studentId);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to unsubmit homework', err);
+        const errMsg = this.getErrorMessage(err, 'Failed to unsubmit homework.');
+        this.toastService.error(errMsg);
+        this.cancelUnsubmit();
       }
     });
   }

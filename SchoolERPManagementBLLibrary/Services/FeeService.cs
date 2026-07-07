@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SchoolERPManagementBLLibrary.DTOs.Fee;
+using SchoolERPManagementBLLibrary.DTOs.Notification;
 using SchoolERPManagementBLLibrary.Exceptions;
 using SchoolERPManagementBLLibrary.Interfaces;
 using SchoolERPManagementDALLibrary.Interfaces;
@@ -21,6 +22,7 @@ public sealed class FeeService : IFeeService
     private readonly IRepository<int, Feestructure> _feeStructureRepository;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
 
     public FeeService(
         IRepository<int, Feepayment> feePaymentRepository,
@@ -28,7 +30,8 @@ public sealed class FeeService : IFeeService
         IRepository<int, Studentenrollment> studentEnrollmentRepository,
         IRepository<int, Feestructure> feeStructureRepository,
         IConfiguration configuration,
-        IEmailService emailService)
+        IEmailService emailService,
+        INotificationService notificationService)
     {
         _feePaymentRepository = feePaymentRepository;
         _studentRepository = studentRepository;
@@ -36,6 +39,7 @@ public sealed class FeeService : IFeeService
         _feeStructureRepository = feeStructureRepository;
         _configuration = configuration;
         _emailService = emailService;
+        _notificationService = notificationService;
     }
 
     public async Task<FeeStructureResponseDTO> AddFeeStructureAsync(AddFeeStructureDTO dto, CancellationToken cancellationToken)
@@ -50,6 +54,38 @@ public sealed class FeeService : IFeeService
         };
 
         await _feeStructureRepository.AddAsync(feeStructure, save: true, ct: cancellationToken);
+
+        // Fetch students and parents enrolled in this class to notify
+        var enrolledStudents = await _studentRepository.Query(true)
+            .Include(s => s.Studentparents)
+            .ThenInclude(sp => sp.Parent)
+            .Where(s => s.Studentenrollments.Any(e => e.Classid == dto.ClassId))
+            .ToListAsync(cancellationToken);
+
+        if (enrolledStudents.Any())
+        {
+            var targetUserIds = new List<int>();
+            foreach (var student in enrolledStudents)
+            {
+                targetUserIds.Add(student.Userid);
+                var parentUserIds = student.Studentparents
+                    .Where(sp => sp.Parent != null)
+                    .Select(sp => sp.Parent.Userid);
+                targetUserIds.AddRange(parentUserIds);
+            }
+
+            if (targetUserIds.Any())
+            {
+                var notificationDto = new SendNotificationDTO(
+                    Title: "New Fee Structure Defined",
+                    Message: $"A new fee structure '{dto.FeeName}' of ₹{dto.TotalAmount} has been defined. Due date: {dto.DueDate:yyyy-MM-dd}.",
+                    CreatedByUserId: null,
+                    TargetUserIds: targetUserIds
+                );
+                await _notificationService.SendNotificationAsync(notificationDto, cancellationToken);
+            }
+        }
+
         return new FeeStructureResponseDTO(feeStructure.Id, feeStructure.Classid, feeStructure.Academicyearid, feeStructure.Feename, feeStructure.Totalamount, feeStructure.Duedate);
     }
 
@@ -89,6 +125,31 @@ public sealed class FeeService : IFeeService
         };
 
         await _feePaymentRepository.AddAsync(payment, save: true, ct: cancellationToken);
+
+        // Fetch student and their parents' UserIds to notify them
+        var studentWithParents = await _studentRepository.Query(true)
+            .Include(s => s.Studentparents)
+            .ThenInclude(sp => sp.Parent)
+            .FirstOrDefaultAsync(s => s.Id == dto.StudentId, cancellationToken);
+
+        if (studentWithParents != null)
+        {
+            var targetUserIds = new List<int> { studentWithParents.Userid };
+            var parentUserIds = studentWithParents.Studentparents
+                .Where(sp => sp.Parent != null)
+                .Select(sp => sp.Parent.Userid)
+                .ToList();
+            targetUserIds.AddRange(parentUserIds);
+
+            var notificationDto = new SendNotificationDTO(
+                Title: "Fee Payment Received",
+                Message: $"A payment of ₹{dto.AmountPaid} for fee '{feeStructure.Feename}' was successfully received on {payment.Paymentdate:yyyy-MM-dd}.",
+                CreatedByUserId: null,
+                TargetUserIds: targetUserIds
+            );
+            await _notificationService.SendNotificationAsync(notificationDto, cancellationToken);
+        }
+
         return new FeePaymentResponseDTO(payment.Id, payment.Studentid, payment.Feestructureid, payment.Amountpaid, payment.Paymentdate, payment.Paymentmethod, payment.Transactionid);
     }
 

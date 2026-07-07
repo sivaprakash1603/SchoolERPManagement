@@ -1,0 +1,217 @@
+/* ==========================================================================
+   FAQ Page Styles — Responsive Premium Accordion
+   ========================================================================== */
+
+.faq-page {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+/* Grid Overlay */
+.grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  background-size: 30px 30px;
+  background-image:
+    linear-gradient(to right, rgba(99, 91, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 91, 255, 0.05) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Orbs */
+.parallax-bg {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(65px);
+  opacity: 0.5;
+  z-index: 0;
+}
+
+.orb-1 {
+  width: 350px;
+  height: 350px;
+  background: var(--primary-accent-glow);
+  top: -10%;
+  left: -5%;
+}
+
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(139, 92, 246, 0.12);
+  bottom: 10%;
+  right: -5%;
+}
+
+/* Navbar */
+.navbar-faq {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--primary-accent), #8b5cf6);
+  color: white;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.logo-text {
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.logo-subtext {
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: block;
+}
+
+.theme-toggle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background-color: var(--primary-accent-soft) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.btn-nav {
+  background: linear-gradient(135deg, var(--primary-accent) 0%, #4b44d1 100%) !important;
+  border: none !important;
+  font-size: 0.9rem;
+  color: #ffffff !important;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn-nav:hover {
+  background: linear-gradient(135deg, #7c75ff 0%, #635bff 100%) !important;
+  transform: translateY(-2px);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-accent) 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-secondary-custom {
+  color: var(--text-secondary);
+}
+
+/* Category Tabs */
+.category-tab {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all 0.25s ease;
+  font-size: 0.875rem;
+}
+
+.category-tab:hover {
+  border-color: var(--primary-accent);
+  color: var(--text-primary);
+}
+
+.category-tab.active {
+  background-color: var(--primary-accent);
+  border-color: var(--primary-accent);
+  color: #ffffff !important;
+}
+
+/* Accordion Card */
+.faq-card {
+  background-color: var(--bg-main);
+  border-color: var(--border-color) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.faq-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--primary-accent) !important;
+}
+
+.faq-trigger {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  transition: color 0.25s ease;
+}
+
+.faq-icon-wrapper {
+  width: 32px;
+  height: 32px;
+  background-color: var(--bg-sidebar);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.faq-card:hover .faq-icon-wrapper {
+  background-color: var(--primary-accent-soft);
+  color: var(--primary-accent);
+}
+
+/* Open State */
+.faq-card.open {
+  border-color: var(--primary-accent) !important;
+}
+
+.faq-card.open .faq-icon-wrapper {
+  transform: rotate(180deg);
+  background-color: var(--primary-accent);
+  color: #ffffff;
+}
+
+/* Smooth Accordion Body Height Transition */
+.faq-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.faq-card.open .faq-content {
+  grid-template-rows: 1fr;
+}
+
+.faq-content > div {
+  overflow: hidden;
+  font-size: 0.925rem;
+  line-height: 1.6;
+}
+
+/* Footer Link */
+.hover-white {
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+.hover-white:hover {
+  color: var(--text-primary) !important;
+}
+
+@media (max-width: 575.98px) {
+  .faq-trigger {
+    font-size: 0.95rem;
+    padding: 1.25rem !important;
+  }
+  .faq-content > div {
+    padding: 1.25rem !important;
+    padding-top: 0 !important;
+  }
+}

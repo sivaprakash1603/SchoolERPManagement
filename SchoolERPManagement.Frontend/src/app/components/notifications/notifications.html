@@ -1,6 +1,6 @@
 <div class="notifications-container fade-in">
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="header-section d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom-custom">
     <div>
       <h2 class="mb-1 text-primary-custom fw-bold">
         <i class="bi bi-bell-fill me-2 text-gradient"></i>Notifications
@@ -8,12 +8,29 @@
       <p class="text-muted-custom mb-0">Stay updated with your latest alerts and messages.</p>
     </div>
     @if (!loading() && notifications().length > 0) {
-      <button class="btn btn-outline-primary-custom rounded-pill btn-sm d-flex align-items-center gap-2" 
+      <button class="btn btn-gradient-custom rounded-pill btn-sm d-flex align-items-center gap-2 px-3 py-2 shadow-sm" 
               (click)="markAllAsRead()">
         <i class="bi bi-check2-all"></i> Mark All as Read
       </button>
     }
   </div>
+
+  <!-- Filters Tab Navigation -->
+  @if (!loading() && notifications().length > 0) {
+    <div class="filter-tabs-container mb-4">
+      <div class="d-flex gap-2">
+        <button class="filter-tab" [class.active]="activeFilter() === 'all'" (click)="activeFilter.set('all'); $event.stopPropagation();">
+          All <span class="badge-custom">{{ notifications().length }}</span>
+        </button>
+        <button class="filter-tab" [class.active]="activeFilter() === 'unread'" (click)="activeFilter.set('unread'); $event.stopPropagation();">
+          Unread <span class="badge-custom unread-badge">{{ unreadCount() }}</span>
+        </button>
+        <button class="filter-tab" [class.active]="activeFilter() === 'read'" (click)="activeFilter.set('read'); $event.stopPropagation();">
+          Read <span class="badge-custom read-badge">{{ readCount() }}</span>
+        </button>
+      </div>
+    </div>
+  }
 
   <!-- Loading State -->
   @if (loading()) {
@@ -34,46 +51,54 @@
 
   <!-- Notifications List -->
   @if (!loading() && !error()) {
-    @if (notifications().length === 0) {
-      <div class="empty-state text-center py-5 rounded-4 shadow-sm bg-white">
+    @if (filteredNotifications().length === 0) {
+      <div class="empty-state text-center py-5 rounded-4 shadow-sm-custom">
         <div class="empty-icon-wrapper mx-auto mb-3">
-          <i class="bi bi-bell-slash text-muted" style="font-size: 2.5rem;"></i>
+          <i class="bi bi-bell-slash text-muted-custom" style="font-size: 2.5rem;"></i>
         </div>
-        <h4 class="fw-bold text-dark">All caught up!</h4>
-        <p class="text-muted">You have no new notifications.</p>
+        <h4 class="fw-bold text-primary-custom">All caught up!</h4>
+        <p class="text-secondary-custom">You have no notifications in this view.</p>
       </div>
     } @else {
       <div class="notification-list d-flex flex-column gap-3">
-        @for (notif of notifications(); track notif.notificationId) {
-          <div class="notification-card p-4 rounded-4 shadow-sm bg-white position-relative" 
-               [class.unread]="!notif.isRead">
+        @for (notif of filteredNotifications(); track notif.notificationId) {
+          <div class="notification-card p-4 rounded-4 shadow-sm-custom position-relative" 
+               [class.unread]="!notif.isRead"
+               (click)="toggleExpand(notif.notificationId, notif)">
                
-            <!-- Unread Dot -->
+            <!-- Unread Indicator bar on left side -->
             @if (!notif.isRead) {
-              <div class="unread-indicator"></div>
+              <div class="unread-glow-bar"></div>
             }
 
             <div class="d-flex align-items-start gap-3">
-              <div class="icon-circle" [class.bg-primary-subtle]="!notif.isRead" [class.bg-light]="notif.isRead">
-                <i class="bi bi-chat-text-fill" [class.text-primary-custom]="!notif.isRead" [class.text-secondary]="notif.isRead"></i>
+              <div class="icon-circle" [ngClass]="getNotificationConfig(notif.title).colorClass">
+                <i class="bi" [ngClass]="getNotificationConfig(notif.title).icon"></i>
               </div>
               <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <h5 class="mb-0 fw-bold" [class.text-dark]="!notif.isRead" [class.text-muted]="notif.isRead">
+                <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                  <h5 class="mb-0 fw-bold notif-card-title">
                     {{ notif.title }}
                   </h5>
-                  <span class="text-muted small">
-                    <i class="bi bi-clock me-1"></i>{{ notif.createdAt | date:'MMM d, y, h:mm a' }}
+                  <span class="text-secondary-custom small d-flex align-items-center gap-1">
+                    <i class="bi bi-clock"></i>{{ notif.createdAt | date:'MMM d, y, h:mm a' }}
                   </span>
                 </div>
-                <p class="mb-2 text-secondary">{{ notif.message }}</p>
                 
-                @if (!notif.isRead) {
-                  <button class="btn btn-sm btn-light rounded-pill border action-btn mt-2" 
-                          (click)="markAsRead(notif)">
-                    <i class="bi bi-check-circle me-1"></i> Mark as Read
-                  </button>
-                }
+                <!-- Truncated/Expanded Message content -->
+                <p class="mb-0 notif-message text-secondary-custom mt-2" [class.expanded]="isExpanded(notif.notificationId)">
+                  {{ notif.message }}
+                </p>
+
+                <!-- Action / Expand bar -->
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top-subtle">
+                  <span class="text-xs text-primary-custom-subtle font-semibold">
+                    {{ isExpanded(notif.notificationId) ? 'Click to collapse' : 'Click to read more' }}
+                  </span>
+                  <i class="bi expand-chevron text-secondary-custom" 
+                     [class.bi-chevron-down]="!isExpanded(notif.notificationId)"
+                     [class.bi-chevron-up]="isExpanded(notif.notificationId)"></i>
+                </div>
               </div>
             </div>
           </div>

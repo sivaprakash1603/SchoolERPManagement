@@ -269,12 +269,27 @@
                 <!-- Submission Info (if submitted) -->
                 @if (hw.submission) {
                   <div class="minimal-card p-3 mb-3" style="background: var(--bg-canvas)">
-                    <p
-                      class="fw-bold small text-muted-custom text-uppercase mb-2"
-                      style="font-size: 0.65rem; letter-spacing: 0.04em"
-                    >
-                      Your Submission
-                    </p>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <p
+                        class="fw-bold small text-muted-custom text-uppercase mb-0"
+                        style="font-size: 0.65rem; letter-spacing: 0.04em"
+                      >
+                        Your Submission
+                      </p>
+                      <span
+                        class="badge rounded-pill px-2 py-1 text-capitalize"
+                        [ngClass]="{
+                          'bg-warning-subtle text-warning':
+                            (hw.submission.verificationStatus || hw.submission.verificationstatus)?.toLowerCase() === 'pending',
+                          'bg-success-subtle text-success':
+                            (hw.submission.verificationStatus || hw.submission.verificationstatus)?.toLowerCase() === 'approved',
+                          'bg-danger-subtle text-danger':
+                            (hw.submission.verificationStatus || hw.submission.verificationstatus)?.toLowerCase() === 'rejected'
+                        }"
+                      >
+                        {{ (hw.submission.verificationStatus || hw.submission.verificationstatus)?.toLowerCase() === 'rejected' ? 'Redo / Needs Correction' : (hw.submission.verificationStatus || hw.submission.verificationstatus || 'Pending') }}
+                      </span>
+                    </div>
                     <div class="d-flex flex-wrap gap-3 align-items-center">
                       <span class="small"
                         ><i class="bi bi-calendar-check me-1"></i>Submitted:
@@ -303,6 +318,24 @@
                         </a>
                       </div>
                     }
+                    <div class="d-flex justify-content-end gap-2 mt-2">
+                      @if ((hw.submission.verificationStatus || hw.submission.verificationstatus)?.toLowerCase() === 'pending') {
+                          <button
+                            class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 rounded-3 d-flex align-items-center gap-1"
+                            (click)="confirmUnsubmit(hw.submission.id); $event.stopPropagation()"
+                          >
+                            <i class="bi bi-x-circle"></i> Unsubmit
+                          </button>
+                      }
+                      @if ((hw.submission.verificationStatus || hw.submission.verificationstatus)?.toLowerCase() === 'rejected') {
+                        <button
+                          class="btn btn-warning btn-sm fw-bold px-3 py-2 rounded-3 d-flex align-items-center gap-1 text-white"
+                          (click)="openSubmitHomeworkModal(hw); $event.stopPropagation()"
+                        >
+                          <i class="bi bi-arrow-repeat"></i> Resubmit Homework
+                        </button>
+                      }
+                    </div>
                   </div>
                 }
                 <!-- Submit Button (if not yet submitted) -->
@@ -373,7 +406,8 @@
             <button
               class="btn btn-primary px-4 rounded-3 fw-bold"
               style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
-              (click)="submitStudentHomework()"
+              appDebounceClick
+              (debounceClick)="submitStudentHomework()"
               [disabled]="isSubmitting()"
             >
               @if (isSubmitting()) {
@@ -547,19 +581,24 @@
                         }
                       </td>
                       <td class="px-4 py-3 text-end">
-                        <!-- Allow Parent to submit too, based on plan approval -->
-                        <button
-                          class="btn btn-sm btn-primary d-flex align-items-center gap-1"
-                          (click)="openSubmitHomeworkModal(hw); $event.stopPropagation()"
-                        >
-                          <i class="bi bi-cloud-arrow-up"></i> Submit Work
-                        </button>
-                        <button
-                          class="btn btn-sm btn-primary fw-bold"
-                          (click)="openSubmissionsModal(hw)"
-                        >
-                          <i class="bi bi-card-checklist me-1"></i> Submissions
-                        </button>
+                        <div class="d-flex justify-content-end gap-2">
+                          @if (!isAdminOrTeacher()) {
+                            <button
+                              class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                              (click)="openSubmitHomeworkModal(hw); $event.stopPropagation()"
+                            >
+                              <i class="bi bi-cloud-arrow-up"></i> Submit Work
+                            </button>
+                          }
+                          @if (isAdminOrTeacher()) {
+                            <button
+                              class="btn btn-sm btn-primary fw-bold d-inline-flex align-items-center gap-1"
+                              (click)="openSubmissionsModal(hw); $event.stopPropagation()"
+                            >
+                              <i class="bi bi-card-checklist"></i> Submissions
+                            </button>
+                          }
+                        </div>
                       </td>
                     </tr>
                   }
@@ -675,7 +714,8 @@
             <button
               class="btn btn-primary px-4 rounded-3 fw-bold"
               style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
-              (click)="saveHomework()"
+              appDebounceClick
+              (debounceClick)="saveHomework()"
               [disabled]="
                 isSaving() ||
                 !createForm().title ||
@@ -740,14 +780,16 @@
                                 class="badge rounded-pill px-2 py-1 text-capitalize"
                                 [ngClass]="{
                                   'bg-warning-subtle text-warning':
-                                    sub.verificationStatus?.toLowerCase() === 'pending',
+                                    (sub.verificationStatus || sub.verificationstatus)?.toLowerCase() === 'pending',
                                   'bg-success-subtle text-success':
-                                    sub.verificationStatus?.toLowerCase() === 'approved',
+                                    (sub.verificationStatus || sub.verificationstatus)?.toLowerCase() === 'approved',
                                   'bg-danger-subtle text-danger':
-                                    sub.verificationStatus?.toLowerCase() === 'rejected',
+                                    (sub.verificationStatus || sub.verificationstatus)?.toLowerCase() === 'rejected',
+                                  'bg-secondary-subtle text-secondary':
+                                    !(sub.verificationStatus || sub.verificationstatus),
                                 }"
                               >
-                                {{ sub.verificationStatus || 'unsubmitted' }}
+                                {{ sub.verificationStatus || sub.verificationstatus || 'unsubmitted' }}
                               </span>
                             </td>
                             <td class="px-2 py-2 text-center fw-bold">
@@ -812,6 +854,7 @@
                           (ngModelChange)="
                             evaluationForm.set({ ...evaluationForm(), marks: $event })
                           "
+                          (keypress)="($event.charCode >= 48 && $event.charCode <= 57 || $event.charCode === 46) ? null : $event.preventDefault()"
                           min="0"
                           required
                         />
@@ -844,7 +887,8 @@
                       </div>
                       <button
                         class="btn btn-primary w-100 fw-bold py-2 rounded-3"
-                        (click)="submitEvaluation()"
+                        appDebounceClick
+                        (debounceClick)="submitEvaluation()"
                         [disabled]="isEvaluating()"
                       >
                         @if (isEvaluating()) {
@@ -868,6 +912,33 @@
               (click)="closeSubmissionsModal()"
             >
               Close
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Custom Unsubmit Confirmation Modal -->
+    @if (showUnsubmitConfirm()) {
+      <div class="modal-overlay" (click)="cancelUnsubmit()">
+        <div class="modal-card" style="max-width: 450px;" (click)="$event.stopPropagation()">
+          <div class="modal-header-custom">
+            <h5 class="fw-bold mb-0 text-danger d-flex align-items-center gap-2">
+              <i class="bi bi-exclamation-triangle-fill"></i> Unsubmit Homework?
+            </h5>
+            <button class="btn-close" (click)="cancelUnsubmit()"></button>
+          </div>
+          <div class="modal-body-custom py-3">
+            <p class="mb-0 text-muted-custom">
+              Are you sure you want to unsubmit this homework assignment? Your current submission will be removed, allowing you to modify and submit again.
+            </p>
+          </div>
+          <div class="modal-footer-custom gap-2 d-flex justify-content-end">
+            <button class="btn btn-secondary px-3 py-2 rounded-3 fw-bold" (click)="cancelUnsubmit()">
+              Cancel
+            </button>
+            <button class="btn btn-danger px-3 py-2 rounded-3 fw-bold" appDebounceClick (debounceClick)="executeUnsubmit()">
+              Yes, Unsubmit
             </button>
           </div>
         </div>

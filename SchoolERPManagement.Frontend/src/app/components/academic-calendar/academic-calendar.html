@@ -221,8 +221,8 @@
         <div class="modal-body-custom">
           <div class="row g-3">
             <!-- Date -->
-            <div class="col-12">
-              <label class="modal-form-label">Date</label>
+            <div class="col-12 col-md-6">
+              <label class="modal-form-label">Start Date</label>
               <input
                 type="date"
                 class="form-control"
@@ -231,6 +231,18 @@
                 [min]="minDate()"
                 [max]="maxDate()"
                 required
+              />
+            </div>
+            <!-- End Date -->
+            <div class="col-12 col-md-6">
+              <label class="modal-form-label">End Date (Optional)</label>
+              <input
+                type="date"
+                class="form-control"
+                [ngModel]="createForm().endDate"
+                (ngModelChange)="createForm.set({ ...createForm(), endDate: $event })"
+                [min]="createForm().date || minDate()"
+                [max]="maxDate()"
               />
             </div>
             <!-- Description -->

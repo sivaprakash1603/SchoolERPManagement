@@ -13,6 +13,7 @@ export interface CalendarEventResponseDTO {
 
 export interface CreateCalendarEventDTO {
   date: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
   description: string;
   isHoliday: boolean;
   academicYearId: number;

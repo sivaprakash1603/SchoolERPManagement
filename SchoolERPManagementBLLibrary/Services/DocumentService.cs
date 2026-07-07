@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SchoolERPManagementBLLibrary.DTOs.Document;
+using SchoolERPManagementBLLibrary.DTOs.Notification;
 using SchoolERPManagementBLLibrary.Exceptions;
 using SchoolERPManagementBLLibrary.Interfaces;
 using SchoolERPManagementDALLibrary.Interfaces;
@@ -24,6 +25,7 @@ public sealed class DocumentService : IDocumentService
     private readonly IFileStorageService _fileStorageService;
     private readonly IRepository<int, Teacher> _teacherRepository;
     private readonly IEnumerable<IDocumentVerificationStrategy> _verificationStrategies;
+    private readonly INotificationService _notificationService;
     private readonly IMapper _mapper;
 
     public DocumentService(
@@ -36,6 +38,7 @@ public sealed class DocumentService : IDocumentService
         IFileStorageService fileStorageService,
         IRepository<int, Teacher> teacherRepository,
         IEnumerable<IDocumentVerificationStrategy> verificationStrategies,
+        INotificationService notificationService,
         IMapper mapper)
     {
         _studentDocumentRepository = studentDocumentRepository;
@@ -47,6 +50,7 @@ public sealed class DocumentService : IDocumentService
         _fileStorageService = fileStorageService;
         _teacherRepository = teacherRepository;
         _verificationStrategies = verificationStrategies;
+        _notificationService = notificationService;
         _mapper = mapper;
     }
 
@@ -121,6 +125,54 @@ public sealed class DocumentService : IDocumentService
         }
 
         await strategy.VerifyAsync(dto, verifyingUserId, userRole, cancellationToken);
+
+        // Send notifications based on document type
+        int targetUserId = 0;
+        string documentName = "";
+        if (dto.DocumentType.Equals("student", StringComparison.OrdinalIgnoreCase))
+        {
+            var doc = await _studentDocumentRepository.Query(true)
+                .Include(d => d.Student)
+                .FirstOrDefaultAsync(d => d.Id == dto.DocumentId, cancellationToken);
+            if (doc != null && doc.Student != null)
+            {
+                targetUserId = doc.Student.Userid;
+                documentName = doc.Documentname;
+            }
+        }
+        else if (dto.DocumentType.Equals("teacher", StringComparison.OrdinalIgnoreCase))
+        {
+            var doc = await _teacherDocumentRepository.Query(true)
+                .Include(d => d.Teacher)
+                .FirstOrDefaultAsync(d => d.Id == dto.DocumentId, cancellationToken);
+            if (doc != null && doc.Teacher != null)
+            {
+                targetUserId = doc.Teacher.Userid;
+                documentName = doc.Documentname;
+            }
+        }
+        else if (dto.DocumentType.Equals("parent", StringComparison.OrdinalIgnoreCase))
+        {
+            var doc = await _parentDocumentRepository.Query(true)
+                .Include(d => d.Parent)
+                .FirstOrDefaultAsync(d => d.Id == dto.DocumentId, cancellationToken);
+            if (doc != null && doc.Parent != null)
+            {
+                targetUserId = doc.Parent.Userid;
+                documentName = doc.Documentname;
+            }
+        }
+
+        if (targetUserId > 0)
+        {
+            var notificationDto = new SendNotificationDTO(
+                Title: $"Document {dto.Status}",
+                Message: $"Your uploaded document '{documentName}' has been {dto.Status!.ToLower()}.",
+                CreatedByUserId: verifyingUserId,
+                TargetUserIds: new[] { targetUserId }
+            );
+            await _notificationService.SendNotificationAsync(notificationDto, cancellationToken);
+        }
     }
 
     public async Task<IReadOnlyList<StudentDocumentResponseDTO>> GetStudentDocumentsAsync(int studentId, int userId, string userRole, CancellationToken cancellationToken)
