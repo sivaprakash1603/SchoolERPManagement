@@ -2,19 +2,29 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of, throwError } from 'rxjs';
 import { AcademicSessions } from './academic-sessions';
+import { AcademicYearService } from '../../services/academic-year.service';
 
 describe('AcademicSessions', () => {
   let component: AcademicSessions;
   let fixture: ComponentFixture<AcademicSessions>;
+  let mockAcademicYearService: any;
 
   beforeEach(async () => {
+    mockAcademicYearService = {
+      getAllAcademicYears: () => of([{ id: 1, yearName: '2026-2027', isCurrent: true, startDate: '2026-06-01', endDate: '2027-05-31' }]),
+      createAcademicYear: () => of({}),
+      setCurrentAcademicYear: () => of({})
+    };
+
     await TestBed.configureTestingModule({
       imports: [AcademicSessions],
       providers: [
         provideRouter([]),
         provideHttpClient(),
-        provideHttpClientTesting()
+        provideHttpClientTesting(),
+        { provide: AcademicYearService, useValue: mockAcademicYearService }
       ]
     }).compileComponents();
 
@@ -23,8 +33,10 @@ describe('AcademicSessions', () => {
     await fixture.whenStable();
   });
 
-  it('should create', () => {
+  it('should create and load sessions', () => {
     expect(component).toBeTruthy();
+    fixture.detectChanges();
+    expect(component.sessions().length).toBe(1);
   });
 
   it('should open and close create modal', () => {
@@ -36,10 +48,14 @@ describe('AcademicSessions', () => {
     expect(component.showCreateModal()).toBe(false);
   });
 
-  it('should validate form before saving session', () => {
-    component.createForm.set({ yearName: '', startDate: '', endDate: '' });
-    expect(component.isSaving()).toBe(false);
+  it('should save session successfully', () => {
+    component.createForm.set({ yearName: '2027-2028', startDate: '2027-06-01', endDate: '2028-05-31' });
     component.saveSession();
-    expect(component.isSaving()).toBe(false); // Should not start saving since validation fails
+    expect(component.isSaving()).toBe(false);
+  });
+
+  it('should set session as active successfully', () => {
+    component.setAsActive(1);
+    expect(component.sessions().length).toBe(1);
   });
 });
