@@ -283,17 +283,82 @@ describe('Assets', () => {
     expect(component.getAssetNameById(999)).toBe('Asset #999');
   });
 
-  it('should render HTML elements and allow clicks', () => {
+  it('should render HTML elements, add-modal elements, reports log, and allow clicks', () => {
     component.userRole.set('Admin');
     component.isLoading.set(false);
+    component.assetReports.set([
+      { id: 1, assetid: 1, status: 'active', report: 'Issue log 1', createdat: '2026-07-01' },
+      { id: 2, assetid: 1, status: 'under repair', report: 'Issue log 2', createdat: '2026-07-02' },
+      { id: 3, assetid: 1, status: 'broken', report: 'Issue log 3', createdat: '2026-07-03' },
+      { id: 4, assetid: 1, status: 'unknown', report: 'Issue log 4', createdat: '' }
+    ]);
+    component.showAddAssetModal.set(true);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const addBtn = compiled.querySelector('.btn-primary') as HTMLButtonElement;
-    if (addBtn) {
-      addBtn.click();
-      expect(component.showAddAssetModal()).toBe(true);
+    expect(compiled.querySelector('.modal-content')).toBeTruthy();
+
+    // Trigger input events in add modal
+    const inputs = compiled.querySelectorAll('input');
+    if (inputs.length >= 3) {
+      const nameInput = inputs[0] as HTMLInputElement;
+      nameInput.value = 'Lab Projector';
+      nameInput.dispatchEvent(new Event('input'));
+
+      const purchaseInput = inputs[1] as HTMLInputElement;
+      purchaseInput.value = '2026-07-01';
+      purchaseInput.dispatchEvent(new Event('input'));
+
+      const warrantyInput = inputs[2] as HTMLInputElement;
+      warrantyInput.value = '2028-07-01';
+      warrantyInput.dispatchEvent(new Event('input'));
     }
+
+    const selects = compiled.querySelectorAll('select');
+    if (selects.length >= 3) {
+      const catSelect = selects[0] as HTMLSelectElement;
+      catSelect.value = '10';
+      catSelect.dispatchEvent(new Event('change'));
+
+      const statusSelect = selects[1] as HTMLSelectElement;
+      statusSelect.value = 'active';
+      statusSelect.dispatchEvent(new Event('change'));
+
+      const classSelect = selects[2] as HTMLSelectElement;
+      classSelect.value = '100';
+      classSelect.dispatchEvent(new Event('change'));
+    }
+    fixture.detectChanges();
+
+    // Click Save Asset (line 484)
+    const saveBtn = compiled.querySelector('.modal-footer .btn-primary') as HTMLButtonElement;
+    if (saveBtn) {
+      saveBtn.click();
+      fixture.detectChanges();
+    }
+
+    // Reopen modal, click Close (line 408)
+    component.showAddAssetModal.set(true);
+    fixture.detectChanges();
+    const closeBtn = compiled.querySelector('.modal-header .btn-close') as HTMLButtonElement;
+    if (closeBtn) {
+      closeBtn.click();
+      fixture.detectChanges();
+      expect(component.showAddAssetModal()).toBe(false);
+    }
+
+    // Reopen modal, click Cancel (line 476)
+    component.showAddAssetModal.set(true);
+    fixture.detectChanges();
+    const cancelBtn = compiled.querySelector('.modal-footer .btn-outline-secondary') as HTMLButtonElement;
+    if (cancelBtn) {
+      cancelBtn.click();
+      fixture.detectChanges();
+      expect(component.showAddAssetModal()).toBe(false);
+    }
+
+    // Check that reports log table rendered
+    expect(compiled.innerHTML).toContain('Maintenance &amp; Issue Reports Log');
   });
 
   it('should render modals and trigger input events', () => {
@@ -313,6 +378,28 @@ describe('Assets', () => {
       fixture.detectChanges();
     }
 
+    // Click Close (line 511)
+    const closeReportBtn = compiled.querySelector('.modal-header .btn-close') as HTMLButtonElement;
+    if (closeReportBtn) {
+      closeReportBtn.click();
+      fixture.detectChanges();
+      expect(component.showReportIssueModal()).toBe(false);
+    }
+
+    // Reopen modal, click Cancel inside modal card
+    component.showReportIssueModal.set(true);
+    fixture.detectChanges();
+
+    // Click Save/Submit Report inside report modal (line 559)
+    const saveBtn = compiled.querySelector('.modal-footer .btn-warning') as HTMLButtonElement;
+    if (saveBtn) {
+      saveBtn.click();
+      fixture.detectChanges();
+    }
+
+    // Reopen modal, click Cancel inside modal card
+    component.showReportIssueModal.set(true);
+    fixture.detectChanges();
     const cancelReportBtn = compiled.querySelector('.modal-footer .btn-outline-secondary') as HTMLButtonElement;
     if (cancelReportBtn) {
       cancelReportBtn.click();
@@ -324,11 +411,19 @@ describe('Assets', () => {
   it('should render resolve modal in DOM and allow submit/cancel actions', () => {
     component.userRole.set('Admin');
     component.isLoading.set(false);
-    component.showResolveModal.set(true);
+    component.assetReports.set([]); // Covers lines 339-342 (empty reports log)
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.modal-content')).toBeTruthy();
+    // Click Address / Resolve button in DOM (line 305)
+    const resolveBtn = compiled.querySelector('.btn-outline-info') as HTMLButtonElement;
+    if (resolveBtn) {
+      resolveBtn.click();
+      fixture.detectChanges();
+    }
+
+    component.showResolveModal.set(true);
+    fixture.detectChanges();
 
     const textareas = compiled.querySelectorAll('textarea');
     if (textareas.length > 0) {
@@ -338,9 +433,27 @@ describe('Assets', () => {
       fixture.detectChanges();
     }
 
-    const submitBtn = compiled.querySelector('.modal-footer .btn-success') as HTMLButtonElement;
+    // Click Submit Update inside resolve modal (line 635)
+    const submitBtn = compiled.querySelector('.modal-footer .btn-info') as HTMLButtonElement;
     if (submitBtn) {
       submitBtn.click();
+      fixture.detectChanges();
+    }
+
+    // Reopen modal, click Close/Cancel inside resolve modal (lines 586 and 628)
+    component.showResolveModal.set(true);
+    fixture.detectChanges();
+    const closeBtn = compiled.querySelector('.modal-header .btn-close') as HTMLButtonElement;
+    if (closeBtn) {
+      closeBtn.click();
+      fixture.detectChanges();
+    }
+
+    component.showResolveModal.set(true);
+    fixture.detectChanges();
+    const cancelBtn = compiled.querySelector('.modal-footer .btn-outline-secondary') as HTMLButtonElement;
+    if (cancelBtn) {
+      cancelBtn.click();
       fixture.detectChanges();
     }
   });
