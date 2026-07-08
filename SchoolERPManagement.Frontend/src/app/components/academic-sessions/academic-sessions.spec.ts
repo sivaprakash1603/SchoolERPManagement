@@ -26,4 +26,20 @@ describe('AcademicSessions', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should open and close create modal', () => {
+    expect(component.showCreateModal()).toBe(false);
+    component.openCreateModal();
+    expect(component.showCreateModal()).toBe(true);
+
+    component.closeCreateModal();
+    expect(component.showCreateModal()).toBe(false);
+  });
+
+  it('should validate form before saving session', () => {
+    component.createForm.set({ yearName: '', startDate: '', endDate: '' });
+    expect(component.isSaving()).toBe(false);
+    component.saveSession();
+    expect(component.isSaving()).toBe(false); // Should not start saving since validation fails
+  });
 });
