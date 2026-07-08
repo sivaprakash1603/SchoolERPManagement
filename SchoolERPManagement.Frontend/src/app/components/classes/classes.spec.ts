@@ -2,19 +2,56 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of, throwError } from 'rxjs';
 import { Classes } from './classes';
+import { ClassService } from '../../services/class.service';
+import { TeacherService } from '../../services/teacher.service';
+import { AcademicYearService } from '../../services/academic-year.service';
+import { SubjectService } from '../../services/subject.service';
+import { ToastService } from '../../services/toast.service';
 
 describe('Classes', () => {
   let component: Classes;
   let fixture: ComponentFixture<Classes>;
+  let mockClassService: any;
+  let mockTeacherService: any;
+  let mockAcademicYearService: any;
+  let mockSubjectService: any;
+  let mockToastService: any;
 
   beforeEach(async () => {
+    mockClassService = {
+      getAllClasses: () => of([{ id: 1, classname: 'Class 1', section: 'A', classteacherId: 10, academicyearId: 2, subjects: [] }]),
+      createClass: () => of({}),
+      updateClass: () => of({}),
+      deleteClass: () => of({})
+    };
+    mockTeacherService = {
+      getAllTeachers: () => of({ items: [{ id: 10, name: 'Teacher Ten', username: 't10', joiningdate: new Date(), phonenumber: '123', userId: 100 }] })
+    };
+    mockAcademicYearService = {
+      getAllAcademicYears: () => of([{ id: 2, yearName: '2026-2027', isCurrent: true, startDate: '', endDate: '' }])
+    };
+    mockSubjectService = {
+      getAllSubjects: () => of([{ id: 5, subjectName: 'Math', description: '' }])
+    };
+    mockToastService = {
+      success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn()
+    };
+
     await TestBed.configureTestingModule({
       imports: [Classes],
       providers: [
         provideRouter([]),
         provideHttpClient(),
-        provideHttpClientTesting()
+        provideHttpClientTesting(),
+        { provide: ClassService, useValue: mockClassService },
+        { provide: TeacherService, useValue: mockTeacherService },
+        { provide: AcademicYearService, useValue: mockAcademicYearService },
+        { provide: SubjectService, useValue: mockSubjectService },
+        { provide: ToastService, useValue: mockToastService }
       ]
     }).compileComponents();
 
@@ -23,15 +60,17 @@ describe('Classes', () => {
     await fixture.whenStable();
   });
 
-  it('should create', () => {
+  it('should create and load initial data', () => {
     expect(component).toBeTruthy();
+    fixture.detectChanges();
+    expect(component.classes().length).toBe(1);
+    expect(component.teachers().length).toBe(1);
+    expect(component.subjects().length).toBe(1);
   });
 
   it('should retrieve teacher name helper', () => {
-    component.teachers.set([
-      { id: 1, userId: 1, name: 'Teacher One', phonenumber: '123', joiningdate: new Date(), username: 't1' }
-    ]);
-    expect(component.getTeacherName(1)).toBe('Teacher One');
+    fixture.detectChanges();
+    expect(component.getTeacherName(10)).toBe('Teacher Ten');
     expect(component.getTeacherName(99)).toBe('Unknown');
     expect(component.getTeacherName(undefined)).toBe('Not Assigned');
   });
@@ -45,30 +84,41 @@ describe('Classes', () => {
     expect(component.showCreateModal()).toBe(false);
   });
 
-  it('should handle academic year name queries', () => {
-    component.academicYears.set([
-      { id: 1, yearName: '2024-2025', startDate: '', endDate: '', isCurrent: true }
-    ]);
-    expect(component.getYearName(1)).toBe('2024-2025');
-    expect(component.getYearName(99)).toBe('N/A');
-  });
-
-  it('should toggle subject selection inside creation form', () => {
+  it('should validate form and save class successfully', () => {
+    fixture.detectChanges();
     component.createForm.set({
       classname: 'Class 3',
       section: 'A',
-      classteacherId: null,
-      academicyearId: 1,
-      subjectIds: [10, 20]
+      classteacherId: 10,
+      academicyearId: 2,
+      subjectIds: [5]
     });
 
-    expect(component.createForm().subjectIds.includes(10)).toBe(true);
-    expect(component.createForm().subjectIds.includes(30)).toBe(false);
+    component.saveClass();
+    expect(mockToastService.success).toHaveBeenCalledWith('Class created successfully!');
+  });
 
-    component.toggleSubjectSelection(30, 'create');
-    expect(component.createForm().subjectIds.includes(30)).toBe(true);
+  it('should open edit modal and update class successfully', () => {
+    fixture.detectChanges();
+    const classItem = { id: 1, classname: 'Class 1', section: 'A', classteacherId: 10, academicyearId: 2, subjects: [] };
+    
+    component.openEditModal(classItem);
+    expect(component.showEditModal()).toBe(true);
+    expect(component.editingClass()).toEqual(classItem);
 
-    component.toggleSubjectSelection(10, 'create');
-    expect(component.createForm().subjectIds.includes(10)).toBe(false);
+    component.saveEdit();
+    expect(mockToastService.success).toHaveBeenCalledWith('Class updated successfully!');
+  });
+
+  it('should open delete modal and confirm deletion successfully', () => {
+    fixture.detectChanges();
+    const classItem = { id: 1, classname: 'Class 1', section: 'A', classteacherId: 10, academicyearId: 2, subjects: [] };
+    
+    component.openDeleteModal(classItem);
+    expect(component.showDeleteModal()).toBe(true);
+    expect(component.deletingClass()).toEqual(classItem);
+
+    component.confirmDelete();
+    expect(mockToastService.success).toHaveBeenCalledWith('Class deleted successfully!');
   });
 });
