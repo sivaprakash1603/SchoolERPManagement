@@ -84,7 +84,7 @@ public partial class SchoolERPDbContext : DbContext
     public virtual DbSet<Timetable> Timetables { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
-    
+
     public virtual DbSet<Usernotification> Usernotifications { get; set; }
 
     public virtual DbSet<Classsubject> Classsubjects { get; set; }
@@ -977,6 +977,87 @@ public partial class SchoolERPDbContext : DbContext
                 .HasForeignKey(d => d.Studentid)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("studentparents_studentid_fkey");
+        });
+
+        modelBuilder.Entity<Parentteachermeeting>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("parentteachermeetings_pkey");
+
+            entity.ToTable("parentteachermeetings");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Academiccalendarid).HasColumnName("academiccalendarid");
+            entity.Property(e => e.Academicyearid).HasColumnName("academicyearid");
+            entity.Property(e => e.Eventdate).HasColumnName("eventdate");
+            entity.Property(e => e.Starttime).HasColumnName("starttime");
+            entity.Property(e => e.Endtime).HasColumnName("endtime");
+            entity.Property(e => e.Slotdurationminutes)
+                .HasDefaultValue(15)
+                .HasColumnName("slotdurationminutes");
+            entity.Property(e => e.Description)
+                .HasMaxLength(250)
+                .HasColumnName("description");
+            entity.Property(e => e.Isactive)
+                .HasDefaultValue(true)
+                .HasColumnName("isactive");
+            entity.Property(e => e.Createdat)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+
+            entity.HasOne(d => d.Academiccalendar).WithMany()
+                .HasForeignKey(d => d.Academiccalendarid)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("parentteachermeetings_academiccalendarid_fkey");
+
+            entity.HasOne(d => d.Academicyear).WithMany()
+                .HasForeignKey(d => d.Academicyearid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("parentteachermeetings_academicyearid_fkey");
+        });
+
+        modelBuilder.Entity<Parentteacherslot>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("parentteacherslots_pkey");
+
+            entity.ToTable("parentteacherslots");
+
+            entity.HasIndex(e => new { e.Meetingid, e.Teacherid, e.Starttime }, "parentteacherslots_meetingid_teacherid_starttime_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Meetingid).HasColumnName("meetingid");
+            entity.Property(e => e.Teacherid).HasColumnName("teacherid");
+            entity.Property(e => e.Starttime).HasColumnName("starttime");
+            entity.Property(e => e.Endtime).HasColumnName("endtime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("Available")
+                .HasColumnName("status");
+            entity.Property(e => e.Parentid).HasColumnName("parentid");
+            entity.Property(e => e.Studentid).HasColumnName("studentid");
+            entity.Property(e => e.Bookedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("bookedat");
+
+            entity.HasOne(d => d.Meeting).WithMany(p => p.Parentteacherslots)
+                .HasForeignKey(d => d.Meetingid)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("parentteacherslots_meetingid_fkey");
+
+            entity.HasOne(d => d.Teacher).WithMany()
+                .HasForeignKey(d => d.Teacherid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("parentteacherslots_teacherid_fkey");
+
+            entity.HasOne(d => d.Parent).WithMany()
+                .HasForeignKey(d => d.Parentid)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("parentteacherslots_parentid_fkey");
+
+            entity.HasOne(d => d.Student).WithMany()
+                .HasForeignKey(d => d.Studentid)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("parentteacherslots_studentid_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
