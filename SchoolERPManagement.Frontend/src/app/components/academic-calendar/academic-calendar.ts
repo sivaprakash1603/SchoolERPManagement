@@ -43,7 +43,10 @@ export class AcademicCalendar implements OnInit {
     date: '',
     endDate: '',
     description: '',
-    isHoliday: true
+    isHoliday: true,
+    isParentTeacherMeeting: false,
+    pmtStartTime: '',
+    pmtEndTime: ''
   });
 
   ngOnInit() {
@@ -124,7 +127,10 @@ export class AcademicCalendar implements OnInit {
       date: defaultDate,
       endDate: '',
       description: '',
-      isHoliday: true
+      isHoliday: true,
+      isParentTeacherMeeting: false,
+      pmtStartTime: '',
+      pmtEndTime: ''
     });
     this.showCreateModal.set(true);
   }
@@ -149,14 +155,34 @@ export class AcademicCalendar implements OnInit {
       return;
     }
 
+    if (form.isParentTeacherMeeting) {
+      if (!form.pmtStartTime || !form.pmtEndTime) {
+        this.toastService.warning('Please set start and end time for the Parent-Teacher Meeting.');
+        return;
+      }
+      if (form.pmtStartTime >= form.pmtEndTime) {
+        this.toastService.warning('Start time must be before end time.');
+        return;
+      }
+      if (form.endDate) {
+        this.toastService.warning('Parent-Teacher Meetings cannot span multiple days.');
+        return;
+      }
+    }
+
     this.isSaving.set(true);
-    const dto = {
+    const dto: any = {
       date: form.date,
       endDate: form.endDate || undefined,
       description: form.description.trim(),
       isHoliday: form.isHoliday,
-      academicYearId: yearId
+      academicYearId: yearId,
+      isParentTeacherMeeting: form.isParentTeacherMeeting
     };
+    if (form.isParentTeacherMeeting) {
+      dto.pmtStartTime = form.pmtStartTime;
+      dto.pmtEndTime = form.pmtEndTime;
+    }
 
     this.calendarService.createCalendarEvent(dto).subscribe({
       next: () => {

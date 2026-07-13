@@ -15,6 +15,7 @@ import { Subjects } from './components/subjects/subjects';
 import { Timetable } from './components/timetable/timetable';
 import { Attendance } from './components/attendance/attendance';
 import { AcademicCalendar } from './components/academic-calendar/academic-calendar';
+import { ParentTeacherMeetings } from './components/parent-teacher-meetings/parent-teacher-meetings';
 import { ResetPassword } from './components/reset-password/reset-password';
 import { Homework } from './components/homework/homework';
 import { Exams } from './components/exams/exams';
@@ -55,6 +56,7 @@ export const routes: Routes = [
             { path: 'documents', component: Documents },
             { path: 'payment-result', component: PaymentResultComponent },
             { path: 'academic-calendar', component: AcademicCalendar },
+            { path: 'parent-teacher-meetings', component: ParentTeacherMeetings },
             { path: 'academic-sessions', component: AcademicSessions },
             { path: 'notifications', component: NotificationsComponent }
         ]

@@ -30,6 +30,7 @@ export class Sidebar implements OnInit {
   private allMenuItems: MenuItem[] = [
     { label: 'Dashboard',         route: '/dashboard',         icon: 'bi-grid-fill',              roles: ['Admin', 'Teacher', 'Student', 'Parent'], category: 'Core' },
     { label: 'Academic Calendar', route: '/academic-calendar', icon: 'bi-calendar3',              roles: ['Admin', 'Teacher', 'Student', 'Parent'], category: 'Core' },
+    { label: 'PT Meetings',       route: '/parent-teacher-meetings', icon: 'bi-people',            roles: ['Admin', 'Teacher', 'Parent'], category: 'Core' },
     { label: 'Classes',           route: '/classes',           icon: 'bi-building',               roles: ['Admin'], category: 'Academics' },
     { label: 'Subjects',          route: '/subjects',          icon: 'bi-book-half',              roles: ['Admin'], category: 'Academics' },
     { label: 'Timetable',         route: '/timetable',         icon: 'bi-clock-fill',             roles: ['Admin', 'Teacher', 'Student', 'Parent'], category: 'Academics' },

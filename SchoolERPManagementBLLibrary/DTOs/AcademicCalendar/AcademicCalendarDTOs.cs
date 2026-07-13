@@ -8,7 +8,10 @@ public record CreateCalendarEventDTO(
     string Description,
     bool IsHoliday,
     int AcademicYearId,
-    DateOnly? EndDate = null
+    bool IsParentTeacherMeeting,
+    DateOnly? EndDate = null,
+    TimeOnly? PmtStartTime = null,
+    TimeOnly? PmtEndTime = null
 );
 
 public record CalendarEventResponseDTO(

@@ -22,7 +22,7 @@ public partial class SchoolERPDbContext : DbContext
     }
 
     public virtual DbSet<Academicyear> Academicyears { get; set; }
-    
+
     public virtual DbSet<Academiccalendar> Academiccalendars { get; set; }
 
     public virtual DbSet<Asset> Assets { get; set; }
@@ -89,8 +89,12 @@ public partial class SchoolERPDbContext : DbContext
 
     public virtual DbSet<Classsubject> Classsubjects { get; set; }
 
+    public virtual DbSet<Parentteachermeeting> Parentteachermeetings { get; set; }
+
+    public virtual DbSet<Parentteacherslot> Parentteacherslots { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=SchoolERPSystem;Username=postgres;Password=postgres");
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=SchoolERPSystem;Username=peewee;Password=");
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
