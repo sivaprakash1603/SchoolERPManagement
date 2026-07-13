@@ -515,7 +515,7 @@
           @if (isAdmin()) {
             <button
               class="btn btn-success px-4 rounded-3"
-              (click)="closeViewModal(); openEnrollModal(selectedStudent()!)"
+              (click)="openEnrollModal(selectedStudent()!); closeViewModal()"
             >
               <i class="bi bi-mortarboard me-1"></i> Promote / Enroll
             </button>
@@ -524,7 +524,7 @@
             <button
               class="btn btn-primary px-4 rounded-3"
               style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
-              (click)="closeViewModal(); openEditModal(selectedStudent()!)"
+              (click)="openEditModal(selectedStudent()!); closeViewModal()"
             >
               <i class="bi bi-pencil me-1"></i> Edit Profile
             </button>

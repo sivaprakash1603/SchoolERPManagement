@@ -50,9 +50,10 @@ public class FeeServiceTests
         
         var dto = new FeePaymentDTO(1, 1, 5000m, DateTime.Parse("2025-01-01T10:00:00Z"), "Credit Card", "TXN123");
         _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
+        _studentRepoMock.Setup(r => r.Query(true)).Returns(new List<Student> { new Student { Id = 1, Userid = 1 } }.BuildMockDbSet().Object);
         _feePaymentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Feepayment>().BuildMockDbSet().Object);
         _studentEnrollmentRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Studentenrollment> { new Studentenrollment { Studentid = 1, Classid = 1, Academicyearid = 1 } }.BuildMockDbSet().Object);
-        _feeStructureRepoMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<Feestructure> { new Feestructure { Id = 1, Classid = 1, Academicyearid = 1, Totalamount = 5000m } }.BuildMockDbSet().Object);
+        _feeStructureRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Feestructure { Id = 1, Classid = 1, Academicyearid = 1, Totalamount = 5000m });
 
         
         var result = await _feeService.PayFeesAsync(dto, CancellationToken.None);
@@ -171,6 +172,8 @@ public class FeeServiceTests
         
         var addDto = new AddFeeStructureDTO(1, 1, "Term 1 Fee", 5000, null);
 
+        _studentRepoMock.Setup(r => r.Query(true)).Returns(new List<Student>().BuildMockDbSet().Object);
+
         
         var result = await _feeService.AddFeeStructureAsync(addDto, CancellationToken.None);
 
@@ -178,10 +181,10 @@ public class FeeServiceTests
         result.Should().NotBeNull();
         result.ClassId.Should().Be(1);
         result.AcademicYearId.Should().Be(1);
-        result.FeeName.Should().Be("Tuition Fee");
+        result.FeeName.Should().Be("Term 1 Fee");
         result.TotalAmount.Should().Be(5000m);
 
         _feeStructureRepoMock.Verify(r => r.AddAsync(It.Is<Feestructure>(f => 
-            f.Classid == 1 && f.Academicyearid == 1 && f.Feename == "Tuition Fee" && f.Totalamount == 5000m), true, It.IsAny<CancellationToken>()), Times.Once);
+            f.Classid == 1 && f.Academicyearid == 1 && f.Feename == "Term 1 Fee" && f.Totalamount == 5000m), true, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

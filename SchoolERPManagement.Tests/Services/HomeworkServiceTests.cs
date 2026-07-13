@@ -64,6 +64,9 @@ public class HomeworkServiceTests
         _subjectRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Subject { Id = 1 });
         _teacherRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Teacher { Id = 1 });
         _classRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Class { Id = 1 });
+        _teacherSubjectRepoMock.Setup(r => r.Query(true)).Returns(new List<Teachersubject> { new Teachersubject { Teacherid = 1, Classid = 1, Subjectid = 1 } }.BuildMockDbSet().Object);
+        _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable> { new Timetable { Classid = 1, Subjectid = 1, Teacherid = 1 } }.BuildMockDbSet().Object);
+        _studentRepoMock.Setup(r => r.Query(true)).Returns(new List<Student>().BuildMockDbSet().Object);
 
         _fileStorageServiceMock.Setup(f => f.UploadFileAsync(mockFile.Object, "homeworks", It.IsAny<CancellationToken>()))
             .ReturnsAsync("/uploads/homeworks/file.pdf");
@@ -102,8 +105,10 @@ public class HomeworkServiceTests
         var mockFile = new Mock<IFormFile>();
         var dto = new HomeworkSubmissionDTO(1, 1, mockFile.Object);
 
-        _homeworkRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Homework { Id = 1 });
-        _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
+        _homeworkRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Homework { Id = 1, Classid = 1 });
+        var studentEnrollments = new List<Studentenrollment> { new Studentenrollment { Classid = 1 } };
+        _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1, Userid = 1, Studentenrollments = studentEnrollments });
+        _studentRepoMock.Setup(r => r.Query(true)).Returns(new List<Student> { new Student { Id = 1, Userid = 1, Studentenrollments = studentEnrollments } }.BuildMockDbSet().Object);
 
         _fileStorageServiceMock.Setup(f => f.UploadFileAsync(mockFile.Object, "homeworksubmissions", It.IsAny<CancellationToken>()))
             .ReturnsAsync("/uploads/homeworksubmissions/answer.pdf");
@@ -128,13 +133,15 @@ public class HomeworkServiceTests
 
         var submission = new Homeworksubmission { Id = 1, Homeworkid = 1, Studentid = 1 };
         _submissionRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(submission);
+        _homeworkRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Homework { Id = 1, Teacherid = 1 });
+        _teacherRepoMock.Setup(r => r.Query(true)).Returns(new List<Teacher> { new Teacher { Id = 1, Userid = 1 } }.BuildMockDbSet().Object);
 
         // Act
         var result = await _homeworkService.EvaluateHomeworkAsync(dto, 1, "Teacher", CancellationToken.None);
 
         // Assert
         result.Marks.Should().Be(90.5m);
-        result.VerificationStatus.Should().Be("Reviewed");
+        result.VerificationStatus.Should().Be("reviewed");
         result.Remarks.Should().Be("Good job");
 
         _submissionRepoMock.Verify(r => r.UpdateAsync(submission, true, It.IsAny<CancellationToken>()), Times.Once);

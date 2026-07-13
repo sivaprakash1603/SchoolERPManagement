@@ -16,6 +16,7 @@ import { DocumentService } from '../../services/document.service';
 import { TimetableService } from '../../services/timetable.service';
 import { NotificationService } from '../../services/notification.service';
 import { ReportService } from '../../services/report.service';
+import { AcademicCalendarService, CalendarEventResponseDTO } from '../../services/academic-calendar.service';
 import { AdminDashboardDTO, TeacherDashboardDTO } from '../../models/dashboard.model';
 import Chart from 'chart.js/auto';
 import { forkJoin, of } from 'rxjs';
@@ -46,21 +47,19 @@ export class Dashboard implements OnInit {
   private timetableService = inject(TimetableService);
   private notificationService = inject(NotificationService);
   private reportService = inject(ReportService);
+  private calendarService = inject(AcademicCalendarService);
   private router = inject(Router);
 
   @ViewChild('demographicsChart') demographicsChartRef!: ElementRef;
   @ViewChild('revenueChart') revenueChartRef!: ElementRef;
-  @ViewChild('performanceChart') performanceChartRef!: ElementRef;
 
   private demographicsChartInstance: Chart | null = null;
   private revenueChartInstance: Chart | null = null;
-  private performanceChartInstance: Chart | null = null;
 
   // New Admin Dashboard signals
   systemAlerts = signal<any[]>([]);
   upcomingEvents = signal<any[]>([]);
   recentActivities = signal<any[]>([]);
-  academicPerformance = signal<any>(null);
   staffWorkload = signal<any[]>([]);
 
   // Role and status
@@ -257,9 +256,12 @@ export class Dashboard implements OnInit {
       notifications: uid ? this.notificationService.getUserNotifications(uid).pipe(catchError(() => of([]))) : of([]),
       recentStudents: this.studentService.getAllStudents({ pageSize: 5 }).pipe(catchError(() => of({ items: [] }))),
       recentTeachers: this.teacherService.getAllTeachers({ pageSize: 5 }).pipe(catchError(() => of({ items: [] }))),
-      exams: this.examService.getAllExams().pipe(catchError(() => of([])))
+      exams: this.examService.getAllExams().pipe(catchError(() => of([]))),
+      calendarSummary: academicYearId
+        ? this.calendarService.getAcademicCalendarSummary(academicYearId).pipe(catchError(() => of(null)))
+        : of(null)
     }).subscribe({
-      next: ({ metrics, classes, pendingDocs, workloadReqs, notifications, recentStudents, recentTeachers, exams }) => {
+      next: ({ metrics, classes, pendingDocs, workloadReqs, notifications, recentStudents, recentTeachers, exams, calendarSummary }) => {
         this.metrics.set(metrics);
 
         // Process real alerts based on actual data
@@ -347,7 +349,7 @@ export class Dashboard implements OnInit {
               user: 'System',
               action: `${n.title}: ${n.message}`,
               icon: 'bi-bell-fill',
-              bg: n.isRead ? 'bg-secondary-soft text-secondary' : 'bg-primary-soft text-primary'
+              bg: n.isRead ? 'bg-secondary-subtle text-secondary' : 'bg-primary-subtle text-primary'
             });
           });
         }
@@ -360,7 +362,7 @@ export class Dashboard implements OnInit {
               user: 'Registrar',
               action: `enrolled student ${st.name} (Reg No: ${st.regNo})`,
               icon: 'bi-person-plus-fill',
-              bg: 'bg-info-soft text-info'
+              bg: 'bg-info-subtle text-info'
             });
           });
         }
@@ -373,7 +375,7 @@ export class Dashboard implements OnInit {
               user: 'HR Admin',
               action: `onboarded faculty member ${t.name} (${t.subjectSpecialtyName || 'General Specialty'})`,
               icon: 'bi-person-badge-fill',
-              bg: 'bg-success-soft text-success'
+              bg: 'bg-success-subtle text-success'
             });
           });
         }
@@ -386,7 +388,7 @@ export class Dashboard implements OnInit {
               user: 'Admin',
               action: `configured class timetable & subjects for ${c.classname} - ${c.section || 'A'}`,
               icon: 'bi-building-fill',
-              bg: 'bg-secondary-soft text-secondary'
+              bg: 'bg-secondary-subtle text-secondary'
             });
           });
         }
@@ -394,9 +396,9 @@ export class Dashboard implements OnInit {
         this.recentActivities.set(activitiesList.slice(0, 5));
 
         this.upcomingEvents.set([
-          { date: 'Jul 15', title: 'Mid-Term Examinations Begin', type: 'exam', badgeBg: 'bg-danger-soft text-danger' },
-          { date: 'Jul 22', title: 'Parent-Teacher Meeting (Grades 6-12)', type: 'meeting', badgeBg: 'bg-primary-soft text-primary' },
-          { date: 'Aug 15', title: 'Independence Day Holiday', type: 'holiday', badgeBg: 'bg-success-soft text-success' }
+          { date: 'Jul 15', title: 'Mid-Term Examinations Begin', type: 'exam', badgeBg: 'bg-danger-subtle text-danger' },
+          { date: 'Jul 22', title: 'Parent-Teacher Meeting (Grades 6-12)', type: 'meeting', badgeBg: 'bg-primary-subtle text-primary' },
+          { date: 'Aug 15', title: 'Independence Day Holiday', type: 'holiday', badgeBg: 'bg-success-subtle text-success' }
         ]);
 
         // Map real workload from DB
@@ -424,53 +426,11 @@ export class Dashboard implements OnInit {
           this.staffWorkload.set(mappedWorkloads.slice(0, 5));
         }
 
-        // Fetch and map original Exam Performance Report if exams exist
-        if (exams && exams.length > 0) {
-          this.reportService.getExamPerformanceReport(exams[0].id).subscribe({
-            next: (report) => {
-              if (report && report.averageBySubject && Object.keys(report.averageBySubject).length > 0) {
-                const subjects = Object.keys(report.averageBySubject);
-                const averages = Object.values(report.averageBySubject) as number[];
-                const passingRates = averages.map(avg => Math.round(Math.min(100, Math.max(0, avg + 12))));
-
-                this.academicPerformance.set({
-                  labels: subjects,
-                  averages: averages,
-                  passingRates: passingRates
-                });
-              } else {
-                this.academicPerformance.set({
-                  labels: ['Mathematics', 'English', 'Science', 'Social Science', 'Computer Science'],
-                  averages: [82, 79, 85, 74, 91],
-                  passingRates: [94, 91, 96, 88, 98]
-                });
-              }
-              this.loading.set(false);
-              setTimeout(() => {
-                this.initDemographicsChart(metrics);
-                this.initRevenueChart(metrics);
-                this.initPerformanceChart();
-              }, 100);
-            },
-            error: () => {
-              this.setDefaultAcademicPerformance();
-              this.loading.set(false);
-              setTimeout(() => {
-                this.initDemographicsChart(metrics);
-                this.initRevenueChart(metrics);
-                this.initPerformanceChart();
-              }, 100);
-            }
-          });
-        } else {
-          this.setDefaultAcademicPerformance();
-          this.loading.set(false);
-          setTimeout(() => {
-            this.initDemographicsChart(metrics);
-            this.initRevenueChart(metrics);
-            this.initPerformanceChart();
-          }, 100);
-        }
+        this.loading.set(false);
+        setTimeout(() => {
+          this.initDemographicsChart(metrics);
+          this.initRevenueChart(metrics);
+        }, 100);
       },
       error: (err) => {
         console.error('Failed to load dashboard metrics', err);
@@ -480,13 +440,6 @@ export class Dashboard implements OnInit {
     });
   }
 
-  private setDefaultAcademicPerformance(): void {
-    this.academicPerformance.set({
-      labels: ['Mathematics', 'English', 'Science', 'Social Science', 'Computer Science'],
-      averages: [82, 79, 85, 74, 91],
-      passingRates: [94, 91, 96, 88, 98]
-    });
-  }
 
   loadTeacherMetrics(teacherId: number, academicYearId?: number): void {
     this.loading.set(true);
@@ -820,58 +773,5 @@ export class Dashboard implements OnInit {
     });
   }
 
-  private initPerformanceChart() {
-    if (!this.performanceChartRef) return;
 
-    if (this.performanceChartInstance) {
-      this.performanceChartInstance.destroy();
-    }
-
-    const data = this.academicPerformance();
-    if (!data) return;
-
-    this.performanceChartInstance = new Chart(this.performanceChartRef.nativeElement, {
-      type: 'line',
-      data: {
-        labels: data.labels,
-        datasets: [
-          {
-            label: 'Class Avg Score (%)',
-            data: data.averages,
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3
-          },
-          {
-            label: 'Pass Rate (%)',
-            data: data.passingRates,
-            borderColor: '#10b981',
-            backgroundColor: 'transparent',
-            borderDash: [5, 5],
-            tension: 0.4,
-            borderWidth: 2
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { 
-            beginAtZero: true, 
-            max: 100,
-            grid: { color: 'rgba(0, 0, 0, 0.05)' } 
-          },
-          x: { 
-            grid: { display: false } 
-          }
-        },
-        plugins: {
-          legend: { position: 'bottom' }
-        }
-      }
-    });
-  }
 }

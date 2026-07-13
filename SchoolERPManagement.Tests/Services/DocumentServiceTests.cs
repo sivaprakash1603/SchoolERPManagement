@@ -141,6 +141,9 @@ public class DocumentServiceTests
         _strategyMock.Setup(s => s.CanHandle("student")).Returns(true);
         _strategyMock.Setup(s => s.VerifyAsync(dto, 1, "Admin", It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
+        var studentDoc = new Studentdocument { Id = 1, Student = new Student { Userid = 2 } };
+        _studentDocRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentdocument> { studentDoc }.BuildMockDbSet().Object);
+
         
         await _documentService.VerifyDocumentAsync(dto, 1, "Admin", CancellationToken.None);
 
