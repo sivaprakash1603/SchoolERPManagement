@@ -276,6 +276,47 @@
                 />
               </div>
             </div>
+            <!-- Parent-Teacher Meeting Toggle -->
+            <div class="col-12">
+              <div
+                class="form-check form-switch p-0 d-flex justify-content-between align-items-center"
+              >
+                <label class="modal-form-label mb-0" style="cursor: pointer" for="ptmSwitch"
+                  >Parent-Teacher Meeting</label
+                >
+                <input
+                  class="form-check-input ms-0"
+                  type="checkbox"
+                  role="switch"
+                  id="ptmSwitch"
+                  [ngModel]="createForm().isParentTeacherMeeting"
+                  (ngModelChange)="createForm.set({ ...createForm(), isParentTeacherMeeting: $event })"
+                  style="width: 2.5em; height: 1.25em"
+                />
+              </div>
+            </div>
+            @if (createForm().isParentTeacherMeeting) {
+              <div class="col-12 col-md-6">
+                <label class="modal-form-label">Meeting Start Time</label>
+                <input
+                  type="time"
+                  class="form-control"
+                  [ngModel]="createForm().pmtStartTime"
+                  (ngModelChange)="createForm.set({ ...createForm(), pmtStartTime: $event })"
+                  required
+                />
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="modal-form-label">Meeting End Time</label>
+                <input
+                  type="time"
+                  class="form-control"
+                  [ngModel]="createForm().pmtEndTime"
+                  (ngModelChange)="createForm.set({ ...createForm(), pmtEndTime: $event })"
+                  required
+                />
+              </div>
+            }
           </div>
         </div>
         <div class="modal-footer-custom">

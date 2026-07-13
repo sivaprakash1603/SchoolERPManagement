@@ -1,0 +1,129 @@
+<div class="minimal-card p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1" style="color: var(--primary-accent)">Parent-Teacher Meetings</h3>
+      <p class="text-muted-custom mb-0">Book and manage your meeting slots.</p>
+    </div>
+    <div class="d-flex gap-2">
+      @if (userRole() === 'Parent') {
+        <button class="btn btn-outline-primary btn-sm" (click)="showBookings()">
+          <i class="bi bi-bookmark-check me-1"></i>My Bookings
+        </button>
+      }
+      <button class="btn btn-outline-secondary btn-sm" (click)="backToList()">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border" role="status"></div>
+    </div>
+  } @else if (view() === 'list') {
+    <!-- Upcoming Meetings List -->
+    @if (meetings().length === 0) {
+      <div class="text-center py-5 text-muted-custom">
+        <i class="bi bi-calendar-x fs-1 mb-2 d-block"></i>
+        No upcoming Parent-Teacher Meetings.
+      </div>
+    }
+    <div class="list-group">
+      @for (m of meetings(); track m.id) {
+        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" (click)="selectMeeting(m)">
+          <div>
+            <strong>{{ m.description }}</strong><br />
+            <small class="text-muted-custom">{{ m.eventDate | date:'mediumDate' }} · {{ m.startTime }} – {{ m.endTime }}</small>
+          </div>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      }
+    </div>
+  } @else if (view() === 'slots') {
+    <!-- Slot Selection -->
+    <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+      <strong>Filter by Teacher:</strong>
+      <button class="btn btn-sm" [class.btn-primary]="!selectedTeacherId()" (click)="filterByTeacher(null)" style="border-radius:20px">All</button>
+      @for (t of teachers(); track t.id) {
+        <button class="btn btn-sm" [class.btn-primary]="selectedTeacherId() === t.id" (click)="filterByTeacher(t.id)" style="border-radius:20px">{{ t.name }}</button>
+      }
+    </div>
+
+    @if (userRole() === 'Parent') {
+      <div class="mb-3">
+        <label class="fw-bold me-2">Select Child:</label>
+        <select class="form-select d-inline-block w-auto" [ngModel]="selectedStudentId()" (ngModelChange)="onChildChange($event)">
+          <option [value]="null">— Select —</option>
+          @for (c of children(); track c.studentId) {
+            <option [value]="c.studentId">{{ c.studentName || c.name }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    @if (userRole() === 'Parent' && !selectedStudentId()) {
+      <div class="text-center py-4 text-muted-custom">
+        <i class="bi bi-person-badge fs-1 mb-2 d-block"></i>
+        Please select a child to view available slots.
+      </div>
+    } @else if (slotsLoading()) {
+      <div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div></div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr>
+            <th>Teacher</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Booked By</th>
+            @if (userRole() === 'Parent') { <th>Action</th> }
+          </tr></thead>
+          <tbody>
+            @for (s of filteredSlots; track s.id) {
+              <tr>
+                <td>{{ s.teacherName }}</td>
+                <td>{{ s.startTime }} – {{ s.endTime }}</td>
+                <td>
+                  <span class="badge" [class.bg-success]="s.status === 'Booked'" [class.bg-secondary]="s.status === 'Available'">
+                    {{ s.status }}
+                  </span>
+                </td>
+                <td>{{ s.parentName || '—' }}</td>
+                @if (userRole() === 'Parent') {
+                  <td>
+                    @if (s.status === 'Available') {
+                      <button class="btn btn-sm btn-primary" (click)="bookSlot(s)" [disabled]="bookingLoading()">
+                        {{ bookingLoading() ? 'Booking...' : 'Book' }}
+                      </button>
+                    } @else {
+                      <span class="text-muted-custom small">Unavailable</span>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  } @else if (view() === 'bookings') {
+    <!-- My Bookings -->
+    <h5 class="fw-bold mb-3">My Bookings</h5>
+    <div class="row g-3">
+      @for (b of myBookings(); track b.id) {
+        <div class="col-12 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h6 class="fw-bold">{{ b.teacherName }}</h6>
+              <p class="mb-1 small">{{ b.startTime }} – {{ b.endTime }}</p>
+              <p class="mb-2 small text-muted-custom">Student: {{ b.studentName }}</p>
+              <button class="btn btn-sm btn-outline-danger" (click)="cancelBooking(b)">Cancel</button>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="col-12 text-center py-4 text-muted-custom">No bookings yet.</div>
+      }
+    </div>
+  }
+</div>

@@ -178,6 +178,8 @@ builder.Services.AddScoped<IRepository<int, Teacherdocument>, AbstractRepository
 builder.Services.AddScoped<IRepository<int, Parentdocument>, AbstractRepository<int, Parentdocument>>();
 builder.Services.AddScoped<IRepository<int, Notification>, AbstractRepository<int, Notification>>();
 builder.Services.AddScoped<IRepository<int, Classsubject>, AbstractRepository<int, Classsubject>>();
+builder.Services.AddScoped<IRepository<int, Parentteachermeeting>, AbstractRepository<int, Parentteachermeeting>>();
+builder.Services.AddScoped<IRepository<int, Parentteacherslot>, AbstractRepository<int, Parentteacherslot>>();
 #endregion
 
 #region Helpers 
@@ -211,6 +213,7 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IPaymentGatewayService, StripePaymentService>();
+builder.Services.AddScoped<IParentTeacherMeetingService, ParentTeacherMeetingService>();
 
 builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<SchoolERPManagementBLLibrary.Profiles.AppMappingProfile>();

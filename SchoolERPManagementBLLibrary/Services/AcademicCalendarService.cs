@@ -17,15 +17,21 @@ public class AcademicCalendarService : IAcademicCalendarService
 {
     private readonly IRepository<int, Academiccalendar> _calendarRepository;
     private readonly IRepository<int, Academicyear> _academicYearRepository;
+    private readonly IRepository<int, Parentteachermeeting> _meetingRepository;
+    private readonly IParentTeacherMeetingService _meetingService;
     private readonly IMapper _mapper;
 
     public AcademicCalendarService(
         IRepository<int, Academiccalendar> calendarRepository,
         IRepository<int, Academicyear> academicYearRepository,
+        IRepository<int, Parentteachermeeting> meetingRepository,
+        IParentTeacherMeetingService meetingService,
         IMapper mapper)
     {
         _calendarRepository = calendarRepository;
         _academicYearRepository = academicYearRepository;
+        _meetingRepository = meetingRepository;
+        _meetingService = meetingService;
         _mapper = mapper;
     }
 
@@ -44,6 +50,18 @@ public class AcademicCalendarService : IAcademicCalendarService
                 throw new BusinessRuleException("The event end date must fall within the selected academic year start and end dates.");
             if (dto.EndDate.Value < dto.Date)
                 throw new BusinessRuleException("The event end date cannot be earlier than the start date.");
+        }
+
+        if (dto.IsParentTeacherMeeting)
+        {
+            if (dto.Date.DayOfWeek == DayOfWeek.Sunday)
+                throw new BusinessRuleException("Parent-Teacher Meetings cannot be scheduled on Sundays.");
+            if (!dto.PmtStartTime.HasValue || !dto.PmtEndTime.HasValue)
+                throw new BusinessRuleException("Start time and end time are required for Parent-Teacher Meetings.");
+            if (dto.PmtStartTime.Value >= dto.PmtEndTime.Value)
+                throw new BusinessRuleException("Start time must be before end time.");
+            if (dto.EndDate.HasValue)
+                throw new BusinessRuleException("Parent-Teacher Meetings cannot span multiple days.");
         }
 
         var startDate = dto.Date;
@@ -80,6 +98,25 @@ public class AcademicCalendarService : IAcademicCalendarService
         if (!eventList.Any())
         {
             throw new BusinessRuleException("All dates in the specified range already have registered events/holidays.");
+        }
+
+        // Create PTM meeting if this is a Parent-Teacher Meeting event
+        if (dto.IsParentTeacherMeeting)
+        {
+            var meeting = new Parentteachermeeting
+            {
+                Academiccalendarid = eventList.First().Id,
+                Academicyearid = dto.AcademicYearId,
+                Eventdate = dto.Date,
+                Starttime = dto.PmtStartTime!.Value,
+                Endtime = dto.PmtEndTime!.Value,
+                Slotdurationminutes = 15,
+                Description = dto.Description,
+                Isactive = true,
+                Createdat = DateTime.UtcNow
+            };
+            await _meetingRepository.AddAsync(meeting, save: true, ct: cancellationToken);
+            await _meetingService.GenerateSlotsAsync(meeting.Id, cancellationToken);
         }
 
         return _mapper.Map<CalendarEventResponseDTO>(eventList.First());

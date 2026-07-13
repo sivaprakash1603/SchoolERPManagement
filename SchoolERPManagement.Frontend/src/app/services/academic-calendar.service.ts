@@ -17,6 +17,9 @@ export interface CreateCalendarEventDTO {
   description: string;
   isHoliday: boolean;
   academicYearId: number;
+  isParentTeacherMeeting?: boolean;
+  pmtStartTime?: string; // HH:mm
+  pmtEndTime?: string; // HH:mm
 }
 
 export interface AcademicCalendarSummaryDTO {

@@ -6,7 +6,6 @@ INSERT INTO roles (id, rolename) VALUES (4, 'Parent') ON CONFLICT DO NOTHING;
 INSERT INTO roles (id, rolename) VALUES (5, 'Staff') ON CONFLICT DO NOTHING;
 
 -- Users
-INSERT INTO users (id, username, passwordhash, email, roleid, isactive, createdat) VALUES (1, 'admin', 'hash', 'admin@erp.com', 1, true, CURRENT_TIMESTAMP);
 INSERT INTO users (id, username, passwordhash, email, roleid, isactive, createdat) VALUES (2, 'teacher0', 'hash', 'teacher0@erp.com', 2, true, CURRENT_TIMESTAMP);
 INSERT INTO users (id, username, passwordhash, email, roleid, isactive, createdat) VALUES (3, 'teacher1', 'hash', 'teacher1@erp.com', 2, true, CURRENT_TIMESTAMP);
 INSERT INTO users (id, username, passwordhash, email, roleid, isactive, createdat) VALUES (4, 'teacher2', 'hash', 'teacher2@erp.com', 2, true, CURRENT_TIMESTAMP);
