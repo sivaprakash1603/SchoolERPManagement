@@ -20,6 +20,11 @@ public class DashboardServiceTests
     private readonly Mock<IRepository<int, Staffattendance>> _staffAttendanceRepoMock;
     private readonly Mock<IRepository<int, Studentenrollment>> _studentEnrollmentRepoMock;
     private readonly Mock<IRepository<int, Academicyear>> _academicYearRepoMock;
+    private readonly Mock<IRepository<int, Teachersubject>> _teacherSubjectRepoMock;
+    private readonly Mock<IRepository<int, Timetable>> _timetableRepoMock;
+    private readonly Mock<IRepository<int, Homework>> _homeworkRepoMock;
+    private readonly Mock<IRepository<int, Homeworksubmission>> _homeworkSubmissionRepoMock;
+    private readonly Mock<IRepository<int, Subject>> _subjectRepoMock;
     private readonly DashboardService _dashboardService;
 
     public DashboardServiceTests()
@@ -34,6 +39,11 @@ public class DashboardServiceTests
         _staffAttendanceRepoMock = new Mock<IRepository<int, Staffattendance>>();
         _studentEnrollmentRepoMock = new Mock<IRepository<int, Studentenrollment>>();
         _academicYearRepoMock = new Mock<IRepository<int, Academicyear>>();
+        _teacherSubjectRepoMock = new Mock<IRepository<int, Teachersubject>>();
+        _timetableRepoMock = new Mock<IRepository<int, Timetable>>();
+        _homeworkRepoMock = new Mock<IRepository<int, Homework>>();
+        _homeworkSubmissionRepoMock = new Mock<IRepository<int, Homeworksubmission>>();
+        _subjectRepoMock = new Mock<IRepository<int, Subject>>();
 
         _dashboardService = new DashboardService(
             _studentRepoMock.Object,
@@ -45,7 +55,12 @@ public class DashboardServiceTests
             _attendanceRepoMock.Object,
             _staffAttendanceRepoMock.Object,
             _studentEnrollmentRepoMock.Object,
-            _academicYearRepoMock.Object
+            _academicYearRepoMock.Object,
+            _teacherSubjectRepoMock.Object,
+            _timetableRepoMock.Object,
+            _homeworkRepoMock.Object,
+            _homeworkSubmissionRepoMock.Object,
+            _subjectRepoMock.Object
         );
     }
 
@@ -98,6 +113,8 @@ public class DashboardServiceTests
         _staffAttendanceRepoMock.Setup(r => r.Query(true)).Returns(staffAttendances.BuildMockDbSet().Object);
         _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(enrollments.BuildMockDbSet().Object);
         _academicYearRepoMock.Setup(r => r.Query(true)).Returns(new List<Academicyear> { activeYear }.BuildMockDbSet().Object);
+        _subjectRepoMock.Setup(r => r.Query(true)).Returns(new List<Subject>().BuildMockDbSet().Object);
+        _timetableRepoMock.Setup(r => r.Query(true)).Returns(new List<Timetable>().BuildMockDbSet().Object);
 
         
         var result = await _dashboardService.GetAdminDashboardMetricsAsync(null, CancellationToken.None);

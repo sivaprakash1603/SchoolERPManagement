@@ -94,7 +94,7 @@ public partial class SchoolERPDbContext : DbContext
     public virtual DbSet<Parentteacherslot> Parentteacherslots { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=SchoolERPSystem;Username=peewee;Password=");
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=SchoolERPSystem;Username=postgres;Password=postgres");
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

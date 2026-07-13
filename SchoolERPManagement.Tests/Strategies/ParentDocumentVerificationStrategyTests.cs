@@ -41,7 +41,7 @@ public class ParentDocumentVerificationStrategyTests
 
         await _strategy.VerifyAsync(dto, 1, "Admin", CancellationToken.None);
 
-        doc.Status.Should().Be("Verified");
+        doc.Status.Should().Be("verified");
         _docRepoMock.Verify(r => r.UpdateAsync(doc, true, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -54,13 +54,13 @@ public class ParentDocumentVerificationStrategyTests
 
         var enrollments = new List<Studentenrollment>
         {
-            new Studentenrollment { Student = new Student { Parentid = 1 }, Class = new Class { Classteacher = new Teacher { Userid = 1 } } }
+            new Studentenrollment { Student = new Student { Studentparents = new List<Studentparent> { new Studentparent { Parentid = 1 } } }, Class = new Class { Classteacher = new Teacher { Userid = 1 } } }
         };
         _enrollmentRepoMock.Setup(r => r.Query(true)).Returns(enrollments.BuildMockDbSet().Object);
 
         await _strategy.VerifyAsync(dto, 1, "Teacher", CancellationToken.None);
 
-        doc.Status.Should().Be("Verified");
+        doc.Status.Should().Be("verified");
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class ParentDocumentVerificationStrategyTests
 
         var enrollments = new List<Studentenrollment>
         {
-            new Studentenrollment { Student = new Student { Parentid = 1 }, Class = new Class { Classteacher = new Teacher { Userid = 999 } } }
+            new Studentenrollment { Student = new Student { Studentparents = new List<Studentparent> { new Studentparent { Parentid = 1 } } }, Class = new Class { Classteacher = new Teacher { Userid = 999 } } }
         };
         _enrollmentRepoMock.Setup(r => r.Query(true)).Returns(enrollments.BuildMockDbSet().Object);
 

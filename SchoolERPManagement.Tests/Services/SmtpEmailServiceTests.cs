@@ -1,5 +1,7 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
-using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
@@ -13,52 +15,148 @@ namespace SchoolERPManagement.Tests.Services;
 
 public class SmtpEmailServiceTests
 {
-    private readonly Mock<ISmtpClient> _smtpClientMock;
-    private readonly IOptions<SmtpSettings> _smtpSettingsOptions;
-    private readonly SmtpEmailService _emailService;
-
-    public SmtpEmailServiceTests()
+    [Fact]
+    public async Task SendEmailAsync_WithAuth_ShouldAuthenticateAndSend()
     {
-        _smtpClientMock = new Mock<ISmtpClient>();
-        
-        var smtpSettings = new SmtpSettings
+        var settings = new SmtpSettings
         {
-            Host = "smtp.test.com",
+            Host = "smtp.example.com",
             Port = 587,
-            Username = "user@test.com",
+            Username = "user",
             Password = "password",
-            SenderName = "Test Sender",
-            SenderEmail = "sender@test.com"
+            SenderEmail = "sender@example.com",
+            SenderName = "Sender"
         };
-        
-        _smtpSettingsOptions = Options.Create(smtpSettings);
-        
-        _emailService = new SmtpEmailService(_smtpSettingsOptions, _smtpClientMock.Object);
+        var optionsMock = new Mock<IOptions<SmtpSettings>>();
+        optionsMock.Setup(o => o.Value).Returns(settings);
+
+        var smtpClientMock = new Mock<ISmtpClient>();
+        var service = new SmtpEmailService(optionsMock.Object, smtpClientMock.Object);
+
+        await service.SendEmailAsync("to@example.com", "Subject", "Body", CancellationToken.None);
+
+        smtpClientMock.Verify(c => c.ConnectAsync("smtp.example.com", 587, SecureSocketOptions.Auto, It.IsAny<CancellationToken>()), Times.Once);
+        smtpClientMock.Verify(c => c.AuthenticateAsync("user", "password", It.IsAny<CancellationToken>()), Times.Once);
+        smtpClientMock.Verify(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<MailKit.ITransferProgress>()), Times.Once);
+        smtpClientMock.Verify(c => c.DisconnectAsync(true, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task SendEmailAsync_ValidData_ShouldConnectAuthenticateAndSend()
+    public async Task SendEmailAsync_WithoutAuth_ShouldNotAuthenticateAndSend()
     {
-        
-        _smtpClientMock.Setup(c => c.ConnectAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<SecureSocketOptions>(), It.IsAny<CancellationToken>()))
-                       .Returns(Task.CompletedTask);
-        
-        _smtpClientMock.Setup(c => c.AuthenticateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                       .Returns(Task.CompletedTask);
-                       
-        _smtpClientMock.Setup(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<ITransferProgress>()))
-                       .ReturnsAsync("MockResponse");
-                       
-        _smtpClientMock.Setup(c => c.DisconnectAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                       .Returns(Task.CompletedTask);
+        var settings = new SmtpSettings
+        {
+            Host = "smtp.example.com",
+            Port = 25,
+            Username = "",
+            Password = "",
+            SenderEmail = "sender@example.com",
+            SenderName = "Sender"
+        };
+        var optionsMock = new Mock<IOptions<SmtpSettings>>();
+        optionsMock.Setup(o => o.Value).Returns(settings);
 
-        
-        await _emailService.SendEmailAsync("recipient@test.com", "Test Subject", "Test Body", CancellationToken.None);
+        var smtpClientMock = new Mock<ISmtpClient>();
+        var service = new SmtpEmailService(optionsMock.Object, smtpClientMock.Object);
 
-        
-        _smtpClientMock.Verify(c => c.ConnectAsync("smtp.test.com", 587, SecureSocketOptions.Auto, It.IsAny<CancellationToken>()), Times.Once);
-        _smtpClientMock.Verify(c => c.AuthenticateAsync("user@test.com", "password", It.IsAny<CancellationToken>()), Times.Once);
-        _smtpClientMock.Verify(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<ITransferProgress>()), Times.Once);
-        _smtpClientMock.Verify(c => c.DisconnectAsync(true, It.IsAny<CancellationToken>()), Times.Once);
+        await service.SendEmailAsync("to@example.com", "Subject", "Body", CancellationToken.None);
+
+        smtpClientMock.Verify(c => c.ConnectAsync("smtp.example.com", 25, SecureSocketOptions.Auto, It.IsAny<CancellationToken>()), Times.Once);
+        smtpClientMock.Verify(c => c.AuthenticateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        smtpClientMock.Verify(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<MailKit.ITransferProgress>()), Times.Once);
+        smtpClientMock.Verify(c => c.DisconnectAsync(true, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendEmailWithAttachmentAsync_WithAuth_ShouldAuthenticateAndSend()
+    {
+        var settings = new SmtpSettings
+        {
+            Host = "smtp.example.com",
+            Port = 587,
+            Username = "user",
+            Password = "password",
+            SenderEmail = "sender@example.com",
+            SenderName = "Sender"
+        };
+        var optionsMock = new Mock<IOptions<SmtpSettings>>();
+        optionsMock.Setup(o => o.Value).Returns(settings);
+
+        var smtpClientMock = new Mock<ISmtpClient>();
+        var service = new SmtpEmailService(optionsMock.Object, smtpClientMock.Object);
+
+        var attachmentData = new byte[] { 1, 2, 3 };
+
+        await service.SendEmailWithAttachmentAsync("to@example.com", "Subject", "Body", attachmentData, "file.pdf", CancellationToken.None);
+
+        smtpClientMock.Verify(c => c.ConnectAsync("smtp.example.com", 587, SecureSocketOptions.Auto, It.IsAny<CancellationToken>()), Times.Once);
+        smtpClientMock.Verify(c => c.AuthenticateAsync("user", "password", It.IsAny<CancellationToken>()), Times.Once);
+        smtpClientMock.Verify(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<MailKit.ITransferProgress>()), Times.Once);
+        smtpClientMock.Verify(c => c.DisconnectAsync(true, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendEmailWithAttachmentAsync_WithoutAuth_ShouldNotAuthenticateAndSend()
+    {
+        var settings = new SmtpSettings
+        {
+            Host = "smtp.example.com",
+            Port = 25,
+            Username = "",
+            Password = "",
+            SenderEmail = "sender@example.com",
+            SenderName = "Sender"
+        };
+        var optionsMock = new Mock<IOptions<SmtpSettings>>();
+        optionsMock.Setup(o => o.Value).Returns(settings);
+
+        var smtpClientMock = new Mock<ISmtpClient>();
+        var service = new SmtpEmailService(optionsMock.Object, smtpClientMock.Object);
+
+        var attachmentData = new byte[] { 1, 2, 3 };
+
+        await service.SendEmailWithAttachmentAsync("to@example.com", "Subject", "Body", attachmentData, "file.pdf", CancellationToken.None);
+
+        smtpClientMock.Verify(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<MailKit.ITransferProgress>()), Times.Once);
+        smtpClientMock.Verify(c => c.DisconnectAsync(true, It.IsAny<CancellationToken>()), Times.Once);
+    }
+    [Fact]
+    public async Task SendEmailAsync_RealClient_ShouldDisposeOnException()
+    {
+        var settings = new SmtpSettings
+        {
+            Host = "invalid.example.com", // Will fail to connect
+            Port = 25,
+            SenderName = "Test",
+            SenderEmail = "test@example.com"
+        };
+        var optionsMock = new Mock<IOptions<SmtpSettings>>();
+        optionsMock.Setup(o => o.Value).Returns(settings);
+
+        var service = new SmtpEmailService(optionsMock.Object);
+
+        Func<Task> action = async () => await service.SendEmailAsync("to@example.com", "Subject", "Body", CancellationToken.None);
+
+        await action.Should().ThrowAsync<Exception>();
+    }
+
+    [Fact]
+    public async Task SendEmailWithAttachmentAsync_RealClient_ShouldDisposeOnException()
+    {
+        var settings = new SmtpSettings
+        {
+            Host = "invalid.example.com",
+            Port = 25,
+            SenderName = "Test",
+            SenderEmail = "test@example.com"
+        };
+        var optionsMock = new Mock<IOptions<SmtpSettings>>();
+        optionsMock.Setup(o => o.Value).Returns(settings);
+
+        var service = new SmtpEmailService(optionsMock.Object);
+
+        Func<Task> action = async () => await service.SendEmailWithAttachmentAsync("to@example.com", "Subject", "Body", new byte[] { 1, 2, 3 }, "file.pdf", CancellationToken.None);
+
+        await action.Should().ThrowAsync<Exception>();
     }
 }

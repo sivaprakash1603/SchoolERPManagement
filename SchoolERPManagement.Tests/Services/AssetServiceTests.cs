@@ -98,8 +98,8 @@ public class AssetServiceTests
 
         
         result.Should().NotBeNull();
-        result.Status.Should().Be("Broken");
-        asset.Status.Should().Be("Broken");
+        result.Status.Should().Be("broken");
+        asset.Status.Should().Be("broken");
 
         _assetRepoMock.Verify(r => r.UpdateAsync(asset, true, It.IsAny<CancellationToken>()), Times.Once);
         _assetReportRepoMock.Verify(r => r.AddAsync(It.IsAny<Assetreport>(), true, It.IsAny<CancellationToken>()), Times.Once);
@@ -137,5 +137,63 @@ public class AssetServiceTests
         
         result.Should().HaveCount(2);
         result.First().Assetname.Should().Be("Projector");
+    }
+
+    [Fact]
+    public async Task GetAssetTypesAsync_ShouldReturnListOfAssetTypes()
+    {
+        var assetTypes = new List<Assettype>
+        {
+            new Assettype { Id = 1, Typename = "Electronics" },
+            new Assettype { Id = 2, Typename = "Furniture" }
+        };
+
+        _assetTypeRepoMock.Setup(r => r.Query(true)).Returns(assetTypes.BuildMockDbSet().Object);
+
+        var result = await _assetService.GetAssetTypesAsync(CancellationToken.None);
+
+        result.Should().HaveCount(2);
+        result.First().Typename.Should().Be("Electronics");
+    }
+
+    [Fact]
+    public async Task GetAssetReportsAsync_ShouldReturnListOfReports()
+    {
+        var reports = new List<Assetreport>
+        {
+            new Assetreport { Id = 1, Report = "Issue 1" },
+            new Assetreport { Id = 2, Report = "Issue 2" }
+        };
+
+        _assetReportRepoMock.Setup(r => r.Query(true)).Returns(reports.BuildMockDbSet().Object);
+
+        var result = await _assetService.GetAssetReportsAsync(CancellationToken.None);
+
+        result.Should().HaveCount(2);
+        result.First().Report.Should().Be("Issue 1");
+    }
+
+    [Fact]
+    public async Task GetAssetStatsAsync_ShouldReturnCorrectStats()
+    {
+        var assets = new List<Asset>
+        {
+            new Asset { Id = 1, Status = "active" },
+            new Asset { Id = 2, Status = "active" },
+            new Asset { Id = 3, Status = "broken" },
+            new Asset { Id = 4, Status = "under repair" },
+            new Asset { Id = 5, Status = "under_repair" },
+            new Asset { Id = 6, Status = null }
+        };
+
+        _assetRepoMock.Setup(r => r.ListAsync(It.IsAny<CancellationToken>())).ReturnsAsync(assets);
+
+        var result = await _assetService.GetAssetStatsAsync(CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.TotalAssets.Should().Be(6);
+        result.ActiveAssets.Should().Be(2);
+        result.BrokenAssets.Should().Be(1);
+        result.UnderRepairAssets.Should().Be(2);
     }
 }

@@ -1,0 +1,276 @@
+Summary
+  Generated on: 7/12/2026 - 11:46:54 PM
+  Coverage date: 7/12/2026 - 9:41:00 PM - 7/12/2026 - 11:46:50 PM
+  Parser: MultiReport (10x Cobertura)
+  Assemblies: 4
+  Classes: 248
+  Files: 242
+  Line coverage: 6.5%
+  Covered lines: 2389
+  Uncovered lines: 34243
+  Coverable lines: 36632
+  Total lines: 42713
+  Branch coverage: 19.7% (374 of 1892)
+  Covered branches: 374
+  Total branches: 1892
+  Method coverage: 41.2% (471 of 1141)
+  Full method coverage: 38.6% (441 of 1141)
+  Covered methods: 471
+  Fully covered methods: 441
+  Total methods: 1141
+
+SchoolERPManagementAPI                                                               9%
+  Program                                                                            0%
+  SchoolERPManagementAPI.Controllers.AcademicCalendarController                      0%
+  SchoolERPManagementAPI.Controllers.AcademicYearsController                         0%
+  SchoolERPManagementAPI.Controllers.AssetsController                                0%
+  SchoolERPManagementAPI.Controllers.AttendanceController                            0%
+  SchoolERPManagementAPI.Controllers.AuthController                                  0%
+  SchoolERPManagementAPI.Controllers.ClassesController                               0%
+  SchoolERPManagementAPI.Controllers.DashboardController                             0%
+  SchoolERPManagementAPI.Controllers.DocumentsController                             0%
+  SchoolERPManagementAPI.Controllers.ExamsController                                 0%
+  SchoolERPManagementAPI.Controllers.FeesController                                  0%
+  SchoolERPManagementAPI.Controllers.HomeworkController                              0%
+  SchoolERPManagementAPI.Controllers.NotificationsController                         0%
+  SchoolERPManagementAPI.Controllers.ParentsController                               0%
+  SchoolERPManagementAPI.Controllers.ReportsController                               0%
+  SchoolERPManagementAPI.Controllers.StaffAttendanceController                       0%
+  SchoolERPManagementAPI.Controllers.StudentsController                              0%
+  SchoolERPManagementAPI.Controllers.SubjectsController                              0%
+  SchoolERPManagementAPI.Controllers.TeachersController                              0%
+  SchoolERPManagementAPI.Controllers.TimetableController                             0%
+  SchoolERPManagementAPI.Converters.IstDateTimeConverter                             0%
+  SchoolERPManagementAPI.Converters.IstNullableDateTimeConverter                     0%
+  SchoolERPManagementAPI.Extensions.DataSeeder                                       0%
+  SchoolERPManagementAPI.Filters.ActiveUserFilterAttribute                           0%
+  SchoolERPManagementAPI.Filters.ValidationFilterAttribute                         100%
+  SchoolERPManagementAPI.Middlewares.ExceptionMiddleware                             0%
+  SchoolERPManagementAPI.Middlewares.UserLoggingMiddleware                           0%
+  SchoolERPManagementAPI.Services.FeesDueReminderService                          76.1%
+  SchoolERPManagementAPI.Services.HomeworkDueReminderService                      69.8%
+  SchoolERPManagementAPI.Services.SignalRNotificationPusher                          0%
+
+SchoolERPManagementBLLibrary                                                      37.5%
+  SchoolERPManagementBLLibrary.Configuration.SmtpSettings                          100%
+  SchoolERPManagementBLLibrary.DTOs.AcademicCalendar.AcademicCalendarSummaryDTO   66.6%
+  SchoolERPManagementBLLibrary.DTOs.AcademicCalendar.CalendarEventResponseDTO     42.8%
+  SchoolERPManagementBLLibrary.DTOs.AcademicCalendar.CreateCalendarEventDTO        100%
+  SchoolERPManagementBLLibrary.DTOs.AcademicYear.AcademicYearResponseDTO           100%
+  SchoolERPManagementBLLibrary.DTOs.AcademicYear.CreateAcademicYearDTO             100%
+  SchoolERPManagementBLLibrary.DTOs.Asset.AssetIssueDTO                            100%
+  SchoolERPManagementBLLibrary.DTOs.Asset.AssetReportResponseDTO                   100%
+  SchoolERPManagementBLLibrary.DTOs.Asset.AssetResponseDTO                         100%
+  SchoolERPManagementBLLibrary.DTOs.Asset.AssetStatsDTO                            100%
+  SchoolERPManagementBLLibrary.DTOs.Asset.AssetTypeResponseDTO                     100%
+  SchoolERPManagementBLLibrary.DTOs.Asset.CreateAssetDTO                           100%
+  SchoolERPManagementBLLibrary.DTOs.Attendance.AttendanceResponseDTO               100%
+  SchoolERPManagementBLLibrary.DTOs.Attendance.MarkAttendanceDTO                   100%
+  SchoolERPManagementBLLibrary.DTOs.Auth.AuthResponseDTO                           100%
+  SchoolERPManagementBLLibrary.DTOs.Auth.ChangePasswordDTO                         100%
+  SchoolERPManagementBLLibrary.DTOs.Auth.ForgotPasswordDTO                         100%
+  SchoolERPManagementBLLibrary.DTOs.Auth.LoginRequestDTO                           100%
+  SchoolERPManagementBLLibrary.DTOs.Auth.RegisterUserDTO                             0%
+  SchoolERPManagementBLLibrary.DTOs.Auth.ResetPasswordDTO                          100%
+  SchoolERPManagementBLLibrary.DTOs.Class.ClassResponseDTO                        77.7%
+  SchoolERPManagementBLLibrary.DTOs.Class.CreateClassDTO                           100%
+  SchoolERPManagementBLLibrary.DTOs.Class.UpdateClassDTO                             0%
+  SchoolERPManagementBLLibrary.DTOs.Dashboard.AdminDashboardDTO                   57.1%
+  SchoolERPManagementBLLibrary.DTOs.Dashboard.MonthlyRevenueDTO                     50%
+  SchoolERPManagementBLLibrary.DTOs.Dashboard.RecentTransactionDTO                33.3%
+  SchoolERPManagementBLLibrary.DTOs.Dashboard.TeacherDashboardDTO                    0%
+  SchoolERPManagementBLLibrary.DTOs.Dashboard.TeacherHomeworkDTO                     0%
+  SchoolERPManagementBLLibrary.DTOs.Dashboard.TeacherTimetableSlotDTO                0%
+  SchoolERPManagementBLLibrary.DTOs.Document.PendingDocumentDTO                      0%
+  SchoolERPManagementBLLibrary.DTOs.Document.StudentDocumentResponseDTO            100%
+  SchoolERPManagementBLLibrary.DTOs.Document.TeacherDocumentResponseDTO            100%
+  SchoolERPManagementBLLibrary.DTOs.Document.VerifyDocumentDTO                     100%
+  SchoolERPManagementBLLibrary.DTOs.Exam.CreateExamDTO                             100%
+  SchoolERPManagementBLLibrary.DTOs.Exam.CreateExamScheduleDTO                       0%
+  SchoolERPManagementBLLibrary.DTOs.Exam.ExamResponseDTO                           100%
+  SchoolERPManagementBLLibrary.DTOs.Exam.ExamResultResponseDTO                     100%
+  SchoolERPManagementBLLibrary.DTOs.Exam.ExamScheduleResponseDTO                     0%
+  SchoolERPManagementBLLibrary.DTOs.Exam.PublishResultDTO                          100%
+  SchoolERPManagementBLLibrary.DTOs.Exam.UpdateExamScheduleDTO                       0%
+  SchoolERPManagementBLLibrary.DTOs.Fee.AddFeeStructureDTO                         100%
+  SchoolERPManagementBLLibrary.DTOs.Fee.CheckoutSessionResultDTO                     0%
+  SchoolERPManagementBLLibrary.DTOs.Fee.ClassFeeSummaryDTO                           0%
+  SchoolERPManagementBLLibrary.DTOs.Fee.CreateCheckoutSessionDTO                     0%
+  SchoolERPManagementBLLibrary.DTOs.Fee.FeeComponentDTO                            100%
+  SchoolERPManagementBLLibrary.DTOs.Fee.FeePaymentDTO                              100%
+  SchoolERPManagementBLLibrary.DTOs.Fee.FeePaymentResponseDTO                      100%
+  SchoolERPManagementBLLibrary.DTOs.Fee.FeeStructureResponseDTO                    100%
+  SchoolERPManagementBLLibrary.DTOs.Fee.FeeSummaryDTO                              100%
+  SchoolERPManagementBLLibrary.DTOs.Fee.PaymentSuccessEventDTO                       0%
+  SchoolERPManagementBLLibrary.DTOs.Homework.CreateHomeworkDTO                     100%
+  SchoolERPManagementBLLibrary.DTOs.Homework.EvaluateHomeworkDTO                   100%
+  SchoolERPManagementBLLibrary.DTOs.Homework.HomeworkResponseDTO                   100%
+  SchoolERPManagementBLLibrary.DTOs.Homework.HomeworkSubmissionDetailsDTO            0%
+  SchoolERPManagementBLLibrary.DTOs.Homework.HomeworkSubmissionDTO                 100%
+  SchoolERPManagementBLLibrary.DTOs.Homework.HomeworkSubmissionResponseDTO         100%
+  SchoolERPManagementBLLibrary.DTOs.Notification.NotificationResponseDTO           100%
+  SchoolERPManagementBLLibrary.DTOs.Notification.SendNotificationDTO               100%
+  SchoolERPManagementBLLibrary.DTOs.Notification.UserNotificationResponseDTO       100%
+  SchoolERPManagementBLLibrary.DTOs.Parent.ChildResponseDTO                          0%
+  SchoolERPManagementBLLibrary.DTOs.Parent.CreateParentDTO                         100%
+  SchoolERPManagementBLLibrary.DTOs.Parent.ParentQueryRequest                        0%
+  SchoolERPManagementBLLibrary.DTOs.Parent.ParentResponseDTO                       100%
+  SchoolERPManagementBLLibrary.DTOs.Parent.ParentStatsDTO                            0%
+  SchoolERPManagementBLLibrary.DTOs.Parent.UpdateParentDTO                           0%
+  SchoolERPManagementBLLibrary.DTOs.Report.AssetInventoryReportDTO                   0%
+  SchoolERPManagementBLLibrary.DTOs.Report.ExamPerformanceReportDTO                  0%
+  SchoolERPManagementBLLibrary.DTOs.Report.FeeCollectionReportDTO                    0%
+  SchoolERPManagementBLLibrary.DTOs.Report.Query.AssetQueryRequest                   0%
+  SchoolERPManagementBLLibrary.DTOs.Report.Query.ExamResultQueryRequest              0%
+  SchoolERPManagementBLLibrary.DTOs.Report.Query.FeePaymentQueryRequest              0%
+  SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedQueryRequest                   0%
+  SchoolERPManagementBLLibrary.DTOs.Report.Query.PagedResponse<T>                    0%
+  SchoolERPManagementBLLibrary.DTOs.Report.Query.StaffAttendanceQueryRequest         0%
+  SchoolERPManagementBLLibrary.DTOs.Report.Query.StudentAttendanceQueryRequest       0%
+  SchoolERPManagementBLLibrary.DTOs.Report.StaffAttendanceReportDTO                  0%
+  SchoolERPManagementBLLibrary.DTOs.Report.StudentAttendanceReportDTO                0%
+  SchoolERPManagementBLLibrary.DTOs.StaffAttendance.StaffAttendanceRequestDTO      100%
+  SchoolERPManagementBLLibrary.DTOs.StaffAttendance.StaffAttendanceResponseDTO    87.5%
+  SchoolERPManagementBLLibrary.DTOs.Student.BulkEnrollStudentsDTO                    0%
+  SchoolERPManagementBLLibrary.DTOs.Student.CreateStudentDTO                       100%
+  SchoolERPManagementBLLibrary.DTOs.Student.EnrollStudentDTO                         0%
+  SchoolERPManagementBLLibrary.DTOs.Student.ParentSelectionDTO                     100%
+  SchoolERPManagementBLLibrary.DTOs.Student.StudentQueryRequest                      0%
+  SchoolERPManagementBLLibrary.DTOs.Student.StudentQueryResponseDTO                  0%
+  SchoolERPManagementBLLibrary.DTOs.Student.StudentResponseDTO                     100%
+  SchoolERPManagementBLLibrary.DTOs.Student.StudentStatsDTO                          0%
+  SchoolERPManagementBLLibrary.DTOs.Student.UpdateStudentDTO                         0%
+  SchoolERPManagementBLLibrary.DTOs.Subject.CreateSubjectDTO                       100%
+  SchoolERPManagementBLLibrary.DTOs.Subject.SubjectResponseDTO                     100%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.AssignTeacherSubjectDTO                  0%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.AutoAssignResultDTO                      0%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.CreateTeacherDTO                       100%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.SimpleTeacherAssignmentDTO               0%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.TeacherAssignmentDTO                     0%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.TeacherQueryRequest                      0%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.TeacherResponseDTO                    16.6%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.TeacherStatsDTO                          0%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.TeacherSubjectResponseDTO                0%
+  SchoolERPManagementBLLibrary.DTOs.Teacher.UpdateTeacherDTO                         0%
+  SchoolERPManagementBLLibrary.DTOs.Timetable.CreateTimetableDTO                   100%
+  SchoolERPManagementBLLibrary.DTOs.Timetable.GenerateTimetableRequestDTO            0%
+  SchoolERPManagementBLLibrary.DTOs.Timetable.PeriodTimingDTO                        0%
+  SchoolERPManagementBLLibrary.DTOs.Timetable.TeacherRequirementDTO                  0%
+  SchoolERPManagementBLLibrary.DTOs.Timetable.TimetableResponseDTO                 100%
+  SchoolERPManagementBLLibrary.DTOs.Timetable.UpdateTimetableDTO                     0%
+  SchoolERPManagementBLLibrary.Exceptions.BusinessRuleException                    100%
+  SchoolERPManagementBLLibrary.Exceptions.DuplicateEntityException                 100%
+  SchoolERPManagementBLLibrary.Exceptions.EntityNotFoundException                  100%
+  SchoolERPManagementBLLibrary.Helpers.JwtTokenGenerator                           100%
+  SchoolERPManagementBLLibrary.Helpers.PasswordHasher                             86.6%
+  SchoolERPManagementBLLibrary.Profiles.AppMappingProfile                         99.2%
+  SchoolERPManagementBLLibrary.Services.AcademicCalendarService                    100%
+  SchoolERPManagementBLLibrary.Services.AcademicYearService                        100%
+  SchoolERPManagementBLLibrary.Services.AssetService                               100%
+  SchoolERPManagementBLLibrary.Services.AttendanceService                         63.3%
+  SchoolERPManagementBLLibrary.Services.AuthService                                100%
+  SchoolERPManagementBLLibrary.Services.ClassService                              34.8%
+  SchoolERPManagementBLLibrary.Services.DashboardService                          52.9%
+  SchoolERPManagementBLLibrary.Services.DocumentService                           48.4%
+  SchoolERPManagementBLLibrary.Services.ExamService                               42.3%
+  SchoolERPManagementBLLibrary.Services.FeeService                                  28%
+  SchoolERPManagementBLLibrary.Services.HomeworkService                           47.4%
+  SchoolERPManagementBLLibrary.Services.LocalFileStorageService                    100%
+  SchoolERPManagementBLLibrary.Services.NotificationService                        100%
+  SchoolERPManagementBLLibrary.Services.ParentService                             33.9%
+  SchoolERPManagementBLLibrary.Services.PdfReportService                             0%
+  SchoolERPManagementBLLibrary.Services.ReportService                                0%
+  SchoolERPManagementBLLibrary.Services.SmtpEmailService                           100%
+  SchoolERPManagementBLLibrary.Services.StaffAttendanceService                     100%
+  SchoolERPManagementBLLibrary.Services.StripePaymentService                         0%
+  SchoolERPManagementBLLibrary.Services.StudentService                            26.8%
+  SchoolERPManagementBLLibrary.Services.SubjectService                             100%
+  SchoolERPManagementBLLibrary.Services.TeacherService                            16.3%
+  SchoolERPManagementBLLibrary.Services.TimetableService                          13.8%
+  SchoolERPManagementBLLibrary.Strategies.ParentDocumentVerificationStrategy       100%
+  SchoolERPManagementBLLibrary.Strategies.StudentDocumentVerificationStrategy      100%
+  SchoolERPManagementBLLibrary.Strategies.TeacherDocumentVerificationStrategy      100%
+  SchoolERPManagementBLLibrary.Validators.AddFeeStructureValidator                   0%
+  SchoolERPManagementBLLibrary.Validators.AssetIssueValidator                        0%
+  SchoolERPManagementBLLibrary.Validators.AssignTeacherSubjectValidator              0%
+  SchoolERPManagementBLLibrary.Validators.ChangePasswordValidator                    0%
+  SchoolERPManagementBLLibrary.Validators.CreateAssetValidator                       0%
+  SchoolERPManagementBLLibrary.Validators.CreateClassValidator                       0%
+  SchoolERPManagementBLLibrary.Validators.CreateExamValidator                        0%
+  SchoolERPManagementBLLibrary.Validators.CreateHomeworkValidator                    0%
+  SchoolERPManagementBLLibrary.Validators.CreateParentValidator                      0%
+  SchoolERPManagementBLLibrary.Validators.CreateStudentDTOValidator                  0%
+  SchoolERPManagementBLLibrary.Validators.CreateSubjectValidator                     0%
+  SchoolERPManagementBLLibrary.Validators.CreateTeacherValidator                     0%
+  SchoolERPManagementBLLibrary.Validators.CreateTimetableValidator                   0%
+  SchoolERPManagementBLLibrary.Validators.EvaluateHomeworkValidator                  0%
+  SchoolERPManagementBLLibrary.Validators.FeePaymentValidator                        0%
+  SchoolERPManagementBLLibrary.Validators.ForgotPasswordValidator                    0%
+  SchoolERPManagementBLLibrary.Validators.HomeworkSubmissionValidator                0%
+  SchoolERPManagementBLLibrary.Validators.LoginRequestValidator                      0%
+  SchoolERPManagementBLLibrary.Validators.MarkAttendanceValidator                    0%
+  SchoolERPManagementBLLibrary.Validators.PublishResultValidator                     0%
+  SchoolERPManagementBLLibrary.Validators.RegisterUserValidator                      0%
+  SchoolERPManagementBLLibrary.Validators.ResetPasswordValidator                     0%
+  SchoolERPManagementBLLibrary.Validators.SendNotificationValidator                  0%
+  SchoolERPManagementBLLibrary.Validators.StaffAttendanceValidator                   0%
+  SchoolERPManagementBLLibrary.Validators.UpdateClassValidator                       0%
+  SchoolERPManagementBLLibrary.Validators.UpdateStudentDTOValidator                  0%
+  SchoolERPManagementBLLibrary.Validators.VerifyDocumentValidator                    0%
+
+SchoolERPManagementDALLibrary                                                      0.1%
+  SchoolERPManagementDALLibrary.Contexts.CurrentUserContext                          0%
+  SchoolERPManagementDALLibrary.Contexts.DateTimeToUtcConverter                      0%
+  SchoolERPManagementDALLibrary.Contexts.SchoolERPDbContext                        0.3%
+  SchoolERPManagementDALLibrary.Migrations.AddAcademicCalendar                       0%
+  SchoolERPManagementDALLibrary.Migrations.AddAcademicYearToClass                    0%
+  SchoolERPManagementDALLibrary.Migrations.AddClassSubject                           0%
+  SchoolERPManagementDALLibrary.Migrations.AddCostAndSalary                          0%
+  SchoolERPManagementDALLibrary.Migrations.AddDocumentName                           0%
+  SchoolERPManagementDALLibrary.Migrations.AddDocumentStatus                         0%
+  SchoolERPManagementDALLibrary.Migrations.AddDueDateToFeeStructure                  0%
+  SchoolERPManagementDALLibrary.Migrations.AddFeeStructureIdToFeePayment             0%
+  SchoolERPManagementDALLibrary.Migrations.AddResetTokenToUser                       0%
+  SchoolERPManagementDALLibrary.Migrations.AddStaffAttendance                        0%
+  SchoolERPManagementDALLibrary.Migrations.AddSubjectSpecialtyToTeacher              0%
+  SchoolERPManagementDALLibrary.Migrations.ChangePaymentDateToDateTime               0%
+  SchoolERPManagementDALLibrary.Migrations.Initial                                   0%
+  SchoolERPManagementDALLibrary.Migrations.MigrateToManyToManyParents                0%
+  SchoolERPManagementDALLibrary.Migrations.SchoolERPDbContextModelSnapshot           0%
+  SchoolERPManagementDALLibrary.Repositories.AbstractRepository<T1, T2>           52.7%
+
+SchoolERPManagementModelLibrary                                                   85.2%
+  SchoolERPManagementModelLibrary.Models.Academiccalendar                          100%
+  SchoolERPManagementModelLibrary.Models.Academicyear                              100%
+  SchoolERPManagementModelLibrary.Models.Asset                                      80%
+  SchoolERPManagementModelLibrary.Models.Assetreport                               100%
+  SchoolERPManagementModelLibrary.Models.Assettype                                 100%
+  SchoolERPManagementModelLibrary.Models.Attendance                               87.5%
+  SchoolERPManagementModelLibrary.Models.Class                                    93.3%
+  SchoolERPManagementModelLibrary.Models.Classsubject                                0%
+  SchoolERPManagementModelLibrary.Models.Exam                                     83.3%
+  SchoolERPManagementModelLibrary.Models.Examresult                                100%
+  SchoolERPManagementModelLibrary.Models.Examschedule                               60%
+  SchoolERPManagementModelLibrary.Models.Feepayment                                100%
+  SchoolERPManagementModelLibrary.Models.Feestructure                              100%
+  SchoolERPManagementModelLibrary.Models.Homework                                  100%
+  SchoolERPManagementModelLibrary.Models.Homeworksubmission                        100%
+  SchoolERPManagementModelLibrary.Models.Notification                             85.7%
+  SchoolERPManagementModelLibrary.Models.Parent                                    100%
+  SchoolERPManagementModelLibrary.Models.Parentdocument                           87.5%
+  SchoolERPManagementModelLibrary.Models.Role                                      100%
+  SchoolERPManagementModelLibrary.Models.Salary                                      0%
+  SchoolERPManagementModelLibrary.Models.Staff                                       0%
+  SchoolERPManagementModelLibrary.Models.Staffattendance                           100%
+  SchoolERPManagementModelLibrary.Models.Stafftype                                   0%
+  SchoolERPManagementModelLibrary.Models.Student                                   100%
+  SchoolERPManagementModelLibrary.Models.Studentdocument                           100%
+  SchoolERPManagementModelLibrary.Models.Studentenrollment                         100%
+  SchoolERPManagementModelLibrary.Models.Studentparent                            85.7%
+  SchoolERPManagementModelLibrary.Models.Subject                                   100%
+  SchoolERPManagementModelLibrary.Models.Teacher                                  93.7%
+  SchoolERPManagementModelLibrary.Models.Teacherdocument                           100%
+  SchoolERPManagementModelLibrary.Models.Teachersubject                           85.7%
+  SchoolERPManagementModelLibrary.Models.Timetable                                 100%
+  SchoolERPManagementModelLibrary.Models.User                                     76.4%
+  SchoolERPManagementModelLibrary.Models.Usernotification                          100%

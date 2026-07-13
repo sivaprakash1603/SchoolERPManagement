@@ -553,6 +553,13 @@
                     }
                   </tr>
                 }
+                @if (feeComponents().length === 0) {
+                  <tr>
+                    <td colspan="5" class="text-center py-4 text-muted-custom">
+                      No components defined.
+                    </td>
+                  </tr>
+                }
               </tbody>
             </table>
           </div>

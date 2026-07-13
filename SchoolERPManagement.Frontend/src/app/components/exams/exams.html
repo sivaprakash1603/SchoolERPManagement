@@ -33,7 +33,7 @@
           [ngModel]="selectedChildId()"
           (ngModelChange)="onChildChange($event)"
         >
-          @for (child of parentChildren(); track child) {
+          @for (child of parentChildren(); track child.studentId) {
             <option [value]="child.studentId" [selected]="child.studentId === selectedChildId()">
               {{ child.name }} ({{ child.className }})
             </option>

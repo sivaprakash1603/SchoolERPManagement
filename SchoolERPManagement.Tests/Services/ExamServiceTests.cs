@@ -91,6 +91,9 @@ public class ExamServiceTests
         _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
 
         _examResultRepoMock.Setup(r => r.Query(true)).Returns(new List<Examresult>().BuildMockDbSet().Object);
+        _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentenrollment> { new Studentenrollment { Studentid = 1, Classid = 1 } }.BuildMockDbSet().Object);
+        _examScheduleRepoMock.Setup(r => r.Query(true)).Returns(new List<Examschedule> { new Examschedule { Examid = 1, Classid = 1, Subjectid = 1 } }.BuildMockDbSet().Object);
+        _studentRepoMock.Setup(r => r.Query(true)).Returns(new List<Student> { new Student { Id = 1, Userid = 1 } }.BuildMockDbSet().Object);
 
         
         var result = await _examService.PublishResultAsync(dto, CancellationToken.None);
@@ -113,6 +116,9 @@ public class ExamServiceTests
 
         var existingResult = new Examresult { Id = 1, Examid = 1, Subjectid = 1, Studentid = 1, Marks = 95.5m };
         _examResultRepoMock.Setup(r => r.Query(true)).Returns(new List<Examresult> { existingResult }.BuildMockDbSet().Object);
+        _studentEnrollmentRepoMock.Setup(r => r.Query(true)).Returns(new List<Studentenrollment> { new Studentenrollment { Studentid = 1, Classid = 1 } }.BuildMockDbSet().Object);
+        _examScheduleRepoMock.Setup(r => r.Query(true)).Returns(new List<Examschedule> { new Examschedule { Examid = 1, Classid = 1, Subjectid = 1 } }.BuildMockDbSet().Object);
+        _studentRepoMock.Setup(r => r.Query(true)).Returns(new List<Student> { new Student { Id = 1, Userid = 1 } }.BuildMockDbSet().Object);
 
         
         var result = await _examService.PublishResultAsync(dto, CancellationToken.None);

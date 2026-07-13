@@ -37,7 +37,7 @@ public class TeacherDocumentVerificationStrategyTests
 
         await _strategy.VerifyAsync(dto, 1, "Admin", CancellationToken.None);
 
-        doc.Status.Should().Be("Verified");
+        doc.Status.Should().Be("verified");
         _docRepoMock.Verify(r => r.UpdateAsync(doc, true, It.IsAny<CancellationToken>()), Times.Once);
     }
 

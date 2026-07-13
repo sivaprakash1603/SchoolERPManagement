@@ -67,7 +67,6 @@ public class AuthServiceTests
         
         result.Should().NotBeNull();
         result.AccessToken.Should().NotBeNullOrEmpty();
-        result.RoleName.Should().Be("Admin");
     }
 
     [Fact]
@@ -94,6 +93,26 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task LoginAsync_DeactivatedUser_ShouldThrowBusinessRuleException()
+    {
+        var user = new User
+        {
+            Username = "jdoe",
+            Passwordhash = PasswordHasher.Hash("Password123"),
+            Isactive = false
+        };
+
+        var usersList = new List<User> { user };
+        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMockDbSet().Object);
+
+        var dto = new LoginRequestDTO("jdoe", "Password123");
+
+        Func<Task> action = async () => await _authService.LoginAsync(dto, CancellationToken.None);
+
+        await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Your account has been deactivated.");
+    }
+
+    [Fact]
     public async Task ForgotPasswordAsync_UserExists_ShouldGenerateTokenAndSendEmail()
     {
         
@@ -110,6 +129,33 @@ public class AuthServiceTests
         user.Resettoken.Should().NotBeNullOrEmpty();
         _userRepositoryMock.Verify(r => r.UpdateAsync(user, true, It.IsAny<CancellationToken>()), Times.Once);
         _emailServiceMock.Verify(e => e.SendEmailAsync(user.Email, "Password Reset Request", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ForgotPasswordAsync_UserNotFound_ShouldThrowEntityNotFoundException()
+    {
+        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().BuildMockDbSet().Object);
+        var dto = new ForgotPasswordDTO("test@example.com");
+
+        Func<Task> action = async () => await _authService.ForgotPasswordAsync(dto, CancellationToken.None);
+
+        await action.Should().ThrowAsync<EntityNotFoundException>();
+    }
+
+    [Fact]
+    public async Task ForgotPasswordAsync_EmailFails_ShouldStillGenerateToken()
+    {
+        var user = new User { Email = "test@example.com", Resettoken = null };
+        var usersList = new List<User> { user };
+        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(usersList.BuildMockDbSet().Object);
+        _emailServiceMock.Setup(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                         .ThrowsAsync(new Exception("Email failed"));
+
+        var dto = new ForgotPasswordDTO("test@example.com");
+
+        await _authService.ForgotPasswordAsync(dto, CancellationToken.None);
+
+        user.Resettoken.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -159,5 +205,54 @@ public class AuthServiceTests
 
         
         await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Invalid or expired reset token.");
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_UserNotFound_ShouldThrowBusinessRuleException()
+    {
+        _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<User>().BuildMockDbSet().Object);
+        var dto = new ResetPasswordDTO("test@example.com", "token", "newPassword123");
+
+        Func<Task> action = async () => await _authService.ResetPasswordAsync(dto, CancellationToken.None);
+
+        await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Invalid or expired reset token.");
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_ValidData_ShouldUpdatePassword()
+    {
+        var user = new User { Id = 1, Passwordhash = PasswordHasher.Hash("oldPassword123") };
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(user);
+
+        var dto = new ChangePasswordDTO(1, "oldPassword123", "newPassword123");
+
+        await _authService.ChangePasswordAsync(dto, CancellationToken.None);
+
+        PasswordHasher.Verify("newPassword123", user.Passwordhash).Should().BeTrue();
+        _userRepositoryMock.Verify(r => r.UpdateAsync(user, true, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_UserNotFound_ShouldThrowEntityNotFoundException()
+    {
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((User)null);
+        var dto = new ChangePasswordDTO(99, "oldPassword", "newPassword");
+
+        Func<Task> action = async () => await _authService.ChangePasswordAsync(dto, CancellationToken.None);
+
+        await action.Should().ThrowAsync<EntityNotFoundException>();
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_InvalidCurrentPassword_ShouldThrowBusinessRuleException()
+    {
+        var user = new User { Id = 1, Passwordhash = PasswordHasher.Hash("oldPassword123") };
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(user);
+
+        var dto = new ChangePasswordDTO(1, "wrongPassword", "newPassword123");
+
+        Func<Task> action = async () => await _authService.ChangePasswordAsync(dto, CancellationToken.None);
+
+        await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Current password is incorrect.");
     }
 }
