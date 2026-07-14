@@ -172,14 +172,7 @@ resource postgresFirewall 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRul
   }
 }
 
-resource postgresFirewallAKS 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2022-12-01' = {
-  parent: postgresServer
-  name: 'AllowAKS'
-  properties: {
-    startIpAddress: '20.207.101.33'
-    endIpAddress: '20.207.101.33'
-  }
-}
+
 
 resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
   parent: postgresServer
