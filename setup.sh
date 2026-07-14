@@ -107,8 +107,8 @@ echo "Assigned Public IP: $EXTERNAL_IP"
 echo "Updating PostgreSQL Firewall to allow AKS IP..."
 az postgres flexible-server firewall-rule create \
   --resource-group $RG_NAME \
-  --name $PG_SERVER \
-  --rule-name AllowAKS \
+  --server-name $PG_SERVER \
+  --name AllowAKS \
   --start-ip-address $EXTERNAL_IP \
   --end-ip-address $EXTERNAL_IP -o none
 
