@@ -61,6 +61,8 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddDbContext<SchoolERPDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"), 
         o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<SchoolERPDbContext>();
 
 builder.Services.Configure<SchoolERPManagementBLLibrary.Configuration.SmtpSettings>(
     builder.Configuration.GetSection("SmtpSettings"));
@@ -296,6 +298,7 @@ app.UseMiddleware<UserLoggingMiddleware>();
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notification");
+app.MapHealthChecks("/health/db");
 
 
 app.SeedData();
