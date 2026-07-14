@@ -1,6 +1,7 @@
 using SchoolERPManagementBLLibrary.Helpers;
 using SchoolERPManagementDALLibrary.Contexts;
 using SchoolERPManagementModelLibrary.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace SchoolERPManagementAPI.Extensions;
 
@@ -10,6 +11,8 @@ public static class DataSeeder
     {
         using var scope = app.ApplicationServices.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<SchoolERPDbContext>();
+
+        context.Database.Migrate();
 
         var roles = new[] { "Admin", "Teacher", "Student", "Parent" };
         foreach (var role in roles)
