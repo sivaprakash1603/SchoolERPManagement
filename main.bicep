@@ -225,16 +225,20 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
           value: blobConnectionString
         }
         {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+          value: blobConnectionString
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: toLower('func-schoolerp-${uniqueString(resourceGroup().id)}')
+        }
+        {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~4'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: 'dotnet-isolated'
-        }
-        {
-          name: 'API_URL'
-          value: 'http://20.207.101.33'
         }
         {
           name: 'API_KEY'
