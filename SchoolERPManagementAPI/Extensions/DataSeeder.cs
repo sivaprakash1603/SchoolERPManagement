@@ -12,7 +12,16 @@ public static class DataSeeder
         using var scope = app.ApplicationServices.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<SchoolERPDbContext>();
 
-        context.Database.Migrate();
+        try
+        {
+            context.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Migration failed: {ex.Message}");
+            Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
+            throw;
+        }
 
         var roles = new[] { "Admin", "Teacher", "Student", "Parent" };
         foreach (var role in roles)
