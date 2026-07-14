@@ -1,0 +1,16 @@
+School ERP System - Frequently Asked Questions
+
+Q: How do I reset my password?
+A: You can reset your password by clicking on the "Forgot Password" link on the login page. An email will be sent to your registered email address with instructions to reset it.
+
+Q: How can I view a student's attendance record?
+A: Go to the "Attendance" module in the left sidebar, select the class and section, and you will see a detailed view of the students' attendance.
+
+Q: What should I do if a parent's contact number is wrong?
+A: Navigate to the "Students" module, find the specific student, and click "Edit". In the "Parent Details" section, update the contact number and click "Save".
+
+Q: How are late fees calculated?
+A: Late fees are automatically calculated at a rate of 5% of the pending amount if the fee is not paid within 7 days of the due date.
+
+Q: Can I schedule a Parent-Teacher Meeting outside of regular school hours?
+A: Yes, in the "Communication" module under "Parent-Teacher Meetings", you can select custom time slots. However, this requires approval from the Principal.
