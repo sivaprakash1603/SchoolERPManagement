@@ -172,6 +172,15 @@ resource postgresFirewall 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRul
   }
 }
 
+resource postgresFirewallAKS 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2022-12-01' = {
+  parent: postgresServer
+  name: 'AllowAKS'
+  properties: {
+    startIpAddress: '20.207.101.33'
+    endIpAddress: '20.207.101.33'
+  }
+}
+
 resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
   parent: postgresServer
   name: 'SchoolERPSystem'
@@ -184,6 +193,62 @@ resource secretDb 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
   name: 'ConnectionStrings--Default'
   properties: {
     value: pgConnectionString
+  }
+}
+
+// Generate a random Job API Key
+var jobApiKey = uniqueString(resourceGroup().id, deployment().name, 'jobApiKey')
+
+resource secretJobApiKey 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'JobApiKey'
+  properties: {
+    value: jobApiKey
+  }
+}
+
+// 7. Create App Service Plan for Azure Functions
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
+  name: 'asp-schoolerp-${uniqueString(resourceGroup().id)}'
+  location: location
+  sku: {
+    name: 'Y1'
+    tier: 'Dynamic'
+  }
+  properties: {}
+}
+
+// 8. Create Azure Function App
+resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
+  name: 'func-schoolerp-${uniqueString(resourceGroup().id)}'
+  location: location
+  kind: 'functionapp'
+  properties: {
+    serverFarmId: appServicePlan.id
+    siteConfig: {
+      appSettings: [
+        {
+          name: 'AzureWebJobsStorage'
+          value: blobConnectionString
+        }
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: 'dotnet-isolated'
+        }
+        {
+          name: 'API_URL'
+          value: 'http://20.207.101.33'
+        }
+        {
+          name: 'API_KEY'
+          value: jobApiKey
+        }
+      ]
+    }
   }
 }
 

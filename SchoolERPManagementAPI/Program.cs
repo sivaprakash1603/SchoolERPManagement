@@ -250,9 +250,9 @@ builder.Services.AddScoped<IDocumentVerificationStrategy, StudentDocumentVerific
 builder.Services.AddScoped<IDocumentVerificationStrategy, TeacherDocumentVerificationStrategy>();
 builder.Services.AddScoped<IDocumentVerificationStrategy, ParentDocumentVerificationStrategy>();
 
-// Register Automated Notification Background Services
-builder.Services.AddHostedService<HomeworkDueReminderService>();
-builder.Services.AddHostedService<FeesDueReminderService>();
+// Register Reminder Services
+builder.Services.AddScoped<HomeworkDueReminderService>();
+builder.Services.AddScoped<FeesDueReminderService>();
 
 // Register FluentValidation Validators from the assembly containing our validators
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();

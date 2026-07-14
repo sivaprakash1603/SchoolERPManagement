@@ -13,37 +13,15 @@ using System.Threading.Tasks;
 
 namespace SchoolERPManagementAPI.Services;
 
-public sealed class HomeworkDueReminderService : BackgroundService
+public sealed class HomeworkDueReminderService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<HomeworkDueReminderService> _logger;
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(1);
 
     public HomeworkDueReminderService(IServiceProvider serviceProvider, ILogger<HomeworkDueReminderService> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
-    }
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        _logger.LogInformation("Homework Due Reminder Background Service starting.");
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                await SendDueRemindersAsync(stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while executing homework due reminders.");
-            }
-
-            await Task.Delay(CheckInterval, stoppingToken);
-        }
-
-        _logger.LogInformation("Homework Due Reminder Background Service stopping.");
     }
 
     public async Task SendDueRemindersAsync(CancellationToken cancellationToken)

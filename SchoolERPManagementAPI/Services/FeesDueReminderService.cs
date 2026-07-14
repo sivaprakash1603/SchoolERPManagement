@@ -14,37 +14,15 @@ using System.Threading.Tasks;
 
 namespace SchoolERPManagementAPI.Services;
 
-public sealed class FeesDueReminderService : BackgroundService
+public sealed class FeesDueReminderService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<FeesDueReminderService> _logger;
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(1);
 
     public FeesDueReminderService(IServiceProvider serviceProvider, ILogger<FeesDueReminderService> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
-    }
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        _logger.LogInformation("Fees Due Reminder Background Service starting.");
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                await SendDueRemindersAsync(stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while executing fees due reminders.");
-            }
-
-            await Task.Delay(CheckInterval, stoppingToken);
-        }
-
-        _logger.LogInformation("Fees Due Reminder Background Service stopping.");
     }
 
     public async Task SendDueRemindersAsync(CancellationToken cancellationToken)
