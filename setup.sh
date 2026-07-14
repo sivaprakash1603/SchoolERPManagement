@@ -49,7 +49,7 @@ KEY_VAULT_URI=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.keyVaultUri
 UNIQUE_ID=$(echo $AKS_NAME | awk -F'-' '{print $3}')
 SWA_NAME="swaschoolerp${UNIQUE_ID}"
 FUNC_APP_NAME="func-schoolerp-${UNIQUE_ID}"
-KV_NAME="kverp${UNIQUE_ID}"
+KV_NAME=$(echo $KEY_VAULT_URI | awk -F'/' '{print $3}' | cut -d'.' -f1)
 
 echo "ACR Name: $ACR_NAME"
 echo "AKS Name: $AKS_NAME"
