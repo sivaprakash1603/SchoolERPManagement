@@ -243,6 +243,10 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
           value: 'dotnet-isolated'
         }
         {
+          name: 'API_URL'
+          value: 'http://4.247.233.14' // Will be dynamically replaced by script
+        }
+        {
           name: 'API_KEY'
           value: jobApiKey
         }

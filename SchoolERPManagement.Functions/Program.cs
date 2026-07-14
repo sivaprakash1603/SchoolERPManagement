@@ -11,8 +11,7 @@ var builder = FunctionsApplication.CreateBuilder(args);
 builder.ConfigureFunctionsWebApplication();
 
 builder.Services.AddOpenTelemetry()
-    .UseFunctionsWorkerDefaults()
-    .UseAzureMonitorExporter();
+    .UseFunctionsWorkerDefaults();
 
 builder.Services.AddHttpClient();
 
