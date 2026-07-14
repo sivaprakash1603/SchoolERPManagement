@@ -29,6 +29,7 @@ export class Sidebar implements OnInit {
 
   private allMenuItems: MenuItem[] = [
     { label: 'Dashboard',         route: '/dashboard',         icon: 'bi-grid-fill',              roles: ['Admin', 'Teacher', 'Student', 'Parent'], category: 'Core' },
+    { label: 'Chat Assistant',    route: '/chat',              icon: 'bi-robot',                  roles: ['Admin', 'Teacher', 'Student', 'Parent'], category: 'Core' },
     { label: 'Academic Calendar', route: '/academic-calendar', icon: 'bi-calendar3',              roles: ['Admin', 'Teacher', 'Student', 'Parent'], category: 'Core' },
     { label: 'PT Meetings',       route: '/parent-teacher-meetings', icon: 'bi-people',            roles: ['Admin', 'Teacher', 'Parent'], category: 'Core' },
     { label: 'Classes',           route: '/classes',           icon: 'bi-building',               roles: ['Admin'], category: 'Academics' },
@@ -43,6 +44,7 @@ export class Sidebar implements OnInit {
     { label: 'Fees',              route: '/fees',              icon: 'bi-cash-coin',              roles: ['Admin', 'Teacher', 'Student', 'Parent'], category: 'Operations' },
     { label: 'Assets',            route: '/assets',            icon: 'bi-pc-display',             roles: ['Admin', 'Teacher', 'Student'], category: 'Operations' },
     { label: 'Documents',         route: '/documents',         icon: 'bi-folder-fill',            roles: ['Admin', 'Teacher', 'Student', 'Parent'], category: 'Operations' },
+    { label: 'AI Insights',       route: '/ai-insights',       icon: 'bi-magic',                  roles: ['Admin'], category: 'Operations' },
     { label: 'Academic Sessions', route: '/academic-sessions', icon: 'bi-calendar-range',         roles: ['Admin'], category: 'Operations' }
   ];
 

@@ -1,0 +1,64 @@
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AiService } from '../../services/ai.service';
+import { ToastService } from '../../services/toast.service';
+
+@Component({
+  selector: 'app-admin-ai-query',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './admin-ai-query.html',
+  styleUrl: './admin-ai-query.css'
+})
+export class AdminAiQuery {
+  aiService = inject(AiService);
+  toastService = inject(ToastService);
+
+  searchQuery: string = '';
+  isSearching: boolean = false;
+
+  suggestedQueries: string[] = [
+    "How many students are enrolled in 10th grade?",
+    "Show me the total fees collected last month",
+    "List all teachers who joined in the last year",
+    "Which classes have less than 20 students?"
+  ];
+
+  setQuery(query: string) {
+    this.searchQuery = query;
+    this.executeSearch();
+  }
+
+  executeSearch() {
+    if (!this.searchQuery.trim()) return;
+
+    this.isSearching = true;
+    const queryToExecute = this.searchQuery;
+
+    this.aiService.adminSearch(queryToExecute).subscribe({
+      next: (blob: Blob) => {
+        this.isSearching = false;
+        
+        // Trigger download
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `AI_Report_${new Date().getTime()}.xlsx`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(anchor);
+        
+        this.toastService.success("Report generated and downloaded successfully!");
+        this.searchQuery = '';
+      },
+      error: (err) => {
+        this.isSearching = false;
+        console.error(err);
+        this.toastService.error("Failed to generate report. Ensure you have Admin privileges.");
+      }
+    });
+  }
+}

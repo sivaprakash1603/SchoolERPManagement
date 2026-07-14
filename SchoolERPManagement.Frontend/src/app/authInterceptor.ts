@@ -1,5 +1,6 @@
 import { HttpInterceptorFn, HttpErrorResponse } from "@angular/common/http";
-import { catchError, throwError, timeout, TimeoutError } from "rxjs";
+import { catchError, throwError, timeout, TimeoutError, of } from "rxjs";
+import { environment } from "../environments/environment";
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const token = sessionStorage.getItem('token');
@@ -11,9 +12,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         });
     }
 
-    // Set a reasonable timeout of 12 seconds (12000 ms) for all API requests
-    return next(requestToSend).pipe(
-        timeout(12000),
+    // Set a reasonable timeout of 12 seconds for all normal API requests
+    // AI API requests (RAG, NLQ) are highly CPU-bound and can take much longer, so we bypass this timeout.
+    let stream = next(requestToSend);
+    
+    if (!req.url.includes(environment.aiApiUrl)) {
+        stream = stream.pipe(timeout(12000));
+    }
+
+    return stream.pipe(
         catchError((error: any) => {
             let errorMessage = 'An unexpected error occurred.';
 

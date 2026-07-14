@@ -26,6 +26,8 @@ import { Documents } from './components/documents/documents';
 import { PaymentResultComponent } from './components/payment-result/payment-result';
 import { NotificationsComponent } from './components/notifications/notifications';
 import { FAQ } from './components/faq/faq';
+import { Chatbot } from './components/chatbot/chatbot';
+import { AdminAiQuery } from './components/admin-ai-query/admin-ai-query';
 
 import { authGuard } from './guards/auth.guard';
 import { setupGuard } from './guards/setup.guard';
@@ -61,7 +63,9 @@ export const routes: Routes = [
             { path: 'academic-calendar', component: AcademicCalendar },
             { path: 'parent-teacher-meetings', component: ParentTeacherMeetings },
             { path: 'academic-sessions', component: AcademicSessions },
-            { path: 'notifications', component: NotificationsComponent }
+            { path: 'notifications', component: NotificationsComponent },
+            { path: 'chat', component: Chatbot },
+            { path: 'ai-insights', component: AdminAiQuery }
         ]
     }
 ];
