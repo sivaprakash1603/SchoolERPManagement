@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://20.207.101.33/api',
-  baseUrl: 'http://20.207.101.33',
-  hubUrl: 'http://20.207.101.33/hubs',
+  apiUrl: 'http://4.247.233.14/api',
+  baseUrl: 'http://4.247.233.14',
+  hubUrl: 'http://4.247.233.14/hubs',
 };
