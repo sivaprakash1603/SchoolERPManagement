@@ -1,6 +1,7 @@
 name: Backend CI/CD to AKS
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
