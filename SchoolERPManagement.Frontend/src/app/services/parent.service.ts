@@ -14,7 +14,8 @@ export interface PagedResponse<T> {
 export interface ParentResponseDTO {
   id: number;
   userId: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   relation: string;
   phonenumber: string;
   email: string;
@@ -32,7 +33,8 @@ export interface ParentQueryRequest {
 
 export interface CreateParentDTO {
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   relation?: string;
   phonenumber: string;
 }
@@ -86,7 +88,7 @@ export class ParentService {
     });
   }
 
-  updateParent(id: number, dto: { name: string, email: string, phonenumber: string }): Observable<ParentResponseDTO> {
+  updateParent(id: number, dto: { firstName: string, lastName: string, email: string, phonenumber: string }): Observable<ParentResponseDTO> {
     return this.http.patch<ParentResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }
 

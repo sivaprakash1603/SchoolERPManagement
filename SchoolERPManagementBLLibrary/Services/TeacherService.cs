@@ -51,7 +51,7 @@ public sealed class TeacherService : ITeacherService
         if (!string.IsNullOrWhiteSpace(request.SearchQuery))
         {
             var search = request.SearchQuery.ToLower();
-            query = query.Where(t => (t.Name != null && t.Name.ToLower().Contains(search)) || (t.Phonenumber != null && t.Phonenumber.Contains(search)) || (t.User != null && t.User.Email != null && t.User.Email.ToLower().Contains(search)));
+            query = query.Where(t => ((t.FirstName + " " + t.LastName).ToLower().Contains(search)) || (t.Phonenumber != null && t.Phonenumber.Contains(search)) || (t.User != null && t.User.Email != null && t.User.Email.ToLower().Contains(search)));
         }
 
         if (!string.IsNullOrWhiteSpace(request.Status) && request.Status != "All")
@@ -69,7 +69,7 @@ public sealed class TeacherService : ITeacherService
             bool isDesc = request.SortDirection?.ToLower() == "desc";
             query = request.SortBy.ToLower() switch
             {
-                "name" => isDesc ? query.OrderByDescending(t => t.Name) : query.OrderBy(t => t.Name),
+                "name" => isDesc ? query.OrderByDescending(t => t.FirstName).ThenByDescending(t => t.LastName) : query.OrderBy(t => t.FirstName).ThenBy(t => t.LastName),
                 "joiningdate" => isDesc ? query.OrderByDescending(t => t.Joiningdate) : query.OrderBy(t => t.Joiningdate),
                 _ => query.OrderByDescending(t => t.Id)
             };
@@ -89,7 +89,7 @@ public sealed class TeacherService : ITeacherService
             return new TeacherResponseDTO(
                 teacher.Id, 
                 teacher.Userid, 
-                teacher.Name, 
+                teacher.FirstName, teacher.LastName,
                 teacher.Phonenumber, 
                 teacher.Joiningdate, 
                 teacher.Qualifications,
@@ -134,7 +134,7 @@ public sealed class TeacherService : ITeacherService
         return new TeacherResponseDTO(
             teacher.Id, 
             teacher.Userid, 
-            teacher.Name, 
+            teacher.FirstName, teacher.LastName,
             teacher.Phonenumber, 
             teacher.Joiningdate, 
             teacher.Qualifications, 
@@ -172,7 +172,7 @@ public sealed class TeacherService : ITeacherService
         return new TeacherResponseDTO(
             teacher.Id, 
             teacher.Userid, 
-            teacher.Name, 
+            teacher.FirstName, teacher.LastName,
             teacher.Phonenumber, 
             teacher.Joiningdate, 
             teacher.Qualifications, 
@@ -221,7 +221,8 @@ public sealed class TeacherService : ITeacherService
         var teacher = new Teacher
         {
             Userid = user.Id,
-            Name = dto.Name,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
             Phonenumber = dto.Phonenumber,
             Joiningdate = DateOnly.FromDateTime(DateTime.UtcNow),
             Qualifications = dto.Qualifications,
@@ -232,7 +233,7 @@ public sealed class TeacherService : ITeacherService
 
         string emailBody = $@"
         <h2>Welcome to School ERP System</h2>
-        <p>Dear {dto.Name},</p>
+        <p>Dear {dto.FirstName} {dto.LastName},</p>
         <p>Your teacher account has been successfully created. Here are your login details:</p>
         <ul>
             <li><strong>Username:</strong> {generatedUsername}</li>
@@ -249,7 +250,7 @@ public sealed class TeacherService : ITeacherService
             // Ensure onboarding completes even if email delivery fails.
         }
 
-        return new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.Name, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, generatedPassword, generatedUsername, null, null, user.Email, null, 0, teacher.SubjectSpecialtyId);
+        return new TeacherResponseDTO(teacher.Id, teacher.Userid, teacher.FirstName, teacher.LastName, teacher.Phonenumber, teacher.Joiningdate, teacher.Qualifications, generatedPassword, generatedUsername, null, null, user.Email, null, 0, teacher.SubjectSpecialtyId);
     }
 
     public async Task<TeacherSubjectResponseDTO> AssignSubjectAsync(AssignTeacherSubjectDTO dto, CancellationToken cancellationToken)
@@ -280,7 +281,7 @@ public sealed class TeacherService : ITeacherService
 
             if (assignedToOther != null)
             {
-                throw new BusinessRuleException($"This subject is already assigned to another teacher ({assignedToOther.Teacher.Name}) for this class.");
+                throw new BusinessRuleException($"This subject is already assigned to another teacher ({assignedToOther.Teacher.FirstName} {assignedToOther.Teacher.LastName}) for this class.");
             }
             existing = new Teachersubject
             {
@@ -350,9 +351,13 @@ public sealed class TeacherService : ITeacherService
             throw new EntityNotFoundException("Teacher", id.ToString());
         }
 
-        if (!string.IsNullOrWhiteSpace(dto.Name))
+        if (!string.IsNullOrWhiteSpace(dto.FirstName))
         {
-            teacher.Name = dto.Name;
+            teacher.FirstName = dto.FirstName;
+        }
+        if (!string.IsNullOrWhiteSpace(dto.LastName))
+        {
+            teacher.LastName = dto.LastName;
         }
 
         if (dto.Phonenumber != null)
@@ -384,7 +389,8 @@ public sealed class TeacherService : ITeacherService
         return new TeacherResponseDTO(
             updatedTeacher!.Id,
             updatedTeacher.Userid,
-            updatedTeacher.Name,
+            updatedTeacher.FirstName,
+            updatedTeacher.LastName,
             updatedTeacher.Phonenumber,
             updatedTeacher.Joiningdate,
             updatedTeacher.Qualifications,

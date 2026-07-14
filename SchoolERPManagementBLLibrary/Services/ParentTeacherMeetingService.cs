@@ -170,6 +170,15 @@ public class ParentTeacherMeetingService : IParentTeacherMeetingService
         if (alreadyBooked)
             throw new BusinessRuleException("You have already booked a slot with this teacher.");
 
+        var hasOverlappingSlot = await _slotRepository.Query(true)
+            .AnyAsync(s => s.Meetingid == slot.Meetingid
+                && s.Parentid == parentId
+                && s.Status == "Booked"
+                && s.Starttime < slot.Endtime
+                && s.Endtime > slot.Starttime, ct);
+        if (hasOverlappingSlot)
+            throw new BusinessRuleException("You already have another meeting scheduled during this time slot.");
+
         var parent = await _parentRepository.Query(true)
             .Include(p => p.Studentparents)
             .FirstOrDefaultAsync(p => p.Id == parentId, ct);
@@ -189,14 +198,14 @@ public class ParentTeacherMeetingService : IParentTeacherMeetingService
             slot.Id,
             slot.Meetingid,
             slot.Teacherid,
-            slot.Teacher.Name,
+            slot.Teacher.FirstName + " " + slot.Teacher.LastName,
             slot.Starttime,
             slot.Endtime,
             slot.Status,
             slot.Parentid,
-            slot.Parent?.Name,
+            slot.Parent != null ? slot.Parent.FirstName + " " + slot.Parent.LastName : null,
             slot.Studentid,
-            slot.Student?.Name
+            slot.Student != null ? slot.Student.FirstName + " " + slot.Student.LastName : null
         );
     }
 
@@ -239,14 +248,14 @@ public class ParentTeacherMeetingService : IParentTeacherMeetingService
             s.Id,
             s.Meetingid,
             s.Teacherid,
-            s.Teacher.Name,
+            s.Teacher.FirstName + " " + s.Teacher.LastName,
             s.Starttime,
             s.Endtime,
             s.Status,
             s.Parentid,
-            s.Parent?.Name,
+            s.Parent != null ? s.Parent.FirstName + " " + s.Parent.LastName : null,
             s.Studentid,
-            s.Student?.Name
+            s.Student != null ? s.Student.FirstName + " " + s.Student.LastName : null
         );
     }
 }

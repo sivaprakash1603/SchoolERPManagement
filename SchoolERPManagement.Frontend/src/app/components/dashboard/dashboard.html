@@ -677,6 +677,11 @@
                     <span>Required: {{ wl.requiredPeriods }} periods</span>
                   </div>
                 </div>
+              } @empty {
+                <div class="text-center text-muted-custom py-4">
+                  <i class="bi bi-person-x fs-2 mb-2 d-block"></i>
+                  <p class="mb-0 small">No staff workload data available.</p>
+                </div>
               }
             </div>
           </div>

@@ -300,7 +300,7 @@
                     />
                     <div>
                       <div class="fw-bold" style="color: var(--primary-accent)">
-                        {{ teacher.name }}
+                        {{ teacher.firstName }} {{ teacher.lastName }}
                         @if (teacher.assignmentsCount !== undefined) {
                           <span class="badge bg-secondary ms-2" style="font-size: 0.65rem">
                             {{ teacher.assignmentsCount }} Assignments
@@ -338,7 +338,7 @@
                       class="btn btn-sm btn-light text-warning"
                       title="Send Notification"
                       (click)="
-                        openNotificationModal(teacher.name, [teacher.userId]);
+                        openNotificationModal(teacher.firstName + ' ' + teacher.lastName, [teacher.userId]);
                         $event.stopPropagation()
                       "
                     >
@@ -433,7 +433,7 @@
               alt="Avatar"
             />
             <h4 class="fw-bold mb-1" style="color: var(--primary-accent)">
-              {{ selectedTeacher()?.name }}
+              {{ selectedTeacher()?.firstName }} {{ selectedTeacher()?.lastName }}
             </h4>
             <span
               class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1"
@@ -506,15 +506,27 @@
         </div>
         <div class="modal-body-custom">
           <div class="row g-3">
-            <div class="col-12">
-              <label class="modal-form-label"><i class="bi bi-person me-1"></i> Full Name</label>
-              <input
-                type="text"
-                class="form-control"
-                [(ngModel)]="editForm().name"
-                placeholder="Enter full name"
-              />
-            </div>
+              <div class="col-12">
+                <label class="modal-form-label"><i class="bi bi-person me-1"></i> Full Name</label>
+                <div class="row">
+                  <div class="col-6">
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="editForm().firstName"
+                      placeholder="First Name"
+                    />
+                  </div>
+                  <div class="col-6">
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="editForm().lastName"
+                      placeholder="Last Name"
+                    />
+                  </div>
+                </div>
+              </div>
             <div class="col-md-6">
               <label class="modal-form-label"
                 ><i class="bi bi-telephone me-1"></i> Phone Number</label
@@ -561,7 +573,7 @@
           <button
             class="btn btn-success px-4 rounded-3"
             (click)="saveTeacher()"
-            [disabled]="isSaving() || !editForm().name"
+            [disabled]="isSaving() || !editForm().firstName || !editForm().lastName"
           >
             @if (isSaving()) {
               <span
@@ -589,7 +601,7 @@
         <div class="modal-body-custom py-4">
           <p class="mb-2">
             Are you sure you want to deactivate the account for
-            <strong>{{ selectedTeacher()?.name }}</strong
+            <strong>{{ selectedTeacher()?.firstName }} {{ selectedTeacher()?.lastName }}</strong
             >?
           </p>
           <p class="text-muted-custom small mb-0">
@@ -710,7 +722,7 @@
             style="background-color: var(--primary-accent)"
           >
             <h5 class="modal-title fw-bold">
-              <i class="bi bi-book me-2"></i>Manage Assignments - {{ selectedTeacher()?.name }}
+              <i class="bi bi-book me-2"></i>Manage Assignments - {{ selectedTeacher()?.firstName }} {{ selectedTeacher()?.lastName }}
             </h5>
             <button
               type="button"

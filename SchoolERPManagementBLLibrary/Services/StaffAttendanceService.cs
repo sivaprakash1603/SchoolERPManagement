@@ -34,6 +34,11 @@ public class StaffAttendanceService : IStaffAttendanceService
             throw new BusinessRuleException("Attendance date cannot be in the future.");
         }
 
+        if (dto.Date.DayOfWeek == DayOfWeek.Sunday)
+        {
+            throw new BusinessRuleException("Cannot mark attendance on a Sunday.");
+        }
+
         var existing = await _staffAttendanceRepository.Query(true)
             .FirstOrDefaultAsync(a => a.Userid == dto.UserId && a.Date == dto.Date, cancellationToken);
 

@@ -204,7 +204,7 @@
               <select class="form-select form-control" [(ngModel)]="createForm().classteacherId">
                 <option [value]="null">Not Assigned</option>
                 @for (teacher of getAvailableTeachersForCreate(); track teacher.id) {
-                  <option [value]="teacher.id">{{ teacher.name }}</option>
+                  <option [value]="teacher.id">{{ teacher.firstName }} {{ teacher.lastName }}</option>
                 }
               </select>
             </div>
@@ -314,7 +314,7 @@
                   teacher of getAvailableTeachersForEdit(editingClass()?.classteacherId);
                   track teacher.id
                 ) {
-                  <option [value]="teacher.id">{{ teacher.name }}</option>
+                  <option [value]="teacher.id">{{ teacher.firstName }} {{ teacher.lastName }}</option>
                 }
               </select>
             </div>

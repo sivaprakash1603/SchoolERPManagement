@@ -11,12 +11,14 @@ import { ToastService } from '../../services/toast.service';
 
 interface SelectedParent {
   parentId: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   relation: string;
 }
 
 interface NewParentForm {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phonenumber: string;
   relation: string;
@@ -52,7 +54,7 @@ export class StudentOnboarding implements OnInit {
   filteredParents() {
     const query = this.parentSearchQuery().toLowerCase();
     return this.parents().filter(p => 
-      p.name.toLowerCase().includes(query) || 
+      (p.firstName + ' ' + p.lastName).toLowerCase().includes(query) || 
       p.phonenumber.includes(query) || 
       p.email.toLowerCase().includes(query)
     );
@@ -60,7 +62,8 @@ export class StudentOnboarding implements OnInit {
   
   // Form State
   studentForm = signal({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     classId: null as number | null,
     academicYearId: null as number | null,
@@ -141,11 +144,11 @@ export class StudentOnboarding implements OnInit {
     return this.selectedParents().some(p => p.parentId === parentId);
   }
 
-  toggleParentSelection(parentId: number, parentName: string) {
+  toggleParentSelection(parentId: number, parentFirstName: string, parentLastName: string) {
     if (this.isParentSelected(parentId)) {
       this.selectedParents.update(list => list.filter(p => p.parentId !== parentId));
     } else {
-      this.selectedParents.update(list => [...list, { parentId, name: parentName, relation: 'Father' }]);
+      this.selectedParents.update(list => [...list, { parentId, firstName: parentFirstName, lastName: parentLastName, relation: 'Father' }]);
     }
   }
 
@@ -162,7 +165,7 @@ export class StudentOnboarding implements OnInit {
   // --- New Parent Logic ---
 
   addNewParentForm() {
-    this.newParents.update(list => [...list, { name: '', email: '', phonenumber: '', relation: 'Father' }]);
+    this.newParents.update(list => [...list, { firstName: '', lastName: '', email: '', phonenumber: '', relation: 'Father' }]);
   }
 
   removeNewParentForm(index: number) {
@@ -239,9 +242,9 @@ export class StudentOnboarding implements OnInit {
       ];
 
       for (const np of this.newParents()) {
-        if (np.name && np.email) {
+        if (np.firstName && np.lastName && np.email) {
           const created = await new Promise<any>((resolve, reject) => {
-            this.parentService.addParent({ name: np.name, email: np.email, phonenumber: np.phonenumber }).subscribe({
+            this.parentService.addParent({ firstName: np.firstName, lastName: np.lastName, email: np.email, phonenumber: np.phonenumber }).subscribe({
               next: (res) => resolve(res),
               error: (err) => reject(err)
             });
@@ -252,7 +255,8 @@ export class StudentOnboarding implements OnInit {
 
       // Step 2: Create Student
       const dto = {
-        name: this.studentForm().name,
+        firstName: this.studentForm().firstName,
+        lastName: this.studentForm().lastName,
         email: this.studentForm().email,
         classId: this.studentForm().classId!,
         academicYearId: this.studentForm().academicYearId!,

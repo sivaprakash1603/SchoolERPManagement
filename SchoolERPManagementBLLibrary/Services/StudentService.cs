@@ -55,7 +55,7 @@ public sealed class StudentService : IStudentService
         if (!string.IsNullOrWhiteSpace(request.SearchQuery))
         {
             var search = request.SearchQuery.ToLower();
-            query = query.Where(s => s.Name.ToLower().Contains(search) || s.Regno.ToLower().Contains(search));
+            query = query.Where(s => (s.FirstName + " " + s.LastName).ToLower().Contains(search) || s.Regno.ToLower().Contains(search));
         }
 
         if (!string.IsNullOrWhiteSpace(request.Gender) && request.Gender != "Any Gender")
@@ -104,7 +104,7 @@ public sealed class StudentService : IStudentService
             bool isDesc = request.SortDirection?.ToLower() == "desc";
             query = request.SortBy.ToLower() switch
             {
-                "name" => isDesc ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name),
+                "name" => isDesc ? query.OrderByDescending(s => s.FirstName).ThenByDescending(s => s.LastName) : query.OrderBy(s => s.FirstName).ThenBy(s => s.LastName),
                 "regno" => isDesc ? query.OrderByDescending(s => s.Regno) : query.OrderBy(s => s.Regno),
                 "admissiondate" => isDesc ? query.OrderByDescending(s => s.Admissiondate) : query.OrderBy(s => s.Admissiondate),
                 _ => query.OrderByDescending(s => s.Id)
@@ -127,14 +127,15 @@ public sealed class StudentService : IStudentService
             {
                 enrollment = s.Studentenrollments.OrderByDescending(e => e.Academicyearid).FirstOrDefault();
             }
-            var parentNames = s.Studentparents.Select(sp => sp.Parent?.Name).Where(n => !string.IsNullOrEmpty(n));
+            var parentNames = s.Studentparents.Select(sp => sp.Parent != null ? sp.Parent.FirstName + " " + sp.Parent.LastName : null).Where(n => !string.IsNullOrEmpty(n));
             var photoDoc = s.Studentdocuments?.FirstOrDefault(d => d.Documentname == "Photo");
             var parentsInfo = s.Studentparents.Select(sp => new ParentSelectionDTO(sp.Parentid, sp.Relation)).ToList();
             return new StudentQueryResponseDTO(
                 s.Id,
                 s.Userid,
                 s.Regno,
-                s.Name,
+                s.FirstName,
+                s.LastName,
                 parentNames.Any() ? string.Join(", ", parentNames) : null,
                 enrollment?.Class?.Classname,
                 enrollment?.Class?.Section,
@@ -232,7 +233,8 @@ public sealed class StudentService : IStudentService
         {
             Userid = user.Id,
             Regno = generatedUsername,
-            Name = dto.Name,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
             Gender = dto.Gender,
             Bloodgroup = dto.Bloodgroup,
             Dateofbirth = dto.Dateofbirth,
@@ -265,7 +267,7 @@ public sealed class StudentService : IStudentService
 
         string emailBody = $@"
         <h2>Welcome to School ERP System</h2>
-        <p>Dear {dto.Name},</p>
+        <p>Dear {dto.FirstName} {dto.LastName},</p>
         <p>Your student account has been successfully created. Here are your login details:</p>
         <ul>
             <li><strong>Username:</strong> {generatedUsername}</li>
@@ -294,9 +296,14 @@ public sealed class StudentService : IStudentService
             throw new EntityNotFoundException("Student", id.ToString());
         }
 
-        if (!string.IsNullOrWhiteSpace(dto.Name))
+        if (!string.IsNullOrWhiteSpace(dto.FirstName))
         {
-            student.Name = dto.Name;
+            student.FirstName = dto.FirstName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.LastName))
+        {
+            student.LastName = dto.LastName;
         }
 
         if (!string.IsNullOrWhiteSpace(dto.Gender))

@@ -7,12 +7,6 @@ import { ClassService, ClassResponseDTO } from '../../services/class.service';
 import { DocumentService } from '../../services/document.service';
 import { ToastService } from '../../services/toast.service';
 
-interface SubjectAssignment {
-  classId: number;
-  subjectId: number;
-  className: string;
-  subjectName: string;
-}
 
 @Component({
   selector: 'app-teacher-onboarding',
@@ -40,19 +34,14 @@ export class TeacherOnboarding implements OnInit {
 
   // Form State
   teacherForm = signal({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phonenumber: '',
     qualifications: '',
     subjectSpecialtyId: null as number | null
   });
 
-  // Assignments State
-  selectedAssignments = signal<SubjectAssignment[]>([]);
-  currentAssignment = signal({
-    classId: null as number | null,
-    subjectId: null as number | null
-  });
 
   // Document State
   selectedDocuments = signal<{ file: File, type: string }[]>([]);
@@ -78,7 +67,7 @@ export class TeacherOnboarding implements OnInit {
 
   // Wizard Navigation
   nextStep() {
-    if (this.currentStep() < 4) {
+    if (this.currentStep() < 3) {
       this.currentStep.update(s => s + 1);
     }
   }
@@ -89,52 +78,6 @@ export class TeacherOnboarding implements OnInit {
     }
   }
 
-  // --- Assignment Logic ---
-  addAssignment() {
-    const classId = this.currentAssignment().classId;
-    const subjectId = this.currentAssignment().subjectId;
-
-    if (!classId || !subjectId) {
-      this.toastService.warning('Please select both a class and a subject.');
-      return;
-    }
-
-    // Check duplicate
-    const isDuplicate = this.selectedAssignments().some(
-      a => a.classId === classId && a.subjectId === subjectId
-    );
-
-    if (isDuplicate) {
-      this.toastService.warning('This assignment has already been added.');
-      return;
-    }
-
-    const cls = this.classes().find(c => c.id === classId);
-    const sub = this.subjects().find(s => s.id === subjectId);
-
-    if (cls && sub) {
-      if (!cls.subjects || !cls.subjects.some((s: any) => s.id === subjectId)) {
-        this.toastService.warning(`Subject '${sub.subjectName || sub.subjectname}' is not assigned to Class '${cls.classname}'. Please map it in the Classes page first.`);
-        return;
-      }
-
-      const assignment: SubjectAssignment = {
-        classId,
-        subjectId,
-        className: `${cls.classname} - ${cls.section}`,
-        subjectName: sub.subjectName || sub.subjectname
-      };
-
-      this.selectedAssignments.update(list => [...list, assignment]);
-      
-      // Reset assignment select boxes
-      this.currentAssignment.set({ classId: null, subjectId: null });
-    }
-  }
-
-  removeAssignment(index: number) {
-    this.selectedAssignments.update(list => list.filter((_, i) => i !== index));
-  }
 
   // --- Document Logic ---
   onFileSelected(event: Event, type: string) {
@@ -170,7 +113,8 @@ export class TeacherOnboarding implements OnInit {
       // Step 1: Create Teacher
       const form = this.teacherForm();
       const payload = {
-        name: form.name,
+        firstName: form.firstName,
+        lastName: form.lastName,
         email: form.email,
         phonenumber: form.phonenumber,
         qualifications: form.qualifications,
@@ -183,24 +127,6 @@ export class TeacherOnboarding implements OnInit {
         });
       });
 
-      // Step 2: Assign Subjects sequentially
-      for (const assignment of this.selectedAssignments()) {
-        await new Promise<void>((resolve) => {
-          const dto = {
-            teacherId: newTeacher.id,
-            subjectId: assignment.subjectId,
-            classId: assignment.classId
-          };
-          this.teacherService.assignSubject(dto).subscribe({
-            next: () => resolve(),
-            error: (err) => {
-              console.error('Failed to assign subject', err);
-              this.toastService.error(err.error?.Message || err.error?.message || 'Failed to assign subject');
-              resolve(); // Continue onboarding other elements
-            }
-          });
-        });
-      }
 
       // Step 3: Upload Documents sequentially
       for (const doc of this.selectedDocuments()) {

@@ -173,12 +173,26 @@ public class AttendanceServiceTests
     [Fact]
     public async Task MarkAttendanceAsync_FutureDate_ShouldThrowBusinessRuleException()
     {
-        var dto = new MarkAttendanceDTO(1, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)), "present", null, null);
+        var futureDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
+        var dto = new MarkAttendanceDTO(1, futureDate, "Present", null, "On time");
+
         _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
 
-        Func<Task> action = async () => await _attendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
+        Func<Task> act = async () => await _attendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
+        await act.Should().ThrowAsync<BusinessRuleException>().WithMessage("Attendance date cannot be in the future.");
+    }
 
-        await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Attendance date cannot be in the future.");
+    [Fact]
+    public async Task MarkAttendanceAsync_Sunday_ShouldThrowBusinessRuleException()
+    {
+        // Find the next Sunday (or any known Sunday, e.g. 2025-01-05 is a Sunday)
+        var sundayDate = DateOnly.Parse("2025-01-05");
+        var dto = new MarkAttendanceDTO(1, sundayDate, "Present", null, "On time");
+
+        _studentRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Student { Id = 1 });
+
+        Func<Task> act = async () => await _attendanceService.MarkAttendanceAsync(dto, CancellationToken.None);
+        await act.Should().ThrowAsync<BusinessRuleException>().WithMessage("Cannot mark attendance on a Sunday.");
     }
 
     [Fact]

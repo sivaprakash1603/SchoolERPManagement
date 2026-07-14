@@ -3,7 +3,7 @@ namespace SchoolERPManagementBLLibrary.DTOs.Teacher;
 public record TeacherResponseDTO(
     int Id, 
     int UserId, 
-    string Name, 
+    string FirstName, string LastName, 
     string? Phonenumber, 
     DateOnly? Joiningdate, 
     string? Qualifications, 

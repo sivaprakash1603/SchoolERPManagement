@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SchoolERPManagementBLLibrary.DTOs.Student;
 
 public record UpdateStudentDTO(
-    string? Name, 
+    string? FirstName, string? LastName, 
     string? Gender, 
     IEnumerable<ParentSelectionDTO>? Parents,
     string? Bloodgroup = null,

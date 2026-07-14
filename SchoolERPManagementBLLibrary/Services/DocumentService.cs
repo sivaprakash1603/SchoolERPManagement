@@ -242,7 +242,7 @@ public sealed class DocumentService : IDocumentService
                 d.Bloburl,
                 d.Uploadedat,
                 d.Studentid,
-                d.Student?.Name ?? "Unknown Student",
+                d.Student != null ? d.Student.FirstName + " " + d.Student.LastName : "Unknown Student",
                 "Student",
                 d.Student?.Regno ?? "N/A",
                 enrollment?.Classid
@@ -258,7 +258,7 @@ public sealed class DocumentService : IDocumentService
                 d.Bloburl,
                 d.Uploadedat,
                 d.Teacherid,
-                d.Teacher?.Name ?? "Unknown Teacher",
+                d.Teacher != null ? d.Teacher.FirstName + " " + d.Teacher.LastName : "Unknown Teacher",
                 "Teacher",
                 d.Teacher?.User?.Username ?? "N/A"
             ));

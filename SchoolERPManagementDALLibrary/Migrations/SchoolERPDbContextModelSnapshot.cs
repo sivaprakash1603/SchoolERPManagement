@@ -198,6 +198,38 @@ namespace SchoolERPManagementDALLibrary.Migrations
                         .IsUnique();
 
                     b.ToTable("assettypes", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Typename = "Electronics"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Typename = "Furniture"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Typename = "IT Equipment"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Typename = "Lab Equipment"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Typename = "Sports Equipment"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Typename = "Vehicles"
+                        });
                 });
 
             modelBuilder.Entity("SchoolERPManagementModelLibrary.Models.Attendance", b =>
@@ -669,11 +701,17 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
+                    b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("name");
+                        .HasMaxLength(75)
+                        .HasColumnType("character varying(75)")
+                        .HasColumnName("firstname");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(75)
+                        .HasColumnType("character varying(75)")
+                        .HasColumnName("lastname");
 
                     b.Property<string>("Phonenumber")
                         .HasMaxLength(20)
@@ -945,15 +983,21 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(75)
+                        .HasColumnType("character varying(75)")
+                        .HasColumnName("firstname");
+
                     b.Property<DateOnly?>("Joiningdate")
                         .HasColumnType("date")
                         .HasColumnName("joiningdate");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("LastName")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("name");
+                        .HasMaxLength(75)
+                        .HasColumnType("character varying(75)")
+                        .HasColumnName("lastname");
 
                     b.Property<string>("Phonenumber")
                         .HasMaxLength(20)
@@ -1059,16 +1103,22 @@ namespace SchoolERPManagementDALLibrary.Migrations
                         .HasColumnType("date")
                         .HasColumnName("dateofbirth");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(75)
+                        .HasColumnType("character varying(75)")
+                        .HasColumnName("firstname");
+
                     b.Property<string>("Gender")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("gender");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("LastName")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("name");
+                        .HasMaxLength(75)
+                        .HasColumnType("character varying(75)")
+                        .HasColumnName("lastname");
 
                     b.Property<string>("Regno")
                         .IsRequired()
@@ -1256,15 +1306,21 @@ namespace SchoolERPManagementDALLibrary.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(75)
+                        .HasColumnType("character varying(75)")
+                        .HasColumnName("firstname");
+
                     b.Property<DateOnly?>("Joiningdate")
                         .HasColumnType("date")
                         .HasColumnName("joiningdate");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("LastName")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("name");
+                        .HasMaxLength(75)
+                        .HasColumnType("character varying(75)")
+                        .HasColumnName("lastname");
 
                     b.Property<string>("Phonenumber")
                         .HasMaxLength(20)

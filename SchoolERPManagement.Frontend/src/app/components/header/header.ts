@@ -56,7 +56,9 @@ export class Header implements OnInit {
         next: (res) => {
           this.displayName.set(res.name);
           this.displayPhotoUrl.set(
-            res.profilePhotoUrl ? environment.baseUrl + res.profilePhotoUrl : null,
+            res.profilePhotoUrl 
+              ? (res.profilePhotoUrl.startsWith('http') ? res.profilePhotoUrl : environment.baseUrl + res.profilePhotoUrl)
+              : null,
           );
         },
         error: () => this.displayName.set(username || 'Student'),
@@ -64,9 +66,11 @@ export class Header implements OnInit {
     } else if (role === 'Teacher' && username) {
       this.teacherService.getTeacherByUsername(username).subscribe({
         next: (res) => {
-          this.displayName.set(res.name);
+          this.displayName.set(res.firstName + ' ' + res.lastName);
           this.displayPhotoUrl.set(
-            res.profilePhotoUrl ? environment.baseUrl + res.profilePhotoUrl : null,
+            res.profilePhotoUrl 
+              ? (res.profilePhotoUrl.startsWith('http') ? res.profilePhotoUrl : environment.baseUrl + res.profilePhotoUrl)
+              : null,
           );
         },
         error: () => this.displayName.set(username || 'Teacher'),
@@ -74,7 +78,7 @@ export class Header implements OnInit {
     } else if (role === 'Parent' && userId) {
       this.parentService.getParentByUserId(userId).subscribe({
         next: (res) => {
-          this.displayName.set(res.name);
+          this.displayName.set(res.firstName + ' ' + res.lastName);
           this.displayPhotoUrl.set(null);
         },
         error: () => this.displayName.set(username || 'Parent'),

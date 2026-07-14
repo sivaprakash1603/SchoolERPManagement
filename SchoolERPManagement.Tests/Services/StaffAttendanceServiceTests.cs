@@ -83,6 +83,17 @@ public class StaffAttendanceServiceTests
     }
 
     [Fact]
+    public async Task MarkAttendanceAsync_Sunday_ShouldThrowBusinessRuleException()
+    {
+        var sundayDate = DateOnly.Parse("2025-01-05");
+        var dto = new StaffAttendanceRequestDTO(1, sundayDate, "present", null, null);
+        _userRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new User { Id = 1 });
+
+        Func<Task> act = async () => await _service.MarkAttendanceAsync(dto, CancellationToken.None);
+        await act.Should().ThrowAsync<BusinessRuleException>().WithMessage("Cannot mark attendance on a Sunday.");
+    }
+
+    [Fact]
     public async Task GetAttendanceByUserAsync_ShouldReturnAttendance()
     {
         var items = new List<Staffattendance>

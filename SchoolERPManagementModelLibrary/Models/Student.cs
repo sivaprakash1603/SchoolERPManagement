@@ -11,7 +11,9 @@ public partial class Student
 
     public string Regno { get; set; } = null!;
 
-    public string Name { get; set; } = null!;
+    public string FirstName { get; set; } = null!;
+    
+    public string LastName { get; set; } = null!;
 
     public string? Gender { get; set; }
 

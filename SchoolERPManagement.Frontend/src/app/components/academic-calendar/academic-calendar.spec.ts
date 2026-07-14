@@ -115,7 +115,10 @@ describe('AcademicCalendar', () => {
       date: '2026-07-01',
       endDate: '2026-07-02',
       description: 'Test Holiday',
-      isHoliday: true
+      isHoliday: true,
+      isParentTeacherMeeting: false,
+      pmtStartTime: '',
+      pmtEndTime: ''
     });
 
     component.saveCalendarEvent();
@@ -128,7 +131,10 @@ describe('AcademicCalendar', () => {
       date: '',
       endDate: '',
       description: '   ',
-      isHoliday: true
+      isHoliday: true,
+      isParentTeacherMeeting: false,
+      pmtStartTime: '',
+      pmtEndTime: ''
     });
 
     component.saveCalendarEvent();
@@ -141,7 +147,10 @@ describe('AcademicCalendar', () => {
       date: '2026-07-02',
       endDate: '2026-07-01',
       description: 'Test Event',
-      isHoliday: true
+      isHoliday: true,
+      isParentTeacherMeeting: false,
+      pmtStartTime: '',
+      pmtEndTime: ''
     });
 
     component.saveCalendarEvent();
@@ -155,7 +164,10 @@ describe('AcademicCalendar', () => {
       date: '2026-07-01',
       endDate: '',
       description: 'Test Holiday',
-      isHoliday: true
+      isHoliday: true,
+      isParentTeacherMeeting: false,
+      pmtStartTime: '',
+      pmtEndTime: ''
     });
 
     component.saveCalendarEvent();
@@ -251,7 +263,10 @@ describe('AcademicCalendar', () => {
       date: '2026-07-01',
       endDate: '2026-07-02',
       description: 'Test Holiday',
-      isHoliday: true
+      isHoliday: true,
+      isParentTeacherMeeting: false,
+      pmtStartTime: '',
+      pmtEndTime: ''
     });
 
     // Open create modal and detect changes to render template HTML branches

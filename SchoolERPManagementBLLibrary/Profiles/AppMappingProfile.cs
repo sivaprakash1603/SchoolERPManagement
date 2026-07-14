@@ -70,7 +70,7 @@ public class AppMappingProfile : Profile
         
         CreateMap<Homework, HomeworkResponseDTO>()
             .ConstructUsing(src => new HomeworkResponseDTO(
-                src.Id, src.Subjectid, src.Subject != null ? src.Subject.Subjectname : null, src.Teacherid, src.Teacher != null ? src.Teacher.Name : null, src.Classid, src.Title, src.Description, src.Attachmenturl, src.Createdat, src.Duedate, 
+                src.Id, src.Subjectid, src.Subject != null ? src.Subject.Subjectname : null, src.Teacherid, src.Teacher != null ? src.Teacher.FirstName + " " + src.Teacher.LastName : null, src.Classid, src.Title, src.Description, src.Attachmenturl, src.Createdat, src.Duedate, 
                 src.Homeworksubmissions != null && src.Homeworksubmissions.Any() ? 
                     new HomeworkSubmissionResponseDTO(
                         src.Homeworksubmissions.First().Id, 
@@ -90,7 +90,7 @@ public class AppMappingProfile : Profile
                 src.Id,
                 src.Homeworkid,
                 src.Studentid,
-                src.Student != null ? src.Student.Name : string.Empty,
+                src.Student != null ? src.Student.FirstName + " " + src.Student.LastName : string.Empty,
                 src.Uploadedfileurl,
                 src.Verificationstatus ?? "pending",
                 src.Marks,
@@ -114,9 +114,9 @@ public class AppMappingProfile : Profile
             .ConstructUsing(src => new ParentResponseDTO(
                 src.Id, 
                 src.Userid, 
-                src.Name, 
+                src.FirstName, src.LastName, 
                 src.Studentparents != null && src.Studentparents.Any()
-                    ? string.Join(", ", src.Studentparents.Select(sp => sp.Student.Name))
+                    ? string.Join(", ", src.Studentparents.Select(sp => sp.Student.FirstName + " " + sp.Student.LastName))
                     : null, 
                 src.Phonenumber, 
                 src.User != null ? src.User.Email : null, 
@@ -130,7 +130,7 @@ public class AppMappingProfile : Profile
                 src.Id, 
                 src.Userid, 
                 src.Regno, 
-                src.Name, 
+                src.FirstName, src.LastName, 
                 src.Studentparents != null && src.Studentparents.Any() 
                     ? src.Studentparents.First().Parentid 
                     : null, 
@@ -152,7 +152,7 @@ public class AppMappingProfile : Profile
             .ConstructUsing(src => new TeacherResponseDTO(
                 src.Id, 
                 src.Userid, 
-                src.Name, 
+                src.FirstName, src.LastName, 
                 src.Phonenumber, 
                 src.Joiningdate, 
                 src.Qualifications, 

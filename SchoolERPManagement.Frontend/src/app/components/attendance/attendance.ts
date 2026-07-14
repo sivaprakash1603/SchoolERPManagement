@@ -38,6 +38,11 @@ interface TeacherAttendanceUI extends TeacherResponseDTO {
 })
 export class Attendance implements OnInit {
   baseUrl = environment.baseUrl;
+
+  getPhotoUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    return url.startsWith('http') ? url : `${this.baseUrl}${url}`;
+  }
   private attendanceService = inject(AttendanceService);
   private studentService = inject(StudentService);
   private teacherService = inject(TeacherService);
@@ -627,7 +632,7 @@ export class Attendance implements OnInit {
       next: (res) => {
         teacher.status = res.status.toLowerCase();
         teacher.isUpdatingStatus = false;
-        this.toastService.success(`Marked ${teacher.name} as ${newStatus}`);
+        this.toastService.success(`Marked ${teacher.firstName} ${teacher.lastName} as ${newStatus}`);
       },
       error: (err) => {
         console.error('Failed to mark staff attendance', err);
@@ -653,7 +658,7 @@ export class Attendance implements OnInit {
       next: (res) => {
         teacher.status = res.status.toLowerCase();
         teacher.isSavingRemarks = false;
-        this.toastService.success(`Saved remarks for ${teacher.name}`);
+        this.toastService.success(`Saved remarks for ${teacher.firstName} ${teacher.lastName}`);
       },
       error: (err) => {
         console.error('Failed to save staff remarks', err);
@@ -682,7 +687,7 @@ export class Attendance implements OnInit {
       next: (res) => {
         student.status = res.status.toLowerCase();
         student.isUpdatingStatus = false;
-        this.toastService.success(`Marked ${student.name} as ${newStatus}`);
+        this.toastService.success(`Marked ${student.firstName} ${student.lastName} as ${newStatus}`);
       },
       error: (err) => {
         console.error('Failed to mark attendance', err);
@@ -707,7 +712,7 @@ export class Attendance implements OnInit {
       next: (res) => {
         student.status = res.status.toLowerCase();
         student.isSavingRemarks = false;
-        this.toastService.success(`Saved remarks for ${student.name}`);
+        this.toastService.success(`Saved remarks for ${student.firstName} ${student.lastName}`);
       },
       error: (err) => {
         console.error('Failed to save remarks', err);

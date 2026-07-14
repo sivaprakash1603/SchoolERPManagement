@@ -1,3 +1,3 @@
 namespace SchoolERPManagementBLLibrary.DTOs.Teacher;
 
-public record UpdateTeacherDTO(string Name, string? Phonenumber, string? Qualifications, int? SubjectSpecialtyId = null);
+public record UpdateTeacherDTO(string FirstName, string LastName, string? Phonenumber, string? Qualifications, int? SubjectSpecialtyId = null);

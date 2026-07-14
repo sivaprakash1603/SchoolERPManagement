@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Logging;
 using SchoolERPManagementModelLibrary.Models;
 
 namespace SchoolERPManagementDALLibrary.Contexts;
@@ -224,6 +226,15 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Typename)
                 .HasMaxLength(100)
                 .HasColumnName("typename");
+                
+            entity.HasData(
+                new Assettype { Id = 1, Typename = "Electronics" },
+                new Assettype { Id = 2, Typename = "Furniture" },
+                new Assettype { Id = 3, Typename = "IT Equipment" },
+                new Assettype { Id = 4, Typename = "Lab Equipment" },
+                new Assettype { Id = 5, Typename = "Sports Equipment" },
+                new Assettype { Id = 6, Typename = "Vehicles" }
+            );
         });
 
         modelBuilder.Entity<Attendance>(entity =>
@@ -527,9 +538,12 @@ public partial class SchoolERPDbContext : DbContext
             entity.HasIndex(e => e.Userid, "parents_userid_key").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Name)
-                .HasMaxLength(150)
-                .HasColumnName("name");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(75)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(75)
+                .HasColumnName("lastname");
             entity.Property(e => e.Phonenumber)
                 .HasMaxLength(20)
                 .HasColumnName("phonenumber");
@@ -623,9 +637,12 @@ public partial class SchoolERPDbContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Joiningdate).HasColumnName("joiningdate");
-            entity.Property(e => e.Name)
-                .HasMaxLength(150)
-                .HasColumnName("name");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(75)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(75)
+                .HasColumnName("lastname");
             entity.Property(e => e.Phonenumber)
                 .HasMaxLength(20)
                 .HasColumnName("phonenumber");
@@ -680,9 +697,12 @@ public partial class SchoolERPDbContext : DbContext
             entity.Property(e => e.Gender)
                 .HasMaxLength(20)
                 .HasColumnName("gender");
-            entity.Property(e => e.Name)
-                .HasMaxLength(150)
-                .HasColumnName("name");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(75)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(75)
+                .HasColumnName("lastname");
             entity.Property(e => e.Regno)
                 .HasMaxLength(50)
                 .HasColumnName("regno");
@@ -779,9 +799,12 @@ public partial class SchoolERPDbContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Joiningdate).HasColumnName("joiningdate");
-            entity.Property(e => e.Name)
-                .HasMaxLength(150)
-                .HasColumnName("name");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(75)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(75)
+                .HasColumnName("lastname");
             entity.Property(e => e.Phonenumber)
                 .HasMaxLength(20)
                 .HasColumnName("phonenumber");
@@ -1152,13 +1175,14 @@ public partial class SchoolERPDbContext : DbContext
 
             if (logLines.Any())
             {
-                var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
-                if (!Directory.Exists(logDirectory))
+                var logger = this.GetService<ILogger<SchoolERPDbContext>>();
+                if (logger != null)
                 {
-                    Directory.CreateDirectory(logDirectory);
+                    foreach (var line in logLines)
+                    {
+                        logger.LogInformation(line);
+                    }
                 }
-                var logFilePath = Path.Combine(logDirectory, $"changelog-{DateTime.UtcNow:yyyyMMdd}.txt");
-                File.AppendAllLines(logFilePath, logLines);
             }
         }
         catch

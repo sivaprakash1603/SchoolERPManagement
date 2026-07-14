@@ -326,7 +326,7 @@ public class PdfReportService : IPdfReportService
                     foreach (var item in records)
                     {
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.RegNo ?? "-");
-                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Name ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.FirstName + " " + item.LastName ?? "-");
                         var classSec = !string.IsNullOrEmpty(item.ClassName) ? $"{item.ClassName} / {item.Section}" : "-";
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(classSec);
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.ParentName ?? "-");
@@ -382,7 +382,7 @@ public class PdfReportService : IPdfReportService
                     foreach (var item in records)
                     {
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Username ?? "-");
-                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Name ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.FirstName + " " + item.LastName ?? "-");
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Phonenumber ?? "-");
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Qualifications ?? "-");
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Joiningdate?.ToString("MMM dd, yyyy") ?? "-");
@@ -434,7 +434,7 @@ public class PdfReportService : IPdfReportService
                     foreach (var item in records)
                     {
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Username ?? "-");
-                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Name ?? "-");
+                        table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.FirstName + " " + item.LastName ?? "-");
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Relation ?? "-");
                         table.Cell().PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text(item.Phonenumber ?? "-");
                     }

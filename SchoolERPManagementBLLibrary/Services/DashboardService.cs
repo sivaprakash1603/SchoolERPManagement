@@ -178,7 +178,7 @@ public sealed class DashboardService : IDashboardService
             .OrderByDescending(f => f.Paymentdate)
             .Take(5)
             .Select(f => new RecentTransactionDTO(
-                f.Student != null ? f.Student.Name : "Unknown",
+                f.Student != null ? f.Student.FirstName + " " + f.Student.LastName : "Unknown",
                 f.Amountpaid,
                 f.Paymentdate ?? DateTime.UtcNow,
                 "Completed"

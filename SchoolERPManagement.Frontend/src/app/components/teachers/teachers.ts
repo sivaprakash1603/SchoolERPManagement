@@ -55,7 +55,8 @@ export class Teachers implements OnInit {
   isDeleting = signal(false);
 
   editForm = signal({
-    name: '',
+    firstName: '',
+    lastName: '',
     phonenumber: '',
     qualifications: '',
     subjectSpecialtyId: null as number | null
@@ -135,7 +136,7 @@ export class Teachers implements OnInit {
           email: dto.email || '',
           avatarUrl: dto.profilePhotoUrl 
             ? (dto.profilePhotoUrl.startsWith('http') ? dto.profilePhotoUrl : `${environment.baseUrl}${dto.profilePhotoUrl}`)
-            : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(dto.name) + '&background=random'
+            : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(dto.firstName + ' ' + dto.lastName) + '&background=random'
         }));
         
         this.teachers.set(mappedData);
@@ -265,7 +266,8 @@ export class Teachers implements OnInit {
   openEditModal(teacher: TeacherUI) {
     this.selectedTeacher.set(teacher);
     this.editForm.set({
-      name: teacher.name,
+      firstName: teacher.firstName,
+      lastName: teacher.lastName,
       phonenumber: teacher.phonenumber || '',
       qualifications: teacher.qualifications || '',
       subjectSpecialtyId: teacher.subjectSpecialtyId ?? null
@@ -285,7 +287,8 @@ export class Teachers implements OnInit {
     this.isSaving.set(true);
     const form = this.editForm();
     this.teacherService.updateTeacher(teacherId, {
-      name: form.name,
+      firstName: form.firstName,
+      lastName: form.lastName,
       phonenumber: form.phonenumber,
       qualifications: form.qualifications,
       subjectSpecialtyId: form.subjectSpecialtyId ?? undefined

@@ -6,7 +6,7 @@ public record StudentQueryResponseDTO(
     int Id,
     int UserId,
     string RegNo,
-    string Name,
+    string FirstName, string LastName,
     string? ParentName,
     string? ClassName,
     string? Section,

@@ -23,6 +23,11 @@ import { DebounceClickDirective } from '../../directives/debounce-click.directiv
 })
 export class Homework implements OnInit {
   baseUrl = environment.baseUrl;
+
+  getAttachmentUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    return url.startsWith('http') ? url : `${this.baseUrl}${url}`;
+  }
   private homeworkService = inject(HomeworkService);
   private academicYearService = inject(AcademicYearService);
   private classService = inject(ClassService);

@@ -48,7 +48,7 @@ public sealed class ParentService : IParentService
         if (!string.IsNullOrWhiteSpace(request.SearchQuery))
         {
             var search = request.SearchQuery.ToLower();
-            query = query.Where(p => (p.Name != null && p.Name.ToLower().Contains(search)) || (p.Phonenumber != null && p.Phonenumber.Contains(search)) || (p.User != null && p.User.Email != null && p.User.Email.ToLower().Contains(search)));
+            query = query.Where(p => ((p.FirstName + " " + p.LastName).ToLower().Contains(search)) || (p.Phonenumber != null && p.Phonenumber.Contains(search)) || (p.User != null && p.User.Email != null && p.User.Email.ToLower().Contains(search)));
         }
 
         if (!string.IsNullOrWhiteSpace(request.Status) && request.Status != "All")
@@ -66,7 +66,7 @@ public sealed class ParentService : IParentService
             bool isDesc = request.SortDirection?.ToLower() == "desc";
             query = request.SortBy.ToLower() switch
             {
-                "name" => isDesc ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
+                "name" => isDesc ? query.OrderByDescending(p => p.FirstName).ThenByDescending(p => p.LastName) : query.OrderBy(p => p.FirstName).ThenBy(p => p.LastName),
                 "relation" => query.OrderByDescending(p => p.Id),
                 _ => query.OrderByDescending(p => p.Id)
             };
@@ -84,9 +84,10 @@ public sealed class ParentService : IParentService
         var dtos = items.Select(p => new ParentResponseDTO(
             p.Id,
             p.Userid,
-            p.Name,
+            p.FirstName,
+            p.LastName,
             p.Studentparents != null && p.Studentparents.Any() 
-                ? string.Join(", ", p.Studentparents.Select(sp => sp.Student.Name)) 
+                ? string.Join(", ", p.Studentparents.Select(sp => sp.Student.FirstName + " " + sp.Student.LastName)) 
                 : "No linked children",
             p.Phonenumber,
             p.User?.Email,
@@ -117,9 +118,10 @@ public sealed class ParentService : IParentService
             : new ParentResponseDTO(
                 parent.Id,
                 parent.Userid,
-                parent.Name,
+                parent.FirstName,
+                parent.LastName,
                 parent.Studentparents != null && parent.Studentparents.Any()
-                    ? string.Join(", ", parent.Studentparents.Select(sp => sp.Student.Name))
+                    ? string.Join(", ", parent.Studentparents.Select(sp => sp.Student.FirstName + " " + sp.Student.LastName))
                     : null,
                 parent.Phonenumber,
                 parent.User?.Email,
@@ -156,7 +158,8 @@ public sealed class ParentService : IParentService
                 child.Id,
                 child.Userid,
                 child.Regno,
-                child.Name,
+                child.FirstName,
+                child.LastName,
                 enrollment?.Classid,
                 enrollment?.Class?.Classname,
                 enrollment?.Class?.Section);
@@ -199,7 +202,8 @@ public sealed class ParentService : IParentService
         var parent = new Parent
         {
             Userid = user.Id,
-            Name = dto.Name,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
             Phonenumber = dto.Phonenumber
         };
 
@@ -207,7 +211,7 @@ public sealed class ParentService : IParentService
 
         string emailBody = $@"
         <h2>Welcome to School ERP System</h2>
-        <p>Dear {dto.Name},</p>
+        <p>Dear {dto.FirstName} {dto.LastName},</p>
         <p>Your parent account has been successfully created. Here are your login details:</p>
         <ul>
             <li><strong>Username:</strong> {generatedUsername}</li>
@@ -247,7 +251,8 @@ public sealed class ParentService : IParentService
             throw new EntityNotFoundException("Parent", id.ToString());
         }
 
-        parent.Name = dto.Name;
+        parent.FirstName = dto.FirstName;
+        parent.LastName = dto.LastName;
         parent.Phonenumber = dto.Phonenumber;
         
         if (parent.User != null)

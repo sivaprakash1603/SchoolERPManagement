@@ -52,6 +52,11 @@ public sealed class AttendanceService : IAttendanceService
             throw new BusinessRuleException("Attendance date cannot be in the future.");
         }
 
+        if (dto.Date.DayOfWeek == DayOfWeek.Sunday)
+        {
+            throw new BusinessRuleException("Cannot mark attendance on a Sunday.");
+        }
+
         var enrollment = await _studentEnrollmentRepository.Query(true)
             .Include(e => e.Class)
             .Include(e => e.Academicyear)
@@ -142,7 +147,7 @@ public sealed class AttendanceService : IAttendanceService
                 {
                     var notificationDto = new SendNotificationDTO(
                         Title: "Student Absent Alert",
-                        Message: $"Your child {studentWithParents.Name} has been marked Absent on {dto.Date:yyyy-MM-dd}.",
+                        Message: $"Your child {studentWithParents.FirstName} {studentWithParents.LastName} has been marked Absent on {dto.Date:yyyy-MM-dd}.",
                         CreatedByUserId: null,
                         TargetUserIds: parentUserIds
                     );

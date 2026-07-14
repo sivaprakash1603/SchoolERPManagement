@@ -150,8 +150,8 @@ export class AcademicCalendar implements OnInit {
       return;
     }
 
-    if (form.endDate && new Date(form.endDate) < new Date(form.date)) {
-      this.toastService.warning('End date cannot be earlier than start date.');
+    if (form.endDate && new Date(form.endDate) <= new Date(form.date)) {
+      this.toastService.warning('End date must be after the start date.');
       return;
     }
 

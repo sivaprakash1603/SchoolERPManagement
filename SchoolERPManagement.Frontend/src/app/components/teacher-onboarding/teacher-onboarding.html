@@ -22,7 +22,7 @@
         <div
           class="progress-bar bg-primary"
           role="progressbar"
-          [style.width]="((currentStep() - 1) / 3) * 100 + '%'"
+          [style.width]="((currentStep() - 1) / 2) * 100 + '%'"
           style="background-color: var(--primary-accent) !important"
         ></div>
       </div>
@@ -34,35 +34,25 @@
         1
       </div>
       <div
-        class="position-absolute top-0 start-33 translate-middle btn btn-sm rounded-pill"
-        style="left: 33%; z-index: 2"
+        class="position-absolute top-0 start-50 translate-middle btn btn-sm rounded-pill"
+        style="z-index: 2"
         [ngClass]="currentStep() >= 2 ? 'btn-primary' : 'btn-light'"
       >
         2
       </div>
       <div
-        class="position-absolute top-0 start-66 translate-middle btn btn-sm rounded-pill"
-        style="left: 66%; z-index: 2"
+        class="position-absolute top-0 start-100 translate-middle btn btn-sm rounded-pill"
+        style="z-index: 2"
         [ngClass]="currentStep() >= 3 ? 'btn-primary' : 'btn-light'"
       >
         3
-      </div>
-      <div
-        class="position-absolute top-0 start-100 translate-middle btn btn-sm rounded-pill"
-        style="z-index: 2"
-        [ngClass]="currentStep() >= 4 ? 'btn-primary' : 'btn-light'"
-      >
-        4
       </div>
     </div>
     <div
       class="d-flex justify-content-between text-muted-custom mt-2"
       style="font-size: 0.75rem; padding: 0 10px"
     >
-      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px"
-        >Profile Details</span
-      >
-      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px">Assignments</span>
+      <span class="fw-bold text-center" style="width: 80px; margin-left: -40px">Profile Details</span>
       <span class="fw-bold text-center" style="width: 80px; margin-left: -40px">KYC Docs</span>
       <span class="fw-bold text-center" style="width: 80px; margin-left: -40px">Complete</span>
     </div>
@@ -81,12 +71,24 @@
               style="font-size: 0.7rem; letter-spacing: 0.05em"
               >Full Name</label
             >
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="teacherForm().name"
-              placeholder="Enter full name"
-            />
+            <div class="row">
+              <div class="col-6">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="teacherForm().firstName"
+                  placeholder="First Name"
+                />
+              </div>
+              <div class="col-6">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="teacherForm().lastName"
+                  placeholder="Last Name"
+                />
+              </div>
+            </div>
           </div>
           <div class="col-md-6">
             <label
@@ -144,106 +146,9 @@
       </div>
     }
 
-    <!-- Step 2: Subject & Class Assignment -->
-    @if (currentStep() === 2) {
-      <div class="flex-grow-1">
-        <h4 class="fw-bold mb-4" style="color: var(--text-primary)">Class & Subject Assignments</h4>
-        <p class="text-muted-custom mb-3">
-          Map the subjects and classes this teacher will manage. You can link multiple
-          classes/subjects.
-        </p>
-        <div
-          class="card border-0 p-3 mb-4"
-          style="
-            background-color: var(--bg-sidebar);
-            border: 1px solid var(--border-color) !important;
-          "
-        >
-          <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-              <label
-                class="form-label text-muted-custom fw-bold text-uppercase mb-1"
-                style="font-size: 0.7rem; letter-spacing: 0.05em"
-                >Class & Section</label
-              >
-              <select class="form-select" [(ngModel)]="currentAssignment().classId">
-                <option [ngValue]="null">Select Class...</option>
-                @for (cls of classes(); track cls) {
-                  <option [value]="cls.id">{{ cls.classname }} - {{ cls.section }}</option>
-                }
-              </select>
-            </div>
-            <div class="col-md-5">
-              <label
-                class="form-label text-muted-custom fw-bold text-uppercase mb-1"
-                style="font-size: 0.7rem; letter-spacing: 0.05em"
-                >Subject</label
-              >
-              <select class="form-select" [(ngModel)]="currentAssignment().subjectId">
-                <option [ngValue]="null">Select Subject...</option>
-                @for (sub of subjects(); track sub) {
-                  <option [value]="sub.id">{{ sub.subjectName || sub.subjectname }}</option>
-                }
-              </select>
-            </div>
-            <div class="col-md-2">
-              <button
-                class="btn btn-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
-                style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
-                (click)="addAssignment()"
-              >
-                <i class="bi bi-plus-lg"></i> Add
-              </button>
-            </div>
-          </div>
-        </div>
-        <!-- Current Assignments list -->
-        <label
-          class="form-label text-muted-custom fw-bold text-uppercase mb-2"
-          style="font-size: 0.7rem; letter-spacing: 0.05em"
-          >Assigned Schedules</label
-        >
-        <div class="list-group rounded-3 border-0">
-          @for (item of selectedAssignments(); track item; let idx = $index) {
-            <div
-              class="list-group-item d-flex align-items-center justify-content-between p-3 border-muted bg-transparent"
-            >
-              <div class="d-flex align-items-center gap-3">
-                <div
-                  class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
-                  style="width: 36px; height: 36px; background-color: rgba(99, 102, 241, 0.1)"
-                >
-                  <i class="bi bi-book-half" style="color: var(--primary-accent)"></i>
-                </div>
-                <div>
-                  <span class="fw-bold" style="color: var(--text-primary)">{{
-                    item.subjectName
-                  }}</span>
-                  <span class="text-muted-custom ms-2"
-                    >assigned to Class <strong>{{ item.className }}</strong></span
-                  >
-                </div>
-              </div>
-              <button class="btn btn-sm btn-outline-danger" (click)="removeAssignment(idx)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          }
-          @if (selectedAssignments().length === 0) {
-            <div
-              class="text-center py-4 text-muted-custom border rounded-3"
-              style="border-color: var(--border-color) !important"
-            >
-              <i class="bi bi-journal-x fs-3 d-block mb-1"></i>
-              No assignments mapped yet.
-            </div>
-          }
-        </div>
-      </div>
-    }
 
-    <!-- Step 3: Documents -->
-    @if (currentStep() === 3) {
+    <!-- Step 2: Documents -->
+    @if (currentStep() === 2) {
       <div class="flex-grow-1">
         <h4 class="fw-bold mb-4" style="color: var(--text-primary)">Faculty KYC Documents</h4>
         <p class="text-muted-custom mb-4">
@@ -331,8 +236,8 @@
       </div>
     }
 
-    <!-- Step 4: Summary -->
-    @if (currentStep() === 4) {
+    <!-- Step 3: Summary -->
+    @if (currentStep() === 3) {
       <div class="flex-grow-1">
         <h4 class="fw-bold mb-4" style="color: var(--text-primary)">Review & Confirm</h4>
         <div
@@ -350,8 +255,8 @@
                 >Teacher Name</small
               >
               <span class="fw-bold" style="color: var(--text-primary)">{{
-                teacherForm().name || 'N/A'
-              }}</span>
+                teacherForm().firstName || 'N/A'
+              }} {{ teacherForm().lastName }}</span>
             </div>
             <div class="col-md-6">
               <small
@@ -383,27 +288,7 @@
                 teacherForm().qualifications || 'N/A'
               }}</span>
             </div>
-            <div class="col-12 border-top pt-3 mt-3">
-              <small
-                class="text-muted-custom fw-bold text-uppercase d-block mb-2"
-                style="font-size: 0.7rem"
-                >Class Assignments</small
-              >
-              @if (selectedAssignments().length === 0) {
-                <div>
-                  <span class="text-muted small">No class maps configured.</span>
-                </div>
-              }
-              @for (item of selectedAssignments(); track item) {
-                <div class="mb-1 d-flex gap-2 align-items-center">
-                  <i class="bi bi-tag-fill text-muted-custom" style="font-size: 0.85rem"></i>
-                  <span style="color: var(--text-primary)"
-                    ><strong>{{ item.subjectName }}</strong> inside Class
-                    <strong>{{ item.className }}</strong></span
-                  >
-                </div>
-              }
-            </div>
+
             <div class="col-12 border-top pt-3 mt-3">
               <small
                 class="text-muted-custom fw-bold text-uppercase d-block mb-1"
@@ -442,18 +327,18 @@
         Back
       </button>
 
-      @if (currentStep() < 4) {
+      @if (currentStep() < 3) {
         <button
           class="btn btn-primary px-4 py-2 fw-bold d-flex align-items-center gap-2"
           style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
           (click)="nextStep()"
-          [disabled]="currentStep() === 1 && (!teacherForm().name || !teacherForm().email)"
+          [disabled]="currentStep() === 1 && (!teacherForm().firstName || !teacherForm().lastName || !teacherForm().email)"
         >
           Next Step <i class="bi bi-arrow-right"></i>
         </button>
       }
 
-      @if (currentStep() === 4) {
+      @if (currentStep() === 3) {
         <button
           class="btn btn-success px-4 py-2 fw-bold d-flex align-items-center gap-2"
           (click)="completeOnboarding()"

@@ -395,11 +395,39 @@ export class Dashboard implements OnInit {
 
         this.recentActivities.set(activitiesList.slice(0, 5));
 
-        this.upcomingEvents.set([
-          { date: 'Jul 15', title: 'Mid-Term Examinations Begin', type: 'exam', badgeBg: 'bg-danger-subtle text-danger' },
-          { date: 'Jul 22', title: 'Parent-Teacher Meeting (Grades 6-12)', type: 'meeting', badgeBg: 'bg-primary-subtle text-primary' },
-          { date: 'Aug 15', title: 'Independence Day Holiday', type: 'holiday', badgeBg: 'bg-success-subtle text-success' }
-        ]);
+        if (calendarSummary && calendarSummary.events) {
+          const todayDate = new Date();
+          todayDate.setHours(0, 0, 0, 0);
+
+          const upcoming = calendarSummary.events
+            .filter((e: any) => new Date(e.date) >= todayDate)
+            .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .slice(0, 5)
+            .map((e: any) => {
+              const evtDate = new Date(e.date);
+              const formattedDate = evtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              let type = e.isHoliday ? 'holiday' : 'event';
+              let badgeBg = e.isHoliday ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary';
+              
+              if (!e.isHoliday && e.description.toLowerCase().includes('exam')) {
+                type = 'exam';
+                badgeBg = 'bg-danger-subtle text-danger';
+              } else if (!e.isHoliday && (e.description.toLowerCase().includes('meeting') || e.description.toLowerCase().includes('ptm'))) {
+                type = 'meeting';
+                badgeBg = 'bg-info-subtle text-info';
+              }
+
+              return {
+                date: formattedDate,
+                title: e.description,
+                type: type,
+                badgeBg: badgeBg
+              };
+            });
+          this.upcomingEvents.set(upcoming);
+        } else {
+          this.upcomingEvents.set([]);
+        }
 
         // Map real workload from DB
         const mappedWorkloads = workloadReqs.map(req => {
@@ -415,16 +443,7 @@ export class Dashboard implements OnInit {
           };
         });
 
-        if (mappedWorkloads.length === 0) {
-          this.staffWorkload.set([
-            { subject: 'Mathematics', assignedPeriods: 24, requiredPeriods: 24, percent: 100, status: 'Optimal' },
-            { subject: 'English', assignedPeriods: 18, requiredPeriods: 20, percent: 90, status: 'Understaffed (-1)' },
-            { subject: 'Science', assignedPeriods: 28, requiredPeriods: 24, percent: 116, status: 'Overloaded (+1)' },
-            { subject: 'Social Science', assignedPeriods: 15, requiredPeriods: 15, percent: 100, status: 'Optimal' }
-          ]);
-        } else {
-          this.staffWorkload.set(mappedWorkloads.slice(0, 5));
-        }
+        this.staffWorkload.set(mappedWorkloads.slice(0, 5));
 
         this.loading.set(false);
         setTimeout(() => {

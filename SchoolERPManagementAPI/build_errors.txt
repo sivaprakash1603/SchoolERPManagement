@@ -1,0 +1,12 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  SchoolERPManagementModelLibrary -> /Users/sivaprakashs/Documents/SchoolERPManagement/SchoolERPManagementModelLibrary/bin/Debug/net8.0/SchoolERPManagementModelLibrary.dll
+  SchoolERPManagementDALLibrary -> /Users/sivaprakashs/Documents/SchoolERPManagement/SchoolERPManagementDALLibrary/bin/Debug/net8.0/SchoolERPManagementDALLibrary.dll
+  SchoolERPManagementBLLibrary -> /Users/sivaprakashs/Documents/SchoolERPManagement/SchoolERPManagementBLLibrary/bin/Debug/net8.0/SchoolERPManagementBLLibrary.dll
+  SchoolERPManagementAPI -> /Users/sivaprakashs/Documents/SchoolERPManagement/SchoolERPManagementAPI/bin/Debug/net8.0/SchoolERPManagementAPI.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.23

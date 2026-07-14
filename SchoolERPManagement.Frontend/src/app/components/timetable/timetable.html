@@ -260,7 +260,7 @@
               >
                 <option [ngValue]="null" disabled>Select Teacher...</option>
                 @for (t of teachers(); track t.id) {
-                  <option [ngValue]="t.id">{{ t.name }}</option>
+                  <option [ngValue]="t.id">{{ t.firstName }} {{ t.lastName }}</option>
                 }
               </select>
             </div>
@@ -452,7 +452,7 @@
             <select class="form-select" [(ngModel)]="editForm().teacherId">
               <option [ngValue]="null" disabled>Select Teacher</option>
               @for (teacher of teachers(); track teacher.id) {
-                <option [ngValue]="teacher.id">{{ teacher.name }}</option>
+                <option [ngValue]="teacher.id">{{ teacher.firstName }} {{ teacher.lastName }}</option>
               }
             </select>
           </div>

@@ -48,8 +48,8 @@ public class AcademicCalendarService : IAcademicCalendarService
         {
             if (dto.EndDate.Value < academicYear.Startdate || dto.EndDate.Value > academicYear.Enddate)
                 throw new BusinessRuleException("The event end date must fall within the selected academic year start and end dates.");
-            if (dto.EndDate.Value < dto.Date)
-                throw new BusinessRuleException("The event end date cannot be earlier than the start date.");
+            if (dto.EndDate.Value <= dto.Date)
+                throw new BusinessRuleException("The event end date must be after the start date.");
         }
 
         if (dto.IsParentTeacherMeeting)

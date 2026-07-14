@@ -76,12 +76,24 @@
               style="font-size: 0.7rem; letter-spacing: 0.05em"
               >Full Name</label
             >
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="studentForm().name"
-              placeholder="Enter student name"
-            />
+            <div class="row">
+              <div class="col-6">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="studentForm().firstName"
+                  placeholder="First name"
+                />
+              </div>
+              <div class="col-6">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="studentForm().lastName"
+                  placeholder="Last name"
+                />
+              </div>
+            </div>
           </div>
           <div class="col-md-6">
             <label
@@ -209,11 +221,11 @@
                   class="form-check-input flex-shrink-0"
                   type="checkbox"
                   [checked]="isParentSelected(p.id)"
-                  (change)="toggleParentSelection(p.id, p.name)"
+                  (change)="toggleParentSelection(p.id, p.firstName, p.lastName)"
                   style="font-size: 1.2rem; cursor: pointer"
                 />
                 <div class="flex-grow-1">
-                  <h6 class="mb-0 fw-bold">{{ p.name }}</h6>
+                  <h6 class="mb-0 fw-bold">{{ p.firstName }} {{ p.lastName }}</h6>
                   <small class="text-muted">{{ p.phonenumber }}</small>
                 </div>
                 @if (isParentSelected(p.id)) {
@@ -266,13 +278,26 @@
                   style="font-size: 0.7rem; letter-spacing: 0.05em"
                   >Full Name</label
                 >
-                <input
-                  type="text"
-                  class="form-control form-control-sm"
-                  [ngModel]="np.name"
-                  (ngModelChange)="updateNewParent(i, 'name', $event)"
-                  placeholder="Parent's Name"
-                />
+                <div class="row">
+                  <div class="col-6">
+                    <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      [ngModel]="np.firstName"
+                      (ngModelChange)="updateNewParent(i, 'firstName', $event)"
+                      placeholder="First Name"
+                    />
+                  </div>
+                  <div class="col-6">
+                    <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      [ngModel]="np.lastName"
+                      (ngModelChange)="updateNewParent(i, 'lastName', $event)"
+                      placeholder="Last Name"
+                    />
+                  </div>
+                </div>
               </div>
               <div class="col-md-3">
                 <label
@@ -406,7 +431,7 @@
                 style="font-size: 0.7rem"
                 >Student Name</small
               >
-              <span class="fw-bold">{{ studentForm().name || 'N/A' }}</span>
+              <span class="fw-bold">{{ studentForm().firstName }} {{ studentForm().lastName }}</span>
             </div>
             <div class="col-md-6">
               <small
@@ -439,13 +464,13 @@
               }
               @for (sp of selectedParents(); track sp) {
                 <div class="mb-1">
-                  <span class="fw-bold">{{ sp.name }}</span>
+                  <span class="fw-bold">{{ sp.firstName }} {{ sp.lastName }}</span>
                   <span class="badge bg-secondary ms-1">{{ sp.relation }}</span>
                 </div>
               }
               @for (np of newParents(); track np) {
                 <div class="mb-1">
-                  <span class="fw-bold">{{ np.name || 'Unnamed' }}</span>
+                  <span class="fw-bold">{{ np.firstName }} {{ np.lastName }}</span>
                   <span class="badge bg-primary ms-1">New · {{ np.relation }}</span>
                 </div>
               }
@@ -490,7 +515,7 @@
           (click)="nextStep()"
           [disabled]="
             currentStep() === 1 &&
-            (!studentForm().name || !studentForm().email || !studentForm().classId)
+            (!studentForm().firstName || !studentForm().lastName || !studentForm().email || !studentForm().classId)
           "
         >
           Next Step <i class="bi bi-arrow-right"></i>

@@ -57,7 +57,7 @@ export class Parents implements OnInit {
   showDeleteModal = signal(false);
   editingParent = signal<ParentUI | null>(null);
   deletingParent = signal<ParentUI | null>(null);
-  editForm = signal({ name: '', email: '', phonenumber: '' });
+  editForm = signal({ firstName: '', lastName: '', email: '', phonenumber: '' });
   isUpdating = signal(false);
   isDeleting = signal(false);
 
@@ -114,7 +114,7 @@ export class Parents implements OnInit {
           email: dto.email || 'N/A',
           avatarUrl:
             'https://ui-avatars.com/api/?name=' +
-            encodeURIComponent(dto.name) +
+            encodeURIComponent(dto.firstName + ' ' + dto.lastName) +
             '&background=random',
         }));
 
@@ -261,7 +261,8 @@ export class Parents implements OnInit {
   openEditModal(parent: ParentUI) {
     this.editingParent.set(parent);
     this.editForm.set({
-      name: parent.name,
+      firstName: parent.firstName,
+      lastName: parent.lastName,
       email: parent.email,
       phonenumber: parent.phonenumber || '',
     });

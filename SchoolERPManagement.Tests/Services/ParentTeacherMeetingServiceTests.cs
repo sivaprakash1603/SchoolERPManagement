@@ -234,6 +234,42 @@ public class ParentTeacherMeetingServiceTests
     }
 
     [Fact]
+    public async Task BookSlotAsync_OverlappingBooking_ThrowsBusinessRuleException()
+    {
+        var meeting = new Parentteachermeeting { Id = 1, Isactive = true };
+        var slot = new Parentteacherslot
+        {
+            Id = 1,
+            Meetingid = 1,
+            Teacherid = 10,
+            Starttime = new TimeOnly(10, 0),
+            Endtime = new TimeOnly(10, 15),
+            Status = "Available",
+            Meeting = meeting
+        };
+
+        var slots = new List<Parentteacherslot>
+        {
+            slot,
+            new() { 
+                Id = 2, 
+                Meetingid = 1, 
+                Teacherid = 20, 
+                Parentid = 100, 
+                Starttime = new TimeOnly(10, 0),
+                Endtime = new TimeOnly(10, 15),
+                Status = "Booked" 
+            }
+        };
+
+        _slotRepoMock.Setup(r => r.Query(true)).Returns(slots.BuildMockDbSet().Object);
+
+        Func<Task> act = async () => await _service.BookSlotAsync(1, 100, 200, CancellationToken.None);
+
+        await act.Should().ThrowAsync<BusinessRuleException>().WithMessage("*already have another meeting scheduled during this time slot*");
+    }
+
+    [Fact]
     public async Task BookSlotAsync_NotOwnChild_ThrowsBusinessRuleException()
     {
         var slot = new Parentteacherslot

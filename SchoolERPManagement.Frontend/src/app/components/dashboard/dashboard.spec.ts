@@ -619,7 +619,7 @@ describe('Dashboard', () => {
         recentTransactions: []
       }));
       mockNotificationService.getUserNotifications.mockReturnValue(of([{ createdAt: new Date(), title: 'Act1', message: 'Test message', isRead: false }]));
-      mockCalendarService.getAcademicCalendarSummary.mockReturnValue(of({ events: [{ date: new Date().toISOString(), description: 'Ev1', isHoliday: false }] }));
+      mockCalendarService.getAcademicCalendarSummary.mockReturnValue(of({ events: [{ date: new Date().toISOString(), description: 'Mid-Term Examinations', isHoliday: false }] }));
       mockTimetableService.getTeacherRequirements.mockReturnValue(of([{ subjectName: 'Math', requiredTeachers: 1, availableTeachers: 1, status: 'Optimal' }]));
       
       component.demographicsChartRef = new ElementRef(document.createElement('canvas'));

@@ -9,7 +9,8 @@ public partial class Parent
 
     public int Userid { get; set; }
 
-    public string Name { get; set; } = null!;
+    public string FirstName { get; set; } = null!;
+    public string LastName { get; set; } = null!;
 
     public string? Phonenumber { get; set; }
 

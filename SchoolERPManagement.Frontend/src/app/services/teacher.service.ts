@@ -14,7 +14,8 @@ export interface PagedResponse<T> {
 export interface TeacherResponseDTO {
   id: number;
   userId: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   phonenumber: string;
   joiningdate: Date;
   qualifications?: string;
@@ -78,7 +79,7 @@ export class TeacherService {
     });
   }
 
-  addTeacher(dto: { email: string, name: string, phonenumber?: string, qualifications?: string, subjectSpecialtyId?: number }): Observable<any> {
+  addTeacher(dto: { email: string, firstName: string, lastName: string, phonenumber?: string, qualifications?: string, subjectSpecialtyId?: number }): Observable<any> {
     return this.http.post<any>(this.baseUrl, dto);
   }
 
@@ -102,7 +103,7 @@ export class TeacherService {
     return this.http.delete<void>(`${this.baseUrl}/${teacherId}/assignments/${classId}/${subjectId}`);
   }
 
-  updateTeacher(id: number, dto: { name: string, phonenumber?: string, qualifications?: string, subjectSpecialtyId?: number }): Observable<TeacherResponseDTO> {
+  updateTeacher(id: number, dto: { firstName: string, lastName: string, phonenumber?: string, qualifications?: string, subjectSpecialtyId?: number }): Observable<TeacherResponseDTO> {
     return this.http.patch<TeacherResponseDTO>(`${this.baseUrl}/${id}`, dto);
   }
 

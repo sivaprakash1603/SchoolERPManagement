@@ -1,0 +1,145 @@
+<div class="setup-container">
+  <div class="setup-card">
+    <!-- Progress Indicator -->
+    <div class="progress-indicator mb-4 d-flex justify-content-center gap-2">
+      <div class="progress-dot" [class.active]="currentStep() === 1" [class.completed]="currentStep() > 1"></div>
+      <div class="progress-dot" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2"></div>
+      <div class="progress-dot" [class.active]="currentStep() === 3" [class.completed]="currentStep() > 3"></div>
+      <div class="progress-dot" [class.active]="currentStep() === 4" [class.completed]="currentStep() > 4"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    @if (currentStep() === 1) {
+      <div class="step-content text-center slide-in">
+        <img src="/Book.svg" alt="Welcome" class="mb-4" style="width: 80px; height: 80px" />
+        <h2 class="fw-bold mb-3" style="color: var(--primary-accent)">Welcome to School ERP</h2>
+        <p class="text-muted-custom mb-5">
+          Let's get your new system up and running! We'll guide you through a few quick steps to configure the essentials. You can always change these settings later.
+        </p>
+        <button class="btn btn-primary btn-lg w-100 fw-bold rounded-pill setup-btn" (click)="nextStep()">
+          Let's Go <i class="bi bi-arrow-right ms-2"></i>
+        </button>
+      </div>
+    }
+
+    <!-- Step 2: Academic Session -->
+    @if (currentStep() === 2) {
+      <div class="step-content slide-in">
+        <h3 class="fw-bold mb-2 text-center" style="color: var(--text-primary)">Academic Session</h3>
+        <p class="text-muted-custom mb-4 text-center small">
+          Before we do anything else, we need to create your first Academic Session (e.g. 2025-2026). This is required.
+        </p>
+        
+        <div class="mb-3">
+          <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Session Name</label>
+          <input type="text" class="form-control" [(ngModel)]="academicYearForm().yearname" placeholder="2025-2026" />
+        </div>
+        
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Start Date</label>
+            <input type="date" class="form-control" [(ngModel)]="academicYearForm().startdate" />
+          </div>
+          <div class="col-6">
+            <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">End Date</label>
+            <input type="date" class="form-control" [(ngModel)]="academicYearForm().enddate" />
+          </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mt-5">
+          <button class="btn btn-light rounded-pill px-4 fw-bold" (click)="prevStep()" [disabled]="isSubmitting()">Back</button>
+          <button class="btn btn-primary rounded-pill px-4 fw-bold setup-btn" (click)="nextStep()" [disabled]="isSubmitting() || !academicYearForm().yearname || !academicYearForm().startdate || !academicYearForm().enddate">
+            @if (isSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            Create Session <i class="bi bi-check2 ms-1"></i>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Step 3: Classes & Subjects -->
+    @if (currentStep() === 3) {
+      <div class="step-content slide-in">
+        <h3 class="fw-bold mb-2 text-center" style="color: var(--text-primary)">Core Setup</h3>
+        <p class="text-muted-custom mb-4 text-center small">
+          Let's add some initial classes and subjects. You can skip this and add them later from the dashboard if you prefer.
+        </p>
+        
+        <!-- Classes -->
+        <h6 class="fw-bold mb-2" style="color: var(--text-primary)">Classes</h6>
+        <div class="setup-list mb-4">
+          @for (c of classesToAdd(); track $index) {
+            <div class="d-flex gap-2 mb-2">
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="c.classname" placeholder="Class Name (e.g. Grade 1)" />
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="c.section" placeholder="Section (e.g. A)" />
+              <button class="btn btn-sm btn-outline-danger" (click)="removeEmptyClass($index)"><i class="bi bi-trash"></i></button>
+            </div>
+          }
+          <button class="btn btn-sm btn-link text-decoration-none p-0" (click)="addEmptyClass()">+ Add another class</button>
+        </div>
+
+        <!-- Subjects -->
+        <h6 class="fw-bold mb-2" style="color: var(--text-primary)">Subjects</h6>
+        <div class="setup-list mb-4">
+          @for (s of subjectsToAdd(); track $index) {
+            <div class="d-flex gap-2 mb-2">
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="s.subjectName" placeholder="Subject Name" />
+              <button class="btn btn-sm btn-outline-danger" (click)="removeEmptySubject($index)"><i class="bi bi-trash"></i></button>
+            </div>
+          }
+          <button class="btn btn-sm btn-link text-decoration-none p-0" (click)="addEmptySubject()">+ Add another subject</button>
+        </div>
+
+        <div class="d-flex justify-content-between mt-5">
+          <button class="btn btn-light rounded-pill px-4 fw-bold" (click)="skipClassesAndSubjects()" [disabled]="isSubmitting()">Skip</button>
+          <button class="btn btn-primary rounded-pill px-4 fw-bold setup-btn" (click)="saveClassesAndSubjects()" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            Save & Continue
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Step 4: Finish -->
+    @if (currentStep() === 4) {
+      <div class="step-content text-center slide-in">
+        <div class="success-icon mb-4">
+          <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+        </div>
+        <h2 class="fw-bold mb-3" style="color: var(--text-primary)">All Set!</h2>
+        <p class="text-muted-custom mb-5">
+          Your School ERP system is successfully configured. You can now start onboarding teachers, students, and managing your institution.
+        </p>
+        <button class="btn btn-primary btn-lg w-100 fw-bold rounded-pill setup-btn" (click)="finishSetup()">
+          Go to Dashboard <i class="bi bi-rocket-takeoff ms-2"></i>
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+  <!-- Toasts Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+    @for (toast of toastService.toasts(); track toast.id) {
+      <div class="toast show align-items-center mb-2 p-2 d-flex border" 
+           style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: all 0.3s ease;"
+           [style.background-color]="toast.type === 'success' ? 'var(--color-success)' : toast.type === 'danger' ? 'var(--color-error)' : toast.type === 'info' ? 'var(--color-info)' : '#fef3c7'"
+           [style.border-color]="toast.type === 'warning' ? '#fde047' : 'transparent'"
+           [style.color]="toast.type === 'warning' ? '#854d0e' : '#fff'"
+           role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex w-100 align-items-center justify-content-between">
+          <div class="toast-body d-flex align-items-center gap-2 fw-semibold px-2" style="font-size: 0.875rem;">
+            @if (toast.type === 'success') { <i class="bi bi-check-circle-fill fs-5"></i> }
+            @if (toast.type === 'danger') { <i class="bi bi-exclamation-octagon-fill fs-5"></i> }
+            @if (toast.type === 'warning') { <i class="bi bi-exclamation-triangle-fill fs-5" style="color: #b45309;"></i> }
+            @if (toast.type === 'info') { <i class="bi bi-info-circle-fill fs-5"></i> }
+            {{ toast.message }}
+          </div>
+          <button type="button" class="btn-close me-2 m-auto" [class.btn-close-white]="toast.type !== 'warning'" (click)="toastService.remove(toast.id)" aria-label="Close"></button>
+        </div>
+      </div>
+    }
+  </div>

@@ -15,7 +15,8 @@ export interface StudentQueryResponseDTO {
   id: number;
   userId: number;
   regNo: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   parentName?: string;
   className?: string;
   section?: string;
@@ -37,7 +38,8 @@ export interface ParentSelection {
 
 export interface CreateStudentDTO {
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   classId: number;
   academicYearId: number;
   parents?: ParentSelection[];

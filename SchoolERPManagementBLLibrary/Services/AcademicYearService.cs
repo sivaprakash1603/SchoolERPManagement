@@ -21,12 +21,19 @@ public sealed class AcademicYearService : IAcademicYearService
 
     public async Task<AcademicYearResponseDTO> CreateAcademicYearAsync(CreateAcademicYearDTO dto, CancellationToken cancellationToken)
     {
+        if (dto.EndDate <= dto.StartDate)
+        {
+            throw new BusinessRuleException("End date must be after the start date.");
+        }
+
+        bool hasAny = await _academicYearRepository.Query(false).AnyAsync(cancellationToken);
+
         var academicYear = new Academicyear
         {
             Yearname = dto.YearName,
             Startdate = dto.StartDate,
             Enddate = dto.EndDate,
-            Iscurrent = false
+            Iscurrent = !hasAny
         };
 
         await _academicYearRepository.AddAsync(academicYear, save: true, ct: cancellationToken);

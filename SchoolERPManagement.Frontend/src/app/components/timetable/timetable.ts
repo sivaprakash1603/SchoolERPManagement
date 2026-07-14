@@ -416,7 +416,7 @@ export class Timetable implements OnInit {
 
   getTeacherName(teacherId: number): string {
     const teach = this.teachers().find((t) => t.id === teacherId);
-    return teach ? teach.name : 'Unknown';
+    return teach ? teach.firstName + ' ' + teach.lastName : 'Unknown';
   }
 
   formatTime(timeStr: string): string {

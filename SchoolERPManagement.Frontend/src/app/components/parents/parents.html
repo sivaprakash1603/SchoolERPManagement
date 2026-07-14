@@ -211,7 +211,7 @@
                     />
                     <div>
                       <div class="fw-bold" style="color: var(--primary-accent)">
-                        {{ parent.name }}
+                        {{ parent.firstName }} {{ parent.lastName }}
                       </div>
                       <div class="small text-muted-custom">{{ parent.email }}</div>
                     </div>
@@ -232,7 +232,7 @@
                       class="btn btn-sm btn-light text-warning"
                       title="Send Notification"
                       (click)="
-                        openNotificationModal(parent.name, [parent.userId]);
+                        openNotificationModal(parent.firstName + ' ' + parent.lastName, [parent.userId]);
                         $event.stopPropagation()
                       "
                     >
@@ -427,16 +427,29 @@
         </div>
         <div class="modal-body-custom">
           <div class="row g-3">
-            <div class="col-12">
-              <label class="modal-form-label"><i class="bi bi-person me-1"></i> Full Name</label>
-              <input
-                type="text"
-                class="form-control"
-                [ngModel]="editForm().name"
-                (ngModelChange)="editForm.set({ ...editForm(), name: $event })"
-                placeholder="Parent Name"
-              />
-            </div>
+              <div class="col-12">
+                <label class="modal-form-label"><i class="bi bi-person me-1"></i> Full Name</label>
+                <div class="row">
+                  <div class="col-6">
+                    <input
+                      type="text"
+                      class="form-control"
+                      [ngModel]="editForm().firstName"
+                      (ngModelChange)="editForm.set({ ...editForm(), firstName: $event })"
+                      placeholder="First Name"
+                    />
+                  </div>
+                  <div class="col-6">
+                    <input
+                      type="text"
+                      class="form-control"
+                      [ngModel]="editForm().lastName"
+                      (ngModelChange)="editForm.set({ ...editForm(), lastName: $event })"
+                      placeholder="Last Name"
+                    />
+                  </div>
+                </div>
+              </div>
             <div class="col-12">
               <label class="modal-form-label"
                 ><i class="bi bi-envelope me-1"></i> Email Address</label
@@ -475,7 +488,7 @@
             class="btn btn-primary px-4 rounded-3 fw-bold d-flex align-items-center gap-2"
             (click)="saveEdit()"
             [disabled]="
-              isUpdating() || !editForm().name || !editForm().email || !editForm().phonenumber
+              isUpdating() || !editForm().firstName || !editForm().lastName || !editForm().email || !editForm().phonenumber
             "
             style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
           >
@@ -511,7 +524,7 @@
         <div class="modal-body-custom text-center py-4">
           <p class="mb-2" style="color: var(--text-primary)">
             Are you sure you want to deactivate the account of
-            <strong class="text-danger">{{ deletingParent()?.name }}</strong
+            <strong class="text-danger">{{ deletingParent()?.firstName }} {{ deletingParent()?.lastName }}</strong
             >?
           </p>
           <p class="text-muted-custom small mb-0">

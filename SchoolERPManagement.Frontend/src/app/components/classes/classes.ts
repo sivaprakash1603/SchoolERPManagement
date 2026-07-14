@@ -158,7 +158,7 @@ export class Classes implements OnInit {
   getTeacherName(teacherId?: number): string {
     if (!teacherId) return 'Not Assigned';
     const teacher = this.teachers().find((t) => t.id === teacherId);
-    return teacher ? teacher.name : 'Unknown';
+    return teacher ? teacher.firstName + ' ' + teacher.lastName : 'Unknown';
   }
 
   getAvailableTeachersForCreate(): TeacherResponseDTO[] {

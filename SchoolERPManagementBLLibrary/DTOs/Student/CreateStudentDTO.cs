@@ -5,7 +5,7 @@ namespace SchoolERPManagementBLLibrary.DTOs.Student;
 
 public record CreateStudentDTO(
     string Email, 
-    string Name, 
+    string FirstName, string LastName, 
     int ClassId, 
     int AcademicYearId, 
     IEnumerable<ParentSelectionDTO>? Parents,

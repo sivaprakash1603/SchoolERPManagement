@@ -65,6 +65,11 @@ export class AcademicSessions implements OnInit {
     const form = this.createForm();
     if (!form.yearName || !form.startDate || !form.endDate) return;
 
+    if (new Date(form.startDate) >= new Date(form.endDate)) {
+      alert('End date must be after the start date.');
+      return;
+    }
+
     this.isSaving.set(true);
     const dto = {
       yearName: form.yearName,

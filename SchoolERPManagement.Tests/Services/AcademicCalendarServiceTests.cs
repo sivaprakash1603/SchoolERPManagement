@@ -9,6 +9,7 @@ using Moq;
 using SchoolERPManagementBLLibrary.DTOs.AcademicCalendar;
 using SchoolERPManagementBLLibrary.Exceptions;
 using SchoolERPManagementBLLibrary.Services;
+using SchoolERPManagementBLLibrary.Interfaces;
 using SchoolERPManagementDALLibrary.Interfaces;
 using SchoolERPManagementModelLibrary.Models;
 using Xunit;
@@ -20,15 +21,21 @@ public class AcademicCalendarServiceTests
 {
     private readonly Mock<IRepository<int, Academiccalendar>> _calendarRepoMock;
     private readonly Mock<IRepository<int, Academicyear>> _academicYearRepoMock;
+    private readonly Mock<IRepository<int, Parentteachermeeting>> _meetingRepoMock;
+    private readonly Mock<IParentTeacherMeetingService> _meetingServiceMock;
     private readonly AcademicCalendarService _service;
 
     public AcademicCalendarServiceTests()
     {
         _calendarRepoMock = new Mock<IRepository<int, Academiccalendar>>();
         _academicYearRepoMock = new Mock<IRepository<int, Academicyear>>();
+        _meetingRepoMock = new Mock<IRepository<int, Parentteachermeeting>>();
+        _meetingServiceMock = new Mock<IParentTeacherMeetingService>();
         _service = new AcademicCalendarService(
             _calendarRepoMock.Object,
             _academicYearRepoMock.Object,
+            _meetingRepoMock.Object,
+            _meetingServiceMock.Object,
             SchoolERPManagement.Tests.Helpers.TestHelper.GetMapper()
         );
     }
@@ -36,7 +43,7 @@ public class AcademicCalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_ValidSingleDay_ShouldCreateEvent()
     {
-        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1);
+        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1, false, null, null, null);
         var academicYear = new Academicyear { Id = 1, Startdate = new DateOnly(2025, 1, 1), Enddate = new DateOnly(2025, 12, 31) };
 
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(academicYear);
@@ -52,7 +59,7 @@ public class AcademicCalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_ValidRange_ShouldCreateEvents()
     {
-        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday Range", true, 1, new DateOnly(2025, 1, 16));
+        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday Range", true, 1, false, new DateOnly(2025, 1, 16), null, null);
         var academicYear = new Academicyear { Id = 1, Startdate = new DateOnly(2025, 1, 1), Enddate = new DateOnly(2025, 12, 31) };
 
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(academicYear);
@@ -67,7 +74,7 @@ public class AcademicCalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_YearNotFound_ShouldThrowEntityNotFoundException()
     {
-        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 99);
+        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 99, false, null, null, null);
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((Academicyear)null);
 
         Func<Task> act = async () => await _service.CreateCalendarEventAsync(dto, CancellationToken.None);
@@ -77,7 +84,7 @@ public class AcademicCalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_StartDateOutOfBounds_ShouldThrowBusinessRuleException()
     {
-        var dto = new CreateCalendarEventDTO(new DateOnly(2024, 12, 31), "Holiday", true, 1);
+        var dto = new CreateCalendarEventDTO(new DateOnly(2024, 12, 31), "Holiday", true, 1, false, null, null, null);
         var academicYear = new Academicyear { Id = 1, Startdate = new DateOnly(2025, 1, 1), Enddate = new DateOnly(2025, 12, 31) };
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(academicYear);
 
@@ -88,7 +95,7 @@ public class AcademicCalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_EndDateOutOfBounds_ShouldThrowBusinessRuleException()
     {
-        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1, new DateOnly(2026, 1, 1));
+        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1, false, new DateOnly(2026, 1, 1), null, null);
         var academicYear = new Academicyear { Id = 1, Startdate = new DateOnly(2025, 1, 1), Enddate = new DateOnly(2025, 12, 31) };
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(academicYear);
 
@@ -99,7 +106,7 @@ public class AcademicCalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_EndDateBeforeStartDate_ShouldThrowBusinessRuleException()
     {
-        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1, new DateOnly(2025, 1, 10));
+        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1, false, new DateOnly(2025, 1, 10), null, null);
         var academicYear = new Academicyear { Id = 1, Startdate = new DateOnly(2025, 1, 1), Enddate = new DateOnly(2025, 12, 31) };
         _academicYearRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(academicYear);
 
@@ -110,7 +117,7 @@ public class AcademicCalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_SingleDayDuplicate_ShouldThrowDuplicateEntityException()
     {
-        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1);
+        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1, false, null, null, null);
         var academicYear = new Academicyear { Id = 1, Startdate = new DateOnly(2025, 1, 1), Enddate = new DateOnly(2025, 12, 31) };
         var existingEvent = new Academiccalendar { Academicyearid = 1, Date = new DateOnly(2025, 1, 15) };
 
@@ -124,7 +131,7 @@ public class AcademicCalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_RangeAllDuplicates_ShouldThrowBusinessRuleException()
     {
-        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1, new DateOnly(2025, 1, 16));
+        var dto = new CreateCalendarEventDTO(new DateOnly(2025, 1, 15), "Holiday", true, 1, false, new DateOnly(2025, 1, 16), null, null);
         var academicYear = new Academicyear { Id = 1, Startdate = new DateOnly(2025, 1, 1), Enddate = new DateOnly(2025, 12, 31) };
         var existingEvent1 = new Academiccalendar { Academicyearid = 1, Date = new DateOnly(2025, 1, 15) };
         var existingEvent2 = new Academiccalendar { Academicyearid = 1, Date = new DateOnly(2025, 1, 16) };

@@ -24,6 +24,7 @@ using FluentValidation;
 using SchoolERPManagementAPI.Filters;
 using SchoolERPManagementBLLibrary.Validators;
 using QuestPDF.Infrastructure;
+using Azure.Identity;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -33,7 +34,27 @@ var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Host.UseSerilog((context, configuration) => 
-    configuration.ReadFrom.Configuration(context.Configuration));
+{
+    configuration.ReadFrom.Configuration(context.Configuration);
+    
+    var blobConnString = context.Configuration["AzureBlobStorage:ConnectionString"] ?? context.Configuration["AzureBlobStorage--ConnectionString"];
+    if (!string.IsNullOrEmpty(blobConnString))
+    {
+        configuration.WriteTo.AzureBlobStorage(
+            connectionString: blobConnString,
+            storageContainerName: "school-erp-logs",
+            storageFileName: "logs/log-{yyyyMMdd}.txt"
+        );
+    }
+});
+
+var keyVaultUrl = builder.Configuration["KeyVault:Url"];
+if (!string.IsNullOrEmpty(keyVaultUrl))
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUrl),
+        new DefaultAzureCredential());
+}
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -194,6 +215,7 @@ builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentService, ParentService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IFeeService, FeeService>();
+builder.Services.AddScoped<ISystemSetupService, SystemSetupService>();
 builder.Services.AddScoped<IHomeworkService, HomeworkService>();
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<ITimetableService, TimetableService>();
@@ -211,7 +233,7 @@ builder.Services.AddScoped<IStaffAttendanceService, StaffAttendanceService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IReportService, ReportService>();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
 builder.Services.AddScoped<IPaymentGatewayService, StripePaymentService>();
 builder.Services.AddScoped<IParentTeacherMeetingService, ParentTeacherMeetingService>();
 

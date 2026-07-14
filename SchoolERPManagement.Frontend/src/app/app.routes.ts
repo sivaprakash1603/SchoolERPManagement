@@ -9,6 +9,7 @@ import { Layout } from './components/layout/layout';
 
 import { StudentOnboarding } from './components/student-onboarding/student-onboarding';
 import { TeacherOnboarding } from './components/teacher-onboarding/teacher-onboarding';
+import { SetupWizardComponent } from './components/setup-wizard/setup-wizard';
 import { AcademicSessions } from './components/academic-sessions/academic-sessions';
 import { Classes } from './components/classes/classes';
 import { Subjects } from './components/subjects/subjects';
@@ -27,6 +28,7 @@ import { NotificationsComponent } from './components/notifications/notifications
 import { FAQ } from './components/faq/faq';
 
 import { authGuard } from './guards/auth.guard';
+import { setupGuard } from './guards/setup.guard';
 import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
 
 export const routes: Routes = [
@@ -34,10 +36,11 @@ export const routes: Routes = [
     { path: 'login', component: Login },
     { path: 'reset-password', component: ResetPassword },
     { path: 'faq', component: FAQ },
+    { path: 'setup', component: SetupWizardComponent, canActivate: [authGuard] },
     { 
         path: '', 
         component: Layout,
-        canActivate: [authGuard],
+        canActivate: [authGuard, setupGuard],
         children: [
             { path: 'dashboard', component: Dashboard },
             { path: 'students', component: Students },

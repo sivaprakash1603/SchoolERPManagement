@@ -1,3 +1,3 @@
 namespace SchoolERPManagementBLLibrary.DTOs.Parent;
 
-public record UpdateParentDTO(string Name, string Email, string Phonenumber);
+public record UpdateParentDTO(string FirstName, string LastName, string Email, string Phonenumber);

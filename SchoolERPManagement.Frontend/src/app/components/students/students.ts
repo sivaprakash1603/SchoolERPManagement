@@ -84,7 +84,7 @@ export class Students implements OnInit {
 
   // Edit parents and docs state
   allParentsList = signal<ParentResponseDTO[]>([]);
-  selectedParents = signal<{ parentId: number; name: string; relation: string }[]>([]);
+  selectedParents = signal<{ parentId: number; firstName: string; lastName: string; relation: string }[]>([]);
   relationOptions = ['Father', 'Mother', 'Guardian', 'Other'];
   parentSearchQuery = signal('');
   currentSessionName = signal('2024-2025');
@@ -92,7 +92,7 @@ export class Students implements OnInit {
   filteredParents() {
     const query = this.parentSearchQuery().toLowerCase();
     return this.allParentsList().filter(p => 
-      p.name.toLowerCase().includes(query) || 
+      (p.firstName + ' ' + p.lastName).toLowerCase().includes(query) || 
       p.phonenumber.includes(query) || 
       p.email.toLowerCase().includes(query)
     );
@@ -104,7 +104,8 @@ export class Students implements OnInit {
 
   // Edit form state
   editForm = signal({
-    name: '',
+    firstName: '',
+    lastName: '',
     gender: 'Male',
     bloodgroup: '',
     dateofbirth: '',
@@ -230,10 +231,10 @@ export class Students implements OnInit {
       next: (response: PagedResponse<StudentQueryResponseDTO>) => {
         const mappedData = response.items.map(dto => ({
           ...dto,
-          email: dto.email || `${dto.name.replace(/\s+/g, '').toLowerCase()}@school.edu`,
+          email: dto.email || `${(dto.firstName + dto.lastName).replace(/\s+/g, '').toLowerCase()}@school.edu`,
           avatarUrl: dto.profilePhotoUrl 
-            ? `${environment.baseUrl}${dto.profilePhotoUrl}` 
-            : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(dto.name) + '&background=random'
+            ? (dto.profilePhotoUrl.startsWith('http') ? dto.profilePhotoUrl : `${environment.baseUrl}${dto.profilePhotoUrl}`)
+            : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(dto.firstName + ' ' + dto.lastName) + '&background=random'
         }));
         
         this.students.set(mappedData);
@@ -333,7 +334,7 @@ export class Students implements OnInit {
     this.isBulkEnroll.set(false);
     this.enrollForm.set({
       studentId: student.id,
-      studentName: student.name,
+      studentName: student.firstName + ' ' + student.lastName,
       academicYearId: this.selectedAcademicYearId(),
       classId: null
     });
@@ -438,7 +439,8 @@ export class Students implements OnInit {
     const adm = student.admissionDate ? new Date(student.admissionDate).toISOString().split('T')[0] : '';
 
     this.editForm.set({
-      name: student.name,
+      firstName: student.firstName,
+      lastName: student.lastName,
       gender: student.gender || 'Male',
       bloodgroup: student.bloodgroup || '',
       dateofbirth: dob,
@@ -460,7 +462,8 @@ export class Students implements OnInit {
       const matchedParent = this.allParentsList().find(ap => ap.id === p.parentId);
       return {
         parentId: p.parentId,
-        name: matchedParent ? matchedParent.name : 'Unknown Parent',
+        firstName: matchedParent ? matchedParent.firstName : 'Unknown',
+        lastName: matchedParent ? matchedParent.lastName : 'Parent',
         relation: p.relation
       };
     });
@@ -497,18 +500,18 @@ export class Students implements OnInit {
 
   getDocumentUrl(type: string): string | null {
     const doc = this.currentDocuments().find(d => d.documentName === type);
-    return doc ? `${environment.baseUrl}${doc.blobUrl}` : null;
+    return doc ? (doc.blobUrl.startsWith('http') ? doc.blobUrl : `${environment.baseUrl}${doc.blobUrl}`) : null;
   }
 
   isParentSelected(parentId: number): boolean {
     return this.selectedParents().some(p => p.parentId === parentId);
   }
 
-  toggleParentSelection(parentId: number, parentName: string) {
+  toggleParentSelection(parentId: number, parentFirstName: string, parentLastName: string) {
     if (this.isParentSelected(parentId)) {
       this.selectedParents.update(list => list.filter(p => p.parentId !== parentId));
     } else {
-      this.selectedParents.update(list => [...list, { parentId, name: parentName, relation: 'Father' }]);
+      this.selectedParents.update(list => [...list, { parentId, firstName: parentFirstName, lastName: parentLastName, relation: 'Father' }]);
     }
   }
 
@@ -545,7 +548,8 @@ export class Students implements OnInit {
 
     this.isSaving.set(true);
     const updateDto = {
-      name: this.editForm().name,
+      firstName: this.editForm().firstName,
+      lastName: this.editForm().lastName,
       gender: this.editForm().gender,
       bloodgroup: this.editForm().bloodgroup || undefined,
       dateofbirth: this.editForm().dateofbirth || undefined,

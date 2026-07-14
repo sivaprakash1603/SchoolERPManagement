@@ -559,7 +559,7 @@ export class Exams implements OnInit {
       next: () => {
         student.isPublishing = false;
         student.isPublished = true;
-        this.toastService.success(`Published marks for ${student.name}`);
+        this.toastService.success(`Published marks for ${student.firstName} ${student.lastName}`);
       },
       error: (err) => {
         console.error('Failed to publish marks', err);

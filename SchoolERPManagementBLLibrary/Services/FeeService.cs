@@ -231,7 +231,7 @@ public sealed class FeeService : IFeeService
                         Currency = "inr",
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = $"{feeStructure.Feename} for {student.Name}",
+                            Name = $"{feeStructure.Feename} for {student.FirstName} {student.LastName}",
                         },
                     },
                     Quantity = 1,
@@ -316,13 +316,13 @@ public sealed class FeeService : IFeeService
                                     string emailBody = $@"
                                     <h3>Payment Successful</h3>
                                     <p>Dear Parent,</p>
-                                    <p>We have successfully received the fee payment of {payment.Amountpaid.ToString("C", new System.Globalization.CultureInfo("en-IN"))} for {studentWithParent.Name}.</p>
+                                    <p>We have successfully received the fee payment of {payment.Amountpaid.ToString("C", new System.Globalization.CultureInfo("en-IN"))} for {studentWithParent.FirstName} {studentWithParent.LastName}.</p>
                                     <p>Please find the payment receipt attached to this email.</p>
                                     <p>Thank you,<br/>School ERP Management</p>";
 
                                     await _emailService.SendEmailWithAttachmentAsync(
                                         sp.Parent.User.Email,
-                                        $"Fee Payment Receipt - {studentWithParent.Name}",
+                                        $"Fee Payment Receipt - {studentWithParent.FirstName} {studentWithParent.LastName}",
                                         emailBody,
                                         pdfBytes,
                                         $"Receipt_{transactionId}.pdf",
@@ -375,7 +375,7 @@ public sealed class FeeService : IFeeService
 
             return new ClassFeeSummaryDTO(
                 student.Id,
-                student.Name ?? "Unknown Student",
+                student.FirstName + " " + student.LastName,
                 student.Regno ?? "N/A",
                 totalFeeAmount,
                 paid,
@@ -401,7 +401,7 @@ public sealed class FeeService : IFeeService
             var student = await _studentRepository.GetByIdAsync(studentId);
             if (student != null)
             {
-                studentName = student.Name;
+                studentName = student.FirstName + " " + student.LastName;
             }
         }
 
@@ -485,7 +485,7 @@ public sealed class FeeService : IFeeService
                 row.RelativeItem().Column(col =>
                 {
                     col.Item().Text("Student Details").SemiBold();
-                    col.Item().Text($"Name: {payment.Student?.Name ?? "N/A"}");
+                    col.Item().Text($"Name: {(payment.Student != null ? payment.Student.FirstName + " " + payment.Student.LastName : "N/A")}");
                     col.Item().Text($"Reg No: {payment.Student?.Regno ?? "N/A"}");
                 });
 

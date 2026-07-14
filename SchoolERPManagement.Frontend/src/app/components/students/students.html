@@ -290,13 +290,13 @@
                   <div class="d-flex align-items-center gap-3">
                     <img
                       [src]="student.avatarUrl"
-                      alt="{{ student.name }}"
+                      alt="{{ student.firstName }} {{ student.lastName }}"
                       class="rounded-circle object-fit-cover"
                       style="width: 40px; height: 40px"
                     />
                     <div>
                       <p class="mb-0 fw-bold" style="color: var(--primary-accent)">
-                        {{ student.name }}
+                        {{ student.firstName }} {{ student.lastName }}
                       </p>
                       <p class="mb-0 text-muted-custom" style="font-size: 0.8rem">
                         {{ student.email }}
@@ -330,7 +330,7 @@
                       class="btn btn-sm btn-light text-warning"
                       title="Send Notification"
                       (click)="
-                        openNotificationModal(student.name, [student.userId]);
+                        openNotificationModal(student.firstName + ' ' + student.lastName, [student.userId]);
                         $event.stopPropagation()
                       "
                     >
@@ -454,7 +454,7 @@
               style="width: 100px; height: 100px"
             />
             <h4 class="fw-bold mb-1" style="color: var(--text-primary)">
-              {{ selectedStudent()?.name }}
+              {{ selectedStudent()?.firstName }} {{ selectedStudent()?.lastName }}
             </h4>
             <span
               class="badge rounded-pill px-3 py-1"
@@ -559,12 +559,24 @@
             <div class="row g-3">
               <div class="col-12">
                 <label class="modal-form-label">Full Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="editForm().name"
-                  placeholder="Enter full name"
-                />
+                <div class="row">
+                  <div class="col-6">
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="editForm().firstName"
+                      placeholder="First Name"
+                    />
+                  </div>
+                  <div class="col-6">
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="editForm().lastName"
+                      placeholder="Last Name"
+                    />
+                  </div>
+                </div>
               </div>
               <div class="col-md-6">
                 <label class="modal-form-label">Gender</label>
@@ -621,7 +633,7 @@
                       class="list-group-item d-flex align-items-center justify-content-between p-2"
                     >
                       <div>
-                        <span class="fw-bold me-2">{{ p.name }}</span>
+                        <span class="fw-bold me-2">{{ p.firstName }} {{ p.lastName }}</span>
                         <span class="badge bg-secondary">{{ p.relation }}</span>
                       </div>
                       <div class="d-flex align-items-center gap-2">
@@ -637,7 +649,7 @@
                         </select>
                         <button
                           class="btn btn-sm btn-outline-danger"
-                          (click)="toggleParentSelection(p.parentId, p.name)"
+                          (click)="toggleParentSelection(p.parentId, p.firstName, p.lastName)"
                           title="Remove Link"
                         >
                           <i class="bi bi-x-lg"></i>
@@ -676,10 +688,10 @@
                       type="checkbox"
                       class="form-check-input"
                       [checked]="isParentSelected(parent.id)"
-                      (change)="toggleParentSelection(parent.id, parent.name)"
+                      (change)="toggleParentSelection(parent.id, parent.firstName, parent.lastName)"
                     />
                     <div class="flex-grow-1 ms-2">
-                      <span class="fw-bold">{{ parent.name }}</span>
+                      <span class="fw-bold">{{ parent.firstName }} {{ parent.lastName }}</span>
                       <small class="text-muted-custom d-block" style="font-size: 0.75rem"
                         >Phone: {{ parent.phonenumber }} | Email: {{ parent.email }}</small
                       >
@@ -802,7 +814,7 @@
           <button
             class="btn btn-success px-4 rounded-3"
             (click)="saveStudent()"
-            [disabled]="isSaving() || !editForm().name"
+            [disabled]="isSaving() || !editForm().firstName || !editForm().lastName"
           >
             @if (isSaving()) {
               <span
@@ -831,7 +843,7 @@
         <div class="modal-body-custom py-4">
           <p class="mb-2">
             Are you sure you want to deactivate the account for
-            <strong>{{ selectedStudent()?.name }}</strong
+            <strong>{{ selectedStudent()?.firstName }} {{ selectedStudent()?.lastName }}</strong
             >?
           </p>
           <p class="text-muted-custom small mb-0">
