@@ -28,6 +28,16 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: KeyVaultUri
+            - name: Stripe__SuccessUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: StripeSuccessUrl
+            - name: Stripe__CancelUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: StripeCancelUrl
       # The secret name that contains ACR login credentials
       imagePullSecrets:
         - name: acr-auth

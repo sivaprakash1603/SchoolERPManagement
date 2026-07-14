@@ -97,6 +97,8 @@ export KUBECONFIG=kubeconfig
 echo "Creating app-config ConfigMap in Kubernetes..."
 kubectl create configmap app-config \
   --from-literal=KeyVaultUri="$KEY_VAULT_URI" \
+  --from-literal=StripeSuccessUrl="https://$SWA_HOSTNAME/payment-success" \
+  --from-literal=StripeCancelUrl="https://$SWA_HOSTNAME/payment-cancelled" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # 7. Create ACR Pull Secret in Kubernetes
