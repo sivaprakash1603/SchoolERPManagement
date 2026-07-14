@@ -55,23 +55,30 @@ echo "Postgres Server: $PG_SERVER"
 echo "Static Web App: $SWA_NAME"
 echo "Function App: $FUNC_APP_NAME"
 
-# 4. Attach ACR to AKS
-echo "Attaching ACR to AKS (this may take a few minutes)..."
-az aks update -n $AKS_NAME -g $RG_NAME --attach-acr $ACR_NAME -o none
-
-# 5. Configure GitHub Secrets
-echo "Fetching credentials and configuring GitHub Secrets..."
+# 4. Fetch ACR Credentials
+echo "Fetching ACR credentials..."
 ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
 ACR_USERNAME=$(az acr credential show --name $ACR_NAME --query "username" -o tsv)
 ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv)
 
+# Get Kubeconfig for AKS
+rm -f kubeconfig
+az aks get-credentials -n $AKS_NAME -g $RG_NAME --file kubeconfig
+export KUBECONFIG=kubeconfig
+
+# 5. Create ACR Pull Secret in Kubernetes
+echo "Creating acr-auth secret in Kubernetes..."
+kubectl create secret docker-registry acr-auth \
+  --docker-server="$ACR_LOGIN_SERVER" \
+  --docker-username="$ACR_USERNAME" \
+  --docker-password="$ACR_PASSWORD" \
+  --docker-email="admin@schoolerp.com" --dry-run=client -o yaml | kubectl apply -f -
+
+# 6. Configure GitHub Secrets
+echo "Configuring GitHub Secrets..."
 gh secret set ACR_LOGIN_SERVER --body "$ACR_LOGIN_SERVER"
 gh secret set ACR_USERNAME --body "$ACR_USERNAME"
 gh secret set ACR_PASSWORD --body "$ACR_PASSWORD"
-
-# Get Kubeconfig
-rm -f kubeconfig
-az aks get-credentials -n $AKS_NAME -g $RG_NAME --file kubeconfig
 gh secret set KUBE_CONFIG < kubeconfig
 
 # Get SWA Token and set secret
