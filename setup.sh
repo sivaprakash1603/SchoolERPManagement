@@ -19,7 +19,19 @@ echo "Fetching signed-in user object ID..."
 USER_OID=$(az ad signed-in-user show --query id -o tsv)
 echo "User Object ID: $USER_OID"
 
-# 3. Deploy Bicep Template
+# 3. Purge Soft-Deleted Key Vaults
+echo "Checking for soft-deleted Key Vaults to purge (to avoid ConflictErrors)..."
+DELETED_KVS=$(az keyvault list-deleted --query "[?starts_with(name, 'kverp')].name" -o tsv 2>/dev/null || echo "")
+for kv in $DELETED_KVS; do
+  if [ -n "$kv" ]; then
+    echo "Purging deleted Key Vault: $kv..."
+    az keyvault purge --name "$kv" -o none
+    # Wait a few seconds for the purge to complete on Azure's backend
+    sleep 20
+  fi
+done
+
+# 4. Deploy Bicep Template
 echo "Deploying infrastructure using Bicep..."
 DEPLOYMENT_OUTPUT=$(az deployment group create \
   --resource-group $RG_NAME \
