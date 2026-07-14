@@ -23,6 +23,11 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
+            - name: KeyVault__Url
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: KeyVaultUri
       # The secret name that contains ACR login credentials
       imagePullSecrets:
         - name: acr-auth

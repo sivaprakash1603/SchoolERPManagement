@@ -44,18 +44,45 @@ ACR_NAME=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.acrLoginServer.v
 AKS_NAME=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.aksClusterName.value')
 PG_SERVER=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.postgresServerName.value')
 SWA_HOSTNAME=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.staticWebAppDefaultHostName.value')
+KEY_VAULT_URI=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.keyVaultUri.value')
 
 UNIQUE_ID=$(echo $AKS_NAME | awk -F'-' '{print $3}')
 SWA_NAME="swaschoolerp${UNIQUE_ID}"
 FUNC_APP_NAME="func-schoolerp-${UNIQUE_ID}"
+KV_NAME="kverp${UNIQUE_ID}"
 
 echo "ACR Name: $ACR_NAME"
 echo "AKS Name: $AKS_NAME"
 echo "Postgres Server: $PG_SERVER"
 echo "Static Web App: $SWA_NAME"
 echo "Function App: $FUNC_APP_NAME"
+echo "Key Vault: $KV_NAME"
 
-# 4. Fetch ACR Credentials
+# 4. Inject Secrets into Azure Key Vault
+echo "Extracting local dotnet user-secrets..."
+STRIPE_SECRET=$(cd SchoolERPManagementAPI && dotnet user-secrets list | grep 'Stripe:SecretKey' | cut -d'=' -f2 | xargs)
+STRIPE_WEBHOOK=$(cd SchoolERPManagementAPI && dotnet user-secrets list | grep 'Stripe:WebhookSecret' | cut -d'=' -f2 | xargs)
+SMTP_PASSWORD=$(cd SchoolERPManagementAPI && dotnet user-secrets list | grep 'SmtpSettings:Password' | cut -d'=' -f2 | xargs)
+
+if [ -n "$STRIPE_SECRET" ]; then
+  echo "Pushing Stripe--SecretKey to Azure Key Vault..."
+  az keyvault secret set --vault-name $KV_NAME --name "Stripe--SecretKey" --value "$STRIPE_SECRET" -o none
+fi
+if [ -n "$STRIPE_WEBHOOK" ]; then
+  echo "Pushing Stripe--WebhookSecret to Azure Key Vault..."
+  az keyvault secret set --vault-name $KV_NAME --name "Stripe--WebhookSecret" --value "$STRIPE_WEBHOOK" -o none
+fi
+if [ -n "$SMTP_PASSWORD" ]; then
+  echo "Pushing SmtpSettings--Password to Azure Key Vault..."
+  az keyvault secret set --vault-name $KV_NAME --name "SmtpSettings--Password" --value "$SMTP_PASSWORD" -o none
+fi
+
+# Generate and push a secure JWT Key
+echo "Generating secure JWT Key and pushing to Key Vault..."
+JWT_KEY=$(openssl rand -base64 32 | tr -d '\n')
+az keyvault secret set --vault-name $KV_NAME --name "Jwt--Key" --value "$JWT_KEY" -o none
+
+# 5. Fetch ACR Credentials
 echo "Fetching ACR credentials..."
 ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
 ACR_USERNAME=$(az acr credential show --name $ACR_NAME --query "username" -o tsv)
@@ -66,7 +93,13 @@ rm -f kubeconfig
 az aks get-credentials -n $AKS_NAME -g $RG_NAME --file kubeconfig
 export KUBECONFIG=kubeconfig
 
-# 5. Create ACR Pull Secret in Kubernetes
+# 6. Create app-config ConfigMap
+echo "Creating app-config ConfigMap in Kubernetes..."
+kubectl create configmap app-config \
+  --from-literal=KeyVaultUri="$KEY_VAULT_URI" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# 7. Create ACR Pull Secret in Kubernetes
 echo "Creating acr-auth secret in Kubernetes..."
 kubectl create secret docker-registry acr-auth \
   --docker-server="$ACR_LOGIN_SERVER" \
