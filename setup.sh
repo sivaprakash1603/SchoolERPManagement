@@ -120,25 +120,44 @@ gh secret set KUBE_CONFIG < kubeconfig
 SWA_TOKEN=$(az staticwebapp secrets list --name $SWA_NAME --resource-group $RG_NAME --query "properties.apiKey" -o tsv)
 gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "$SWA_TOKEN"
 
-# 6. Trigger Backend CI/CD
+# 8. Install NGINX Ingress and Cert-Manager
+echo "Installing NGINX Ingress Controller..."
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+echo "Installing Cert-Manager..."
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
+echo "Waiting for Cert-Manager webhooks to be ready..."
+sleep 30
+
+# 9. Trigger Backend CI/CD
 echo "Triggering backend CI/CD workflow..."
 gh workflow run backend-ci-cd.yml
 echo "Waiting 60 seconds for GitHub Actions to deploy the backend..."
 sleep 60
 
-# 7. Wait for AKS LoadBalancer IP
-echo "Waiting for backend-api-service to obtain a Public IP (Load Balancer)..."
+# 10. Wait for Ingress LoadBalancer IP
+echo "Waiting for ingress-nginx-controller to obtain a Public IP..."
 export KUBECONFIG=kubeconfig
 EXTERNAL_IP=""
 while [ -z "$EXTERNAL_IP" ] || [ "$EXTERNAL_IP" == "<pending>" ] || [ "$EXTERNAL_IP" == "pending" ]; do
   sleep 10
-  EXTERNAL_IP=$(kubectl get svc backend-api-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+  EXTERNAL_IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   echo "Current IP Status: ${EXTERNAL_IP:-Pending...}"
 done
 
 echo "Assigned Public IP: $EXTERNAL_IP"
 
-# 8. Update DB Firewall with new IP
+# 11. Assign Azure DNS Label
+echo "Assigning DNS label to Public IP..."
+PIP_NAME=$(az network public-ip list -g MC_${RG_NAME}_${AKS_NAME}_${LOCATION} --query "[?ipAddress=='$EXTERNAL_IP'].name" -o tsv)
+az network public-ip update -g MC_${RG_NAME}_${AKS_NAME}_${LOCATION} -n $PIP_NAME --dns-name "schoolerp-api-$UNIQUE_ID" -o none
+API_DOMAIN="schoolerp-api-$UNIQUE_ID.$LOCATION.cloudapp.azure.com"
+echo "API Domain is: https://$API_DOMAIN"
+
+# 12. Apply Ingress Resource
+echo "Applying Ingress and Cert-Manager ClusterIssuer..."
+sed "s/API_DOMAIN_PLACEHOLDER/$API_DOMAIN/g" k8s/backend-ingress.yaml | kubectl apply -f -
+
+# 13. Update DB Firewall with new IP
 echo "Updating PostgreSQL Firewall to allow AKS IP..."
 az postgres flexible-server firewall-rule create \
   --resource-group $RG_NAME \
@@ -147,29 +166,30 @@ az postgres flexible-server firewall-rule create \
   --start-ip-address $EXTERNAL_IP \
   --end-ip-address $EXTERNAL_IP -o none
 
-# 9. Update Frontend Code
-echo "Updating environment.prod.ts with new backend IP..."
+# 14. Update Frontend Code
+echo "Updating environment.prod.ts with new HTTPS backend URL..."
 cat <<EOF > SchoolERPManagement.Frontend/src/environments/environment.prod.ts
 export const environment = {
   production: true,
-  apiUrl: 'http://$EXTERNAL_IP/api',
-  baseUrl: 'http://$EXTERNAL_IP',
-  hubUrl: 'http://$EXTERNAL_IP/hubs',
+  apiUrl: 'https://$API_DOMAIN/api',
+  baseUrl: 'https://$API_DOMAIN',
+  hubUrl: 'https://$API_DOMAIN/hubs',
+  aiApiUrl: 'http://localhost:8000'
 };
 EOF
 
-# 10. Commit and Push Frontend Updates
+# 15. Commit and Push Frontend Updates
 echo "Committing and pushing frontend updates..."
 git add SchoolERPManagement.Frontend/src/environments/environment.prod.ts
-git commit -m "Automated update of backend IP to $EXTERNAL_IP" || echo "No changes to commit"
+git commit -m "Automated update of backend IP to HTTPS Domain $API_DOMAIN" || echo "No changes to commit"
 git push origin main
 
-# 11. Deploy Azure Functions
+# 16. Deploy Azure Functions
 echo "Configuring Azure Function App settings..."
 az functionapp config appsettings set \
   --name $FUNC_APP_NAME \
   --resource-group $RG_NAME \
-  --settings "API_URL=http://$EXTERNAL_IP" -o none
+  --settings "API_URL=https://$API_DOMAIN" -o none
 
 echo "Deploying Azure Functions..."
 cd SchoolERPManagement.Functions
@@ -179,6 +199,6 @@ cd ..
 echo "========================================"
 echo " Setup Complete!"
 echo " Frontend URL: https://$SWA_HOSTNAME"
-echo " Backend API: http://$EXTERNAL_IP/api"
+echo " Backend API: https://$API_DOMAIN/api"
 echo " GitHub Actions is currently building and deploying your Frontend!"
 echo "========================================"
