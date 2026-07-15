@@ -337,7 +337,12 @@
                 class="form-control"
                 [ngModel]="notificationTitle()"
                 (ngModelChange)="notificationTitle.set($event)"
+                name="notifTitle"
+                #notifTitle="ngModel"
                 placeholder="Notification Title"
+                required
+                [class.is-valid]="notifTitle.valid && notifTitle.touched"
+                [class.is-invalid]="notifTitle.invalid && notifTitle.touched"
               />
             </div>
             <div class="col-12">
@@ -346,8 +351,13 @@
                 class="form-control"
                 [ngModel]="notificationMessage()"
                 (ngModelChange)="notificationMessage.set($event)"
+                name="notifMessage"
+                #notifMessage="ngModel"
                 placeholder="Type notification message here..."
                 rows="4"
+                required
+                [class.is-valid]="notifMessage.valid && notifMessage.touched"
+                [class.is-invalid]="notifMessage.invalid && notifMessage.touched"
               ></textarea>
             </div>
           </div>
@@ -436,7 +446,12 @@
                       class="form-control"
                       [ngModel]="editForm().firstName"
                       (ngModelChange)="editForm.set({ ...editForm(), firstName: $event })"
+                      name="editFirstName"
+                      #editFirstName="ngModel"
                       placeholder="First Name"
+                      required
+                      [class.is-valid]="editFirstName.valid && editFirstName.touched"
+                      [class.is-invalid]="editFirstName.invalid && editFirstName.touched"
                     />
                   </div>
                   <div class="col-6">
@@ -445,7 +460,12 @@
                       class="form-control"
                       [ngModel]="editForm().lastName"
                       (ngModelChange)="editForm.set({ ...editForm(), lastName: $event })"
+                      name="editLastName"
+                      #editLastName="ngModel"
                       placeholder="Last Name"
+                      required
+                      [class.is-valid]="editLastName.valid && editLastName.touched"
+                      [class.is-invalid]="editLastName.invalid && editLastName.touched"
                     />
                   </div>
                 </div>
@@ -459,7 +479,13 @@
                 class="form-control"
                 [ngModel]="editForm().email"
                 (ngModelChange)="editForm.set({ ...editForm(), email: $event })"
+                name="editEmail"
+                #editEmail="ngModel"
                 placeholder="Email Address"
+                required
+                pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$"
+                [class.is-valid]="editEmail.valid && editEmail.touched"
+                [class.is-invalid]="editEmail.invalid && editEmail.touched"
               />
             </div>
             <div class="col-12">
@@ -471,7 +497,12 @@
                 class="form-control"
                 [ngModel]="editForm().phonenumber"
                 (ngModelChange)="editForm.set({ ...editForm(), phonenumber: $event })"
+                name="editPhone"
+                #editPhone="ngModel"
                 placeholder="Phone Number"
+                required
+                [class.is-valid]="editPhone.valid && editPhone.touched"
+                [class.is-invalid]="editPhone.invalid && editPhone.touched"
               />
             </div>
           </div>

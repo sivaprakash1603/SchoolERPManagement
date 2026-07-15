@@ -77,6 +77,11 @@
                   type="text"
                   class="form-control"
                   [(ngModel)]="teacherForm().firstName"
+                  name="firstName"
+                  #firstName="ngModel"
+                  required
+                  [class.is-valid]="firstName.valid && firstName.touched"
+                  [class.is-invalid]="firstName.invalid && firstName.touched"
                   placeholder="First Name"
                 />
               </div>
@@ -85,6 +90,11 @@
                   type="text"
                   class="form-control"
                   [(ngModel)]="teacherForm().lastName"
+                  name="lastName"
+                  #lastName="ngModel"
+                  required
+                  [class.is-valid]="lastName.valid && lastName.touched"
+                  [class.is-invalid]="lastName.invalid && lastName.touched"
                   placeholder="Last Name"
                 />
               </div>
@@ -100,6 +110,13 @@
               type="email"
               class="form-control"
               [(ngModel)]="teacherForm().email"
+              name="email"
+              #email="ngModel"
+              required
+              email
+              pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$"
+              [class.is-valid]="email.valid && email.touched"
+              [class.is-invalid]="email.invalid && email.touched"
               placeholder="teacher@school.edu"
             />
           </div>
@@ -113,6 +130,11 @@
               type="text"
               class="form-control"
               [(ngModel)]="teacherForm().phonenumber"
+              name="phone"
+              #phone="ngModel"
+              required
+              [class.is-valid]="phone.valid && phone.touched"
+              [class.is-invalid]="phone.invalid && phone.touched"
               placeholder="Enter contact number"
             />
           </div>

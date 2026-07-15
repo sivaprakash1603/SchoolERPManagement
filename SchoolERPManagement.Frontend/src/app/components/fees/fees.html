@@ -631,7 +631,11 @@
                 class="form-select"
                 [ngModel]="structureForm().classId"
                 (ngModelChange)="structureForm.set({ ...structureForm(), classId: $event })"
+                name="structClassId"
+                #structClassId="ngModel"
                 required
+                [class.is-valid]="structClassId.valid && structClassId.touched"
+                [class.is-invalid]="structClassId.invalid && structClassId.touched"
               >
                 <option [ngValue]="null" disabled>Select Class...</option>
                 @for (c of classes(); track c.id) {
@@ -648,8 +652,12 @@
                 class="form-control"
                 [ngModel]="structureForm().feeName"
                 (ngModelChange)="structureForm.set({ ...structureForm(), feeName: $event })"
+                name="structFeeName"
+                #structFeeName="ngModel"
                 placeholder="e.g. Tuition Fee Q1, Library Fee"
                 required
+                [class.is-valid]="structFeeName.valid && structFeeName.touched"
+                [class.is-invalid]="structFeeName.invalid && structFeeName.touched"
               />
             </div>
             <div class="col-12">
@@ -659,9 +667,13 @@
                 class="form-control"
                 [ngModel]="structureForm().totalAmount"
                 (ngModelChange)="structureForm.set({ ...structureForm(), totalAmount: $event })"
+                name="structTotalAmount"
+                #structTotalAmount="ngModel"
                 (keypress)="($event.charCode >= 48 && $event.charCode <= 57 || $event.charCode === 46) ? null : $event.preventDefault()"
                 min="1"
                 required
+                [class.is-valid]="structTotalAmount.valid && structTotalAmount.touched"
+                [class.is-invalid]="structTotalAmount.invalid && structTotalAmount.touched"
               />
             </div>
             <div class="col-12">
@@ -671,6 +683,11 @@
                 class="form-control"
                 [ngModel]="structureForm().dueDate"
                 (ngModelChange)="structureForm.set({ ...structureForm(), dueDate: $event })"
+                name="structDueDate"
+                #structDueDate="ngModel"
+                required
+                [class.is-valid]="structDueDate.valid && structDueDate.touched"
+                [class.is-invalid]="structDueDate.invalid && structDueDate.touched"
               />
             </div>
           </div>
@@ -729,7 +746,11 @@
                 class="form-select"
                 [ngModel]="paymentForm().feeStructureId"
                 (ngModelChange)="paymentForm.set({ ...paymentForm(), feeStructureId: $event })"
+                name="payFeeId"
+                #payFeeId="ngModel"
                 required
+                [class.is-valid]="payFeeId.valid && payFeeId.touched"
+                [class.is-invalid]="payFeeId.invalid && payFeeId.touched"
               >
                 <option [ngValue]="null" disabled>Select Fee Component...</option>
                 @for (comp of feeComponents(); track comp.id) {
@@ -747,9 +768,13 @@
                 class="form-control"
                 [ngModel]="paymentForm().amountPaid"
                 (ngModelChange)="paymentForm.set({ ...paymentForm(), amountPaid: $event })"
+                name="payAmount"
+                #payAmount="ngModel"
                 (keypress)="($event.charCode >= 48 && $event.charCode <= 57 || $event.charCode === 46) ? null : $event.preventDefault()"
                 min="1"
                 required
+                [class.is-valid]="payAmount.valid && payAmount.touched"
+                [class.is-invalid]="payAmount.invalid && payAmount.touched"
               />
             </div>
             <div class="col-md-6">
@@ -758,7 +783,11 @@
                 class="form-select"
                 [ngModel]="paymentForm().paymentMethod"
                 (ngModelChange)="paymentForm.set({ ...paymentForm(), paymentMethod: $event })"
+                name="payMethod"
+                #payMethod="ngModel"
                 required
+                [class.is-valid]="payMethod.valid && payMethod.touched"
+                [class.is-invalid]="payMethod.invalid && payMethod.touched"
               >
                 <option value="cash">Cash</option>
                 <option value="cheque">Cheque</option>
@@ -772,6 +801,11 @@
                 class="form-control"
                 [ngModel]="paymentForm().paymentDate"
                 (ngModelChange)="paymentForm.set({ ...paymentForm(), paymentDate: $event })"
+                name="payDate"
+                #payDate="ngModel"
+                required
+                [class.is-valid]="payDate.valid && payDate.touched"
+                [class.is-invalid]="payDate.invalid && payDate.touched"
               />
             </div>
             <div class="col-12">

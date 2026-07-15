@@ -417,6 +417,11 @@
                   class="form-control"
                   placeholder="e.g. Science Lab Projector"
                   [(ngModel)]="newAsset().assetname"
+                  name="astName"
+                  #astName="ngModel"
+                  required
+                  [class.is-valid]="astName.valid && astName.touched"
+                  [class.is-invalid]="astName.invalid && astName.touched"
                 />
               </div>
 
@@ -425,7 +430,7 @@
                   <label class="form-label text-muted-custom fw-semibold mb-1"
                     >Asset Category *</label
                   >
-                  <select class="form-select" [(ngModel)]="newAsset().assettypeId">
+                  <select class="form-select" [(ngModel)]="newAsset().assettypeId" name="astCat" #astCat="ngModel" required [class.is-valid]="astCat.valid && astCat.touched" [class.is-invalid]="astCat.invalid && astCat.touched">
                     <option [ngValue]="undefined">Select Category</option>
                     @for (t of assetTypes(); track t.id) {
                       <option [value]="t.id">{{ t.typename }}</option>
@@ -434,7 +439,7 @@
                 </div>
                 <div class="col-6">
                   <label class="form-label text-muted-custom fw-semibold mb-1">Status</label>
-                  <select class="form-select" [(ngModel)]="newAsset().status">
+                  <select class="form-select" [(ngModel)]="newAsset().status" name="astStatus" #astStatus="ngModel" required [class.is-valid]="astStatus.valid && astStatus.touched" [class.is-invalid]="astStatus.invalid && astStatus.touched">
                     <option value="active">Active</option>
                     <option value="under repair">Under Repair</option>
                     <option value="broken">Broken</option>
@@ -527,7 +532,7 @@
                 <label class="form-label text-muted-custom fw-semibold mb-1"
                   >New Condition / Status *</label
                 >
-                <select class="form-select" [(ngModel)]="reportIssue().status">
+                <select class="form-select" [(ngModel)]="reportIssue().status" name="repStatus" #repStatus="ngModel" required [class.is-valid]="repStatus.valid && repStatus.touched" [class.is-invalid]="repStatus.invalid && repStatus.touched">
                   <option value="under repair">Under Repair</option>
                   <option value="broken">Broken</option>
                 </select>
@@ -542,6 +547,11 @@
                   rows="4"
                   placeholder="Describe what is wrong or needs maintenance..."
                   [(ngModel)]="reportIssue().report"
+                  name="repDesc"
+                  #repDesc="ngModel"
+                  required
+                  [class.is-valid]="repDesc.valid && repDesc.touched"
+                  [class.is-invalid]="repDesc.invalid && repDesc.touched"
                 ></textarea>
               </div>
             </div>
@@ -602,7 +612,7 @@
                 <label class="form-label text-muted-custom fw-semibold mb-1"
                   >Update Status / Action</label
                 >
-                <select class="form-select" [(ngModel)]="resolveForm().status">
+                <select class="form-select" [(ngModel)]="resolveForm().status" name="resStatus" #resStatus="ngModel" required [class.is-valid]="resStatus.valid && resStatus.touched" [class.is-invalid]="resStatus.invalid && resStatus.touched">
                   <option value="active">Active (Fully Resolved)</option>
                   <option value="under repair">Keep Under Repair</option>
                   <option value="broken">Broken (Out of Order)</option>
@@ -618,6 +628,11 @@
                   rows="4"
                   placeholder="Describe the resolution, repairs performed, or update details..."
                   [(ngModel)]="resolveForm().report"
+                  name="resReport"
+                  #resReport="ngModel"
+                  required
+                  [class.is-valid]="resReport.valid && resReport.touched"
+                  [class.is-invalid]="resReport.invalid && resReport.touched"
                 ></textarea>
               </div>
             </div>

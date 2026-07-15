@@ -4,8 +4,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
+import requests
+from langchain_core.messages import AIMessage
 
 class RAGService:
     def __init__(self):
@@ -19,11 +21,30 @@ class RAGService:
             model=self.model_name
         )
         
-        self.llm = ChatOllama(
-            base_url=ollama_base_url,
-            model=self.model_name,
-            temperature=0
-        )
+        self.api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        self.chat_model_name = os.environ.get("OLLAMA_MODEL", "meta-llama/llama-3-8b-instruct:free")
+        
+        def call_openrouter(prompt_value):
+            if not self.api_key or self.api_key == "sk-or-v1-put-your-key-here":
+                raise Exception("Please put your OpenRouter API key in the .env file")
+                
+            messages = [{"role": m.type if m.type != "human" else "user", "content": m.content} for m in prompt_value.to_messages()]
+            
+            response = requests.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                json={
+                    "model": self.chat_model_name,
+                    "messages": messages,
+                    "temperature": 0
+                }
+            )
+            if response.status_code == 200:
+                return AIMessage(content=response.json()["choices"][0]["message"]["content"])
+            else:
+                raise Exception(f"OpenRouter Error: {response.text}")
+
+        self.llm = RunnableLambda(call_openrouter)
         
         self.vectorstore = Chroma(
             persist_directory=self.persist_directory,

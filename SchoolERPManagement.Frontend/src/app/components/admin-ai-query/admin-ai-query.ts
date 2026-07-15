@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiService } from '../../services/ai.service';
 import { ToastService } from '../../services/toast.service';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-admin-ai-query',
@@ -25,6 +26,10 @@ export class AdminAiQuery {
     "Which classes have less than 20 students?"
   ];
 
+  tableHeaders: string[] = [];
+  tableData: any[] = [];
+  rawBlob: Blob | null = null;
+
   setQuery(query: string) {
     this.searchQuery = query;
     this.executeSearch();
@@ -37,28 +42,51 @@ export class AdminAiQuery {
     const queryToExecute = this.searchQuery;
 
     this.aiService.adminSearch(queryToExecute).subscribe({
-      next: (blob: Blob) => {
+      next: async (blob: Blob) => {
         this.isSearching = false;
-        
-        // Trigger download
-        const url = window.URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `AI_Report_${new Date().getTime()}.xlsx`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(anchor);
-        
-        this.toastService.success("Report generated and downloaded successfully!");
+        this.rawBlob = blob;
         this.searchQuery = '';
+        
+        try {
+          // Parse the Excel blob to JSON for preview
+          const arrayBuffer = await blob.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+          
+          if (jsonData && jsonData.length > 0) {
+            this.tableHeaders = jsonData[0] || [];
+            this.tableData = jsonData.slice(1);
+            this.toastService.success("Report generated successfully!");
+          } else {
+            this.tableHeaders = [];
+            this.tableData = [];
+            this.toastService.success("Report generated (No data found).");
+          }
+        } catch (e) {
+          console.error("Error parsing Excel blob", e);
+          this.toastService.error("Report generated but could not be previewed.");
+        }
       },
       error: (err) => {
         this.isSearching = false;
         console.error(err);
-        this.toastService.error("Failed to generate report. Ensure you have Admin privileges.");
+        this.toastService.error("Failed to generate report. Ensure you have Admin privileges or valid API setup.");
       }
     });
+  }
+
+  downloadReport() {
+    if (!this.rawBlob) return;
+    const url = window.URL.createObjectURL(this.rawBlob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `AI_Report_${new Date().getTime()}.xlsx`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(anchor);
   }
 }

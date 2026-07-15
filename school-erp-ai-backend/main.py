@@ -1,17 +1,29 @@
 import asyncio
+import os
 import jwt
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 from services.rag_service import RAGService
 from services.sql_agent_service import SQLAgentService
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = FastAPI(title="School ERP AI Backend", version="1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200", "https://localhost:4200", "http://127.0.0.1:4200"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"]
+)
+
 security = HTTPBearer()
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "SchoolERPManagement_SuperSecretKey_2026_AtLeast32CharsLong")
@@ -20,7 +32,13 @@ ALGORITHM = "HS256"
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM], audience="SchoolERPManagementAngularApp")
+        payload = jwt.decode(
+            token, 
+            JWT_SECRET, 
+            algorithms=[ALGORITHM], 
+            audience="SchoolERPManagementAngularApp",
+            options={"verify_iss": False, "verify_sub": False}
+        )
         
         # In .NET, the role claim is often stored with this URI key
         role_claim_uri = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
@@ -31,9 +49,14 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             
         return {"role": role, "sub": payload.get("sub")}
     except jwt.ExpiredSignatureError:
+        print("Token has expired")
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError as e:
+        print(f"Invalid token: {str(e)}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    except Exception as e:
+        print(f"Unknown token error: {str(e)}")
+        raise HTTPException(status_code=401, detail=f"Unknown token error: {str(e)}")
 
 def require_admin(user: dict = Depends(get_current_user)):
     if user.get("role") != "Admin":
@@ -88,7 +111,11 @@ async def admin_sql_search(request: SqlSearchRequest, user: dict = Depends(requi
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        if "Execution failed on sql" in error_msg:
+            # Extract the actual DB syntax error
+            error_msg = f"AI generated an invalid query. Detail: {error_msg.split(':', 1)[-1].strip()}"
+        raise HTTPException(status_code=400, detail=error_msg)
 
 if __name__ == "__main__":
     import uvicorn

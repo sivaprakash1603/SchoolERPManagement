@@ -228,9 +228,13 @@
                 class="form-control"
                 [ngModel]="createForm().date"
                 (ngModelChange)="createForm.set({ ...createForm(), date: $event })"
+                name="calDate"
+                #calDate="ngModel"
                 [min]="minDate()"
                 [max]="maxDate()"
                 required
+                [class.is-valid]="calDate.valid && calDate.touched"
+                [class.is-invalid]="calDate.invalid && calDate.touched"
               />
             </div>
             <!-- End Date -->
@@ -241,8 +245,12 @@
                 class="form-control"
                 [ngModel]="createForm().endDate"
                 (ngModelChange)="createForm.set({ ...createForm(), endDate: $event })"
+                name="calEndDate"
+                #calEndDate="ngModel"
                 [min]="createForm().date || minDate()"
                 [max]="maxDate()"
+                [class.is-valid]="calEndDate.valid && calEndDate.touched"
+                [class.is-invalid]="calEndDate.invalid && calEndDate.touched"
               />
             </div>
             <!-- Description -->
@@ -253,8 +261,12 @@
                 class="form-control"
                 [ngModel]="createForm().description"
                 (ngModelChange)="createForm.set({ ...createForm(), description: $event })"
+                name="calDesc"
+                #calDesc="ngModel"
                 placeholder="e.g. Independence Day, Annual Sports Meet"
                 required
+                [class.is-valid]="calDesc.valid && calDesc.touched"
+                [class.is-invalid]="calDesc.invalid && calDesc.touched"
               />
             </div>
             <!-- Is Holiday Toggle -->

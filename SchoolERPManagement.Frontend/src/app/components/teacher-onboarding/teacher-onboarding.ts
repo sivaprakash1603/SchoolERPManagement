@@ -67,6 +67,14 @@ export class TeacherOnboarding implements OnInit {
 
   // Wizard Navigation
   nextStep() {
+    if (this.currentStep() === 1) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (this.teacherForm().email && !emailRegex.test(this.teacherForm().email)) {
+        this.toastService.warning('Please enter a valid email address for the teacher.');
+        return;
+      }
+    }
+
     if (this.currentStep() < 3) {
       this.currentStep.update(s => s + 1);
     }

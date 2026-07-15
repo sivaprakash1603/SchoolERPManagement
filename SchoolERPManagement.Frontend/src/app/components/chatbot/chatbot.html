@@ -1,5 +1,5 @@
-<div class="chatbot-container p-4">
-  <div class="chatbot-card d-flex flex-column mx-auto">
+<div class="chatbot-container p-2 p-md-4">
+  <div class="chatbot-card d-flex flex-column mx-auto shadow-lg">
     <!-- Header -->
     <div class="chatbot-header p-4 d-flex align-items-center gap-3">
       <div class="avatar-circle pulse-animation">
@@ -34,7 +34,7 @@
     </div>
 
     <!-- Footer / Input -->
-    <div class="chatbot-footer p-3 bg-white border-top">
+    <div class="chatbot-footer p-3 chat-footer-custom border-top">
       @if (messages.length === 1 && !isTyping) {
         <div class="suggestions-container mb-3 d-flex flex-wrap gap-2 px-1" @messageAnimation>
           @for (sug of suggestedQuestions; track $index) {

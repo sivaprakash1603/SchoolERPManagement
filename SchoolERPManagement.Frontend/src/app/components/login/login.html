@@ -101,6 +101,7 @@
               <div class="input-group">
                 <span class="input-group-text login-input-icon"><i class="bi bi-person"></i></span>
                 <input type="text" class="form-control login-input" id="username" placeholder="Enter username" formControlName="username"
+                       [class.is-valid]="loginForm.get('username')?.valid && loginForm.get('username')?.touched"
                        [class.is-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
               </div>
               @if (loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched) {
@@ -117,6 +118,7 @@
               <div class="input-group">
                 <span class="input-group-text login-input-icon"><i class="bi bi-lock"></i></span>
                 <input [type]="showPassword() ? 'text' : 'password'" class="form-control login-input" id="password" placeholder="Enter password" formControlName="password"
+                       [class.is-valid]="loginForm.get('password')?.valid && loginForm.get('password')?.touched"
                        [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
                 <button type="button" class="input-group-text login-input-icon login-eye-btn" (click)="togglePasswordVisibility()">
                   @if (!showPassword()) {
@@ -163,7 +165,7 @@
               <div class="input-group">
                 <span class="input-group-text login-input-icon"><i class="bi bi-envelope"></i></span>
                 <input type="email" class="form-control login-input" id="forgotEmail" placeholder="you@school.edu"
-                       [ngModel]="forgotPasswordEmail()" (ngModelChange)="forgotPasswordEmail.set($event)" name="forgotEmail" required>
+                       [ngModel]="forgotPasswordEmail()" (ngModelChange)="forgotPasswordEmail.set($event)" name="forgotEmail" #forgotEmail="ngModel" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$" [class.is-valid]="forgotEmail.valid && forgotEmail.touched" [class.is-invalid]="forgotEmail.invalid && forgotEmail.touched">
               </div>
             </div>
 

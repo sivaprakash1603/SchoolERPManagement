@@ -2,9 +2,9 @@ import os
 import uuid
 import pandas as pd
 from langchain_community.utilities import SQLDatabase
-from langchain_ollama import ChatOllama
-from langchain_community.agent_toolkits import create_sql_agent
-from langchain.agents.agent_types import AgentType
+import requests
+import json
+from langchain_core.messages import AIMessage
 import sqlalchemy
 
 class SQLAgentService:
@@ -17,13 +17,36 @@ class SQLAgentService:
         self.engine = sqlalchemy.create_engine(db_connection)
         
         ollama_base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-        model_name = os.environ.get("OLLAMA_MODEL", "llama3")
+        self.model_name = os.environ.get("OLLAMA_MODEL", "meta-llama/llama-3-8b-instruct:free")
+        self.api_key = os.environ.get("OPENROUTER_API_KEY", "")
         
-        self.llm = ChatOllama(
-            base_url=ollama_base_url,
-            model=model_name,
-            temperature=0
-        )
+        # We use a custom LLM invoke wrapper for OpenRouter to avoid external dependencies
+        class OpenRouterLLM:
+            def __init__(self, api_key, model):
+                self.api_key = api_key
+                self.model = model
+                
+            def invoke(self, prompt: str):
+                if not self.api_key or self.api_key == "sk-or-v1-put-your-key-here":
+                    raise Exception("Please put your OpenRouter API key in the .env file")
+                
+                response = requests.post(
+                    url="https://openrouter.ai/api/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    json={
+                        "model": self.model,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0
+                    }
+                )
+                if response.status_code == 200:
+                    content = response.json()["choices"][0]["message"]["content"]
+                    # For compatibility if needed, return an AIMessage
+                    return AIMessage(content=content)
+                else:
+                    raise Exception(f"OpenRouter Error: {response.text}")
+
+        self.llm = OpenRouterLLM(self.api_key, self.model_name)
         
         # We use create_sql_agent to translate natural language to SQL and get the answer.
         # But we also need the actual table data to export.
@@ -33,26 +56,45 @@ class SQLAgentService:
         # A simpler robust approach for exporting data:
         # 1. Ask LLM to translate query to SQL
         # 2. Run the SQL with pandas and export
-        from langchain.chains import create_sql_query_chain
-        self.query_chain = create_sql_query_chain(self.llm, self.db)
+        # We can just fetch the schema manually or from self.db and use a standard prompt.
 
     def query_and_export(self, question: str) -> str:
         # Generate the SQL query based on the user's question
         # We tell the model to return ONLY the valid SQL.
-        prompt = f"{question}. Return ONLY the raw SQL query, no markdown formatting, no explanations."
+        schema = self.db.get_table_info()
+        prompt = f"""You are a PostgreSQL expert. Given an input question, create a syntactically correct PostgreSQL query to run.
+Return ONLY the raw SQL query, no markdown formatting, no explanations, no wrapping in ```sql ... ```.
+
+CRITICAL RULES:
+1. ONLY use valid PostgreSQL syntax (e.g., use `CURRENT_DATE - INTERVAL '1 month'` instead of MySQL's `DATE_SUB()`).
+2. ONLY use tables and columns that exist in the Schema below. Do not hallucinate table names.
+
+EXAMPLES:
+Question: What is the total fee collected last month?
+SQL Query: SELECT SUM(amountpaid) FROM feepayments WHERE paymentdate >= CURRENT_DATE - INTERVAL '1 month';
+
+Question: How many students are there?
+SQL Query: SELECT COUNT(id) FROM students;
+
+Schema:
+{schema}
+
+Question: {question}"""
         
-        response = self.query_chain.invoke({"question": prompt})
+        response = self.llm.invoke(prompt)
+        import re
         
-        # Clean up the response in case the model added markdown blocks anyway
-        sql_query = response.strip()
-        if sql_query.startswith("```sql"):
-            sql_query = sql_query[6:]
-        if sql_query.startswith("```"):
-            sql_query = sql_query[3:]
-        if sql_query.endswith("```"):
-            sql_query = sql_query[:-3]
-        
-        sql_query = sql_query.strip()
+        # Try to extract SQL if the model wrapped it in markdown blocks
+        match = re.search(r"```sql\s*(.*?)\s*```", response.content, re.DOTALL | re.IGNORECASE)
+        if match:
+            sql_query = match.group(1).strip()
+        else:
+            # Fallback: model might have just returned the query
+            sql_query = response.content.strip()
+            if sql_query.startswith("```"):
+                sql_query = sql_query[3:].strip()
+            if sql_query.endswith("```"):
+                sql_query = sql_query[:-3].strip()
         
         try:
             # Execute the query and load into a pandas DataFrame

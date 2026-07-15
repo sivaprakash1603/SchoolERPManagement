@@ -134,16 +134,39 @@
                 type="text"
                 class="form-control"
                 [(ngModel)]="createForm().yearName"
+                name="yearName"
+                #yearName="ngModel"
+                required
+                [class.is-valid]="yearName.valid && yearName.touched"
+                [class.is-invalid]="yearName.invalid && yearName.touched"
                 placeholder="e.g. 2025-2026"
               />
             </div>
             <div class="col-md-6">
               <label class="modal-form-label">Start Date</label>
-              <input type="date" class="form-control" [(ngModel)]="createForm().startDate" />
+              <input 
+                type="date" 
+                class="form-control" 
+                [(ngModel)]="createForm().startDate" 
+                name="startDate"
+                #startDate="ngModel"
+                required
+                [class.is-valid]="startDate.valid && startDate.touched"
+                [class.is-invalid]="startDate.invalid && startDate.touched"
+              />
             </div>
             <div class="col-md-6">
               <label class="modal-form-label">End Date</label>
-              <input type="date" class="form-control" [(ngModel)]="createForm().endDate" />
+              <input 
+                type="date" 
+                class="form-control" 
+                [(ngModel)]="createForm().endDate" 
+                name="endDate"
+                #endDate="ngModel"
+                required
+                [class.is-valid]="endDate.valid && endDate.touched"
+                [class.is-invalid]="endDate.invalid && endDate.touched"
+              />
             </div>
           </div>
         </div>

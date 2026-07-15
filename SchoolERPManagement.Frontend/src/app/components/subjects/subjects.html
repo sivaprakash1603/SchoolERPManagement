@@ -176,8 +176,12 @@
                 class="form-control"
                 [ngModel]="createForm().subjectName"
                 (ngModelChange)="createForm.set({ subjectName: $event })"
-                placeholder="e.g. Mathematics, Physics, History"
+                name="subjectName"
+                #subjectName="ngModel"
                 required
+                [class.is-valid]="subjectName.valid && subjectName.touched"
+                [class.is-invalid]="subjectName.invalid && subjectName.touched"
+                placeholder="e.g. Mathematics, Physics, History"
               />
             </div>
           </div>
@@ -230,8 +234,12 @@
                 class="form-control"
                 [ngModel]="editForm().subjectName"
                 (ngModelChange)="editForm.set({ subjectName: $event })"
-                placeholder="Enter subject name"
+                name="editSubjectName"
+                #editSubjectName="ngModel"
                 required
+                [class.is-valid]="editSubjectName.valid && editSubjectName.touched"
+                [class.is-invalid]="editSubjectName.invalid && editSubjectName.touched"
+                placeholder="Enter subject name"
               />
             </div>
           </div>

@@ -227,6 +227,11 @@
                 class="form-select"
                 [ngModel]="createForm().dayOfWeek"
                 (ngModelChange)="createForm.set({ ...createForm(), dayOfWeek: $event })"
+                name="dayOfWeek"
+                #dayOfWeek="ngModel"
+                required
+                [class.is-valid]="dayOfWeek.valid && dayOfWeek.touched"
+                [class.is-invalid]="dayOfWeek.invalid && dayOfWeek.touched"
               >
                 <option value="monday">Monday</option>
                 <option value="tuesday">Tuesday</option>
@@ -243,6 +248,11 @@
                 class="form-select"
                 [ngModel]="createForm().subjectId"
                 (ngModelChange)="createForm.set({ ...createForm(), subjectId: $event })"
+                name="ttSubject"
+                #ttSubject="ngModel"
+                required
+                [class.is-valid]="ttSubject.valid && ttSubject.touched"
+                [class.is-invalid]="ttSubject.invalid && ttSubject.touched"
               >
                 <option [ngValue]="null" disabled>Select Subject...</option>
                 @for (sub of subjects(); track sub.id) {
@@ -257,6 +267,11 @@
                 class="form-select"
                 [ngModel]="createForm().teacherId"
                 (ngModelChange)="createForm.set({ ...createForm(), teacherId: $event })"
+                name="ttTeacher"
+                #ttTeacher="ngModel"
+                required
+                [class.is-valid]="ttTeacher.valid && ttTeacher.touched"
+                [class.is-invalid]="ttTeacher.invalid && ttTeacher.touched"
               >
                 <option [ngValue]="null" disabled>Select Teacher...</option>
                 @for (t of teachers(); track t.id) {
@@ -272,7 +287,11 @@
                 class="form-control"
                 [ngModel]="createForm().startTime"
                 (ngModelChange)="createForm.set({ ...createForm(), startTime: $event })"
+                name="ttStartTime"
+                #ttStartTime="ngModel"
                 required
+                [class.is-valid]="ttStartTime.valid && ttStartTime.touched"
+                [class.is-invalid]="ttStartTime.invalid && ttStartTime.touched"
               />
             </div>
             <!-- End Time -->
@@ -283,7 +302,11 @@
                 class="form-control"
                 [ngModel]="createForm().endTime"
                 (ngModelChange)="createForm.set({ ...createForm(), endTime: $event })"
+                name="ttEndTime"
+                #ttEndTime="ngModel"
                 required
+                [class.is-valid]="ttEndTime.valid && ttEndTime.touched"
+                [class.is-invalid]="ttEndTime.invalid && ttEndTime.touched"
               />
             </div>
             <!-- Room No -->
@@ -440,7 +463,7 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label class="modal-form-label"><i class="bi bi-book me-1"></i> Subject</label>
-            <select class="form-select" [(ngModel)]="editForm().subjectId">
+            <select class="form-select" [(ngModel)]="editForm().subjectId" name="editSub" #editSub="ngModel" required [class.is-valid]="editSub.valid && editSub.touched" [class.is-invalid]="editSub.invalid && editSub.touched">
               <option [ngValue]="null" disabled>Select Subject</option>
               @for (sub of subjects(); track sub.id) {
                 <option [ngValue]="sub.id">{{ sub.subjectName }}</option>
@@ -449,7 +472,7 @@
           </div>
           <div class="col-md-6">
             <label class="modal-form-label"><i class="bi bi-person-badge me-1"></i> Teacher</label>
-            <select class="form-select" [(ngModel)]="editForm().teacherId">
+            <select class="form-select" [(ngModel)]="editForm().teacherId" name="editTea" #editTea="ngModel" required [class.is-valid]="editTea.valid && editTea.touched" [class.is-invalid]="editTea.invalid && editTea.touched">
               <option [ngValue]="null" disabled>Select Teacher</option>
               @for (teacher of teachers(); track teacher.id) {
                 <option [ngValue]="teacher.id">{{ teacher.firstName }} {{ teacher.lastName }}</option>

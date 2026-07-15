@@ -187,6 +187,11 @@
                 type="text"
                 class="form-control"
                 [(ngModel)]="createForm().classname"
+                name="classname"
+                #classname="ngModel"
+                required
+                [class.is-valid]="classname.valid && classname.touched"
+                [class.is-invalid]="classname.invalid && classname.touched"
                 placeholder="e.g. Class 10"
               />
             </div>
@@ -196,6 +201,11 @@
                 type="text"
                 class="form-control"
                 [(ngModel)]="createForm().section"
+                name="section"
+                #section="ngModel"
+                required
+                [class.is-valid]="section.valid && section.touched"
+                [class.is-invalid]="section.invalid && section.touched"
                 placeholder="e.g. A"
               />
             </div>
@@ -289,6 +299,11 @@
                 class="form-control"
                 [ngModel]="editForm().classname"
                 (ngModelChange)="editForm.set({ ...editForm(), classname: $event })"
+                name="editClassname"
+                #editClassname="ngModel"
+                required
+                [class.is-valid]="editClassname.valid && editClassname.touched"
+                [class.is-invalid]="editClassname.invalid && editClassname.touched"
                 placeholder="e.g. Class 10"
               />
             </div>
@@ -299,6 +314,11 @@
                 class="form-control"
                 [ngModel]="editForm().section"
                 (ngModelChange)="editForm.set({ ...editForm(), section: $event })"
+                name="editSection"
+                #editSection="ngModel"
+                required
+                [class.is-valid]="editSection.valid && editSection.touched"
+                [class.is-invalid]="editSection.invalid && editSection.touched"
                 placeholder="e.g. A"
               />
             </div>

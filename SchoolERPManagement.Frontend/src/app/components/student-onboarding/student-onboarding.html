@@ -82,6 +82,11 @@
                   type="text"
                   class="form-control"
                   [(ngModel)]="studentForm().firstName"
+                  name="firstName"
+                  #firstName="ngModel"
+                  required
+                  [class.is-valid]="firstName.valid && firstName.touched"
+                  [class.is-invalid]="firstName.invalid && firstName.touched"
                   placeholder="First name"
                 />
               </div>
@@ -90,6 +95,11 @@
                   type="text"
                   class="form-control"
                   [(ngModel)]="studentForm().lastName"
+                  name="lastName"
+                  #lastName="ngModel"
+                  required
+                  [class.is-valid]="lastName.valid && lastName.touched"
+                  [class.is-invalid]="lastName.invalid && lastName.touched"
                   placeholder="Last name"
                 />
               </div>
@@ -105,6 +115,13 @@
               type="email"
               class="form-control"
               [(ngModel)]="studentForm().email"
+              name="email"
+              #email="ngModel"
+              required
+              email
+              pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$"
+              [class.is-valid]="email.valid && email.touched"
+              [class.is-invalid]="email.invalid && email.touched"
               placeholder="student@example.com"
             />
           </div>
@@ -155,7 +172,17 @@
               style="font-size: 0.7rem; letter-spacing: 0.05em"
               >Date of Birth</label
             >
-            <input type="date" class="form-control" [(ngModel)]="studentForm().dateofbirth" />
+            <input 
+              type="date" 
+              class="form-control" 
+              [(ngModel)]="studentForm().dateofbirth"
+              name="dob"
+              #dob="ngModel"
+              required
+              [max]="todayDate"
+              [class.is-valid]="dob.valid && dob.touched"
+              [class.is-invalid]="dob.invalid && dob.touched"
+            />
           </div>
           <div class="col-md-4">
             <label
@@ -181,7 +208,17 @@
               style="font-size: 0.7rem; letter-spacing: 0.05em"
               >Admission Date</label
             >
-            <input type="date" class="form-control" [(ngModel)]="studentForm().admissiondate" />
+            <input 
+              type="date" 
+              class="form-control" 
+              [(ngModel)]="studentForm().admissiondate"
+              name="admissiondate"
+              #admissiondate="ngModel"
+              required
+              [max]="todayDate"
+              [class.is-valid]="admissiondate.valid && admissiondate.touched"
+              [class.is-invalid]="admissiondate.invalid && admissiondate.touched"
+            />
           </div>
         </div>
       </div>
@@ -285,6 +322,11 @@
                       class="form-control form-control-sm"
                       [ngModel]="np.firstName"
                       (ngModelChange)="updateNewParent(i, 'firstName', $event)"
+                      name="npFirst{{i}}"
+                      #npFirst="ngModel"
+                      required
+                      [class.is-valid]="npFirst.valid && npFirst.touched"
+                      [class.is-invalid]="npFirst.invalid && npFirst.touched"
                       placeholder="First Name"
                     />
                   </div>
@@ -294,6 +336,11 @@
                       class="form-control form-control-sm"
                       [ngModel]="np.lastName"
                       (ngModelChange)="updateNewParent(i, 'lastName', $event)"
+                      name="npLast{{i}}"
+                      #npLast="ngModel"
+                      required
+                      [class.is-valid]="npLast.valid && npLast.touched"
+                      [class.is-invalid]="npLast.invalid && npLast.touched"
                       placeholder="Last Name"
                     />
                   </div>
@@ -310,6 +357,13 @@
                   class="form-control form-control-sm"
                   [ngModel]="np.email"
                   (ngModelChange)="updateNewParent(i, 'email', $event)"
+                  name="npEmail{{i}}"
+                  #npEmail="ngModel"
+                  required
+                  email
+                  pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$"
+                  [class.is-valid]="npEmail.valid && npEmail.touched"
+                  [class.is-invalid]="npEmail.invalid && npEmail.touched"
                   placeholder="Email Address"
                 />
               </div>
@@ -515,7 +569,7 @@
           (click)="nextStep()"
           [disabled]="
             currentStep() === 1 &&
-            (!studentForm().firstName || !studentForm().lastName || !studentForm().email || !studentForm().classId)
+            (!studentForm().firstName || !studentForm().lastName || !studentForm().email || !studentForm().classId || !studentForm().dateofbirth || !studentForm().admissiondate)
           "
         >
           Next Step <i class="bi bi-arrow-right"></i>

@@ -391,8 +391,12 @@
                 class="form-control"
                 [ngModel]="examForm().examname"
                 (ngModelChange)="examForm.set({ ...examForm(), examname: $event })"
+                name="examName"
+                #examName="ngModel"
                 placeholder="e.g. Quarterly Examination, Unit Test 1"
                 required
+                [class.is-valid]="examName.valid && examName.touched"
+                [class.is-invalid]="examName.invalid && examName.touched"
               />
             </div>
           </div>
@@ -449,7 +453,11 @@
                   scheduleForm.set({ ...scheduleForm(), classId: $event });
                   onModalClassChange($event)
                 "
+                name="schClassId"
+                #schClassId="ngModel"
                 required
+                [class.is-valid]="schClassId.valid && schClassId.touched"
+                [class.is-invalid]="schClassId.invalid && schClassId.touched"
               >
                 <option [ngValue]="null" disabled>Select Class...</option>
                 @for (c of classes(); track c.id) {
@@ -466,7 +474,11 @@
                 class="form-select"
                 [ngModel]="scheduleForm().subjectId"
                 (ngModelChange)="scheduleForm.set({ ...scheduleForm(), subjectId: $event })"
+                name="schSubjectId"
+                #schSubjectId="ngModel"
                 required
+                [class.is-valid]="schSubjectId.valid && schSubjectId.touched"
+                [class.is-invalid]="schSubjectId.invalid && schSubjectId.touched"
               >
                 <option [ngValue]="null" disabled>Select Subject...</option>
                 @for (sub of modalSubjects(); track sub.id) {
@@ -482,7 +494,11 @@
                 class="form-control"
                 [ngModel]="scheduleForm().examDate"
                 (ngModelChange)="scheduleForm.set({ ...scheduleForm(), examDate: $event })"
+                name="schExamDate"
+                #schExamDate="ngModel"
                 required
+                [class.is-valid]="schExamDate.valid && schExamDate.touched"
+                [class.is-invalid]="schExamDate.invalid && schExamDate.touched"
               />
             </div>
             <!-- Duration -->
@@ -493,9 +509,13 @@
                 class="form-control"
                 [ngModel]="scheduleForm().durationMinutes"
                 (ngModelChange)="scheduleForm.set({ ...scheduleForm(), durationMinutes: $event })"
+                name="schDuration"
+                #schDuration="ngModel"
                 (keypress)="($event.charCode >= 48 && $event.charCode <= 57) ? null : $event.preventDefault()"
                 min="15"
                 required
+                [class.is-valid]="schDuration.valid && schDuration.touched"
+                [class.is-invalid]="schDuration.invalid && schDuration.touched"
               />
             </div>
             <!-- Session -->

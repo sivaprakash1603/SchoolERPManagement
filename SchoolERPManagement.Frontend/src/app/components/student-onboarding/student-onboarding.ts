@@ -45,6 +45,8 @@ export class StudentOnboarding implements OnInit {
   isCancelled = false;
   isSubmitted = false;
 
+  todayDate = new Date().toISOString().split('T')[0];
+
   // Data Loading
   classes = signal<ClassResponseDTO[]>([]);
   parents = signal<ParentResponseDTO[]>([]);
@@ -127,6 +129,50 @@ export class StudentOnboarding implements OnInit {
 
   // Navigation
   nextStep() {
+    if (this.currentStep() === 1) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (this.studentForm().email && !emailRegex.test(this.studentForm().email)) {
+        this.toastService.warning('Please enter a valid email address for the student.');
+        return;
+      }
+
+      if (this.studentForm().dateofbirth) {
+        const selectedDate = new Date(this.studentForm().dateofbirth);
+        const today = new Date();
+        selectedDate.setHours(0,0,0,0);
+        today.setHours(0,0,0,0);
+        if (selectedDate > today) {
+          this.toastService.warning('Date of birth cannot be in the future.');
+          return;
+        }
+      }
+
+      if (this.studentForm().admissiondate) {
+        const selectedDate = new Date(this.studentForm().admissiondate);
+        const today = new Date();
+        selectedDate.setHours(0,0,0,0);
+        today.setHours(0,0,0,0);
+        if (selectedDate > today) {
+          this.toastService.warning('Admission date cannot be in the future.');
+          return;
+        }
+      }
+    }
+
+    if (this.currentStep() === 2) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      for (const np of this.newParents()) {
+        if (!np.firstName || !np.lastName || !np.email || !np.phonenumber) {
+          this.toastService.warning('Please fill in all details for new parents before continuing.');
+          return;
+        }
+        if (!emailRegex.test(np.email)) {
+          this.toastService.warning(`Please enter a valid email address for parent: ${np.firstName}`);
+          return;
+        }
+      }
+    }
+
     if (this.currentStep() < 4) {
       this.currentStep.update(s => s + 1);
     }
@@ -229,6 +275,21 @@ export class StudentOnboarding implements OnInit {
       today.setHours(0,0,0,0);
       if (selectedDate > today) {
         this.toastService.warning('Date of birth cannot be in the future.');
+        return;
+      }
+    }
+
+    // Ensure student email is not the same as any newly created parent email
+    const studentEmail = this.studentForm().email?.trim().toLowerCase();
+    if (studentEmail) {
+      if (this.newParents().some(p => p.email?.trim().toLowerCase() === studentEmail)) {
+        this.toastService.warning("The student's email cannot be exactly the same as a new parent's email.");
+        return;
+      }
+      const selectedParentIds = this.selectedParents().map(p => p.parentId);
+      const existingParentEmails = this.parents().filter(p => selectedParentIds.includes(p.id)).map(p => p.email.toLowerCase());
+      if (existingParentEmails.includes(studentEmail)) {
+        this.toastService.warning("The student's email cannot be exactly the same as a selected parent's email.");
         return;
       }
     }

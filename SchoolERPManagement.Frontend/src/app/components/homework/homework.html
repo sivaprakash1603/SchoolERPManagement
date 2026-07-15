@@ -644,8 +644,12 @@
                   class="form-control"
                   [ngModel]="createForm().title"
                   (ngModelChange)="createForm.set({ ...createForm(), title: $event })"
+                  name="hwTitle"
+                  #hwTitle="ngModel"
                   placeholder="e.g. Solve exercises 1 to 5"
                   required
+                  [class.is-valid]="hwTitle.valid && hwTitle.touched"
+                  [class.is-invalid]="hwTitle.invalid && hwTitle.touched"
                 />
               </div>
               <div class="col-12">
@@ -664,7 +668,11 @@
                   class="form-select"
                   [ngModel]="createForm().subjectId"
                   (ngModelChange)="createForm.set({ ...createForm(), subjectId: $event })"
+                  name="hwSubject"
+                  #hwSubject="ngModel"
                   required
+                  [class.is-valid]="hwSubject.valid && hwSubject.touched"
+                  [class.is-invalid]="hwSubject.invalid && hwSubject.touched"
                 >
                   <option [ngValue]="null" disabled>Select Subject...</option>
                   @for (sub of subjects(); track sub.id) {
@@ -678,8 +686,12 @@
                   class="form-select"
                   [ngModel]="createForm().teacherId"
                   (ngModelChange)="createForm.set({ ...createForm(), teacherId: $event })"
+                  name="hwTeacher"
+                  #hwTeacher="ngModel"
                   [disabled]="userRole() === 'Teacher'"
                   required
+                  [class.is-valid]="hwTeacher.valid && hwTeacher.touched"
+                  [class.is-invalid]="hwTeacher.invalid && hwTeacher.touched"
                 >
                   <option [ngValue]="null" disabled>Select Teacher...</option>
                   @for (t of teachers(); track t.id) {
@@ -694,7 +706,11 @@
                   class="form-control"
                   [ngModel]="createForm().dueDate"
                   (ngModelChange)="createForm.set({ ...createForm(), dueDate: $event })"
+                  name="hwDueDate"
+                  #hwDueDate="ngModel"
                   required
+                  [class.is-valid]="hwDueDate.valid && hwDueDate.touched"
+                  [class.is-invalid]="hwDueDate.invalid && hwDueDate.touched"
                 />
               </div>
               <div class="col-md-6">

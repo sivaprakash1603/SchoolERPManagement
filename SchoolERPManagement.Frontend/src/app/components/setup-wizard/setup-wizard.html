@@ -32,17 +32,17 @@
         
         <div class="mb-3">
           <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Session Name</label>
-          <input type="text" class="form-control" [(ngModel)]="academicYearForm().yearname" placeholder="2025-2026" />
+          <input type="text" class="form-control" [(ngModel)]="academicYearForm().yearname" name="yrName" #yrName="ngModel" required [class.is-valid]="yrName.valid && yrName.touched" [class.is-invalid]="yrName.invalid && yrName.touched" placeholder="2025-2026" />
         </div>
         
         <div class="row g-3 mb-4">
           <div class="col-6">
             <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Start Date</label>
-            <input type="date" class="form-control" [(ngModel)]="academicYearForm().startdate" />
+            <input type="date" class="form-control" [(ngModel)]="academicYearForm().startdate" name="stDate" #stDate="ngModel" required [class.is-valid]="stDate.valid && stDate.touched" [class.is-invalid]="stDate.invalid && stDate.touched" />
           </div>
           <div class="col-6">
             <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">End Date</label>
-            <input type="date" class="form-control" [(ngModel)]="academicYearForm().enddate" />
+            <input type="date" class="form-control" [(ngModel)]="academicYearForm().enddate" name="edDate" #edDate="ngModel" required [class.is-valid]="edDate.valid && edDate.touched" [class.is-invalid]="edDate.invalid && edDate.touched" />
           </div>
         </div>
         
