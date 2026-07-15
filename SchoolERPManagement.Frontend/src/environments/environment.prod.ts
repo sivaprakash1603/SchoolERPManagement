@@ -1,7 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://4.247.233.14/api',
-  baseUrl: 'http://4.247.233.14',
-  hubUrl: 'http://4.247.233.14/hubs',
-  aiApiUrl: 'http://localhost:8000'
+  apiUrl: 'https://schoolerp-api-4ftuujzdmtwe6.centralindia.cloudapp.azure.com/api',
+  baseUrl: 'https://schoolerp-api-4ftuujzdmtwe6.centralindia.cloudapp.azure.com',
+  hubUrl: 'https://schoolerp-api-4ftuujzdmtwe6.centralindia.cloudapp.azure.com/hubs',
 };
