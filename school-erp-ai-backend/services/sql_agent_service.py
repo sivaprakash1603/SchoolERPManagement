@@ -22,11 +22,11 @@ class SQLAgentService:
         if not api_key:
             print("WARNING: ANTHROPIC_API_KEY is missing from environment variables.")
             
-        # We use claude-sonnet-4-6 via the proxy
+        # We use claude-haiku-4-5-20251001 via the proxy
         self.llm = ChatAnthropic(
-            model_name="claude-sonnet-4-6", 
+            model="claude-haiku-4-5-20251001", 
             anthropic_api_key=api_key,
-            anthropic_api_url=base_url,
+            base_url=base_url,
             temperature=0
         )
 
