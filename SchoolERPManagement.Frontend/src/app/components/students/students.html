@@ -738,6 +738,7 @@
                   }
                   <input
                     type="file"
+                    accept=".pdf"
                     class="form-control form-control-sm"
                     (change)="onFileSelected($event, 'Aadhaar')"
                   />
@@ -766,6 +767,7 @@
                   }
                   <input
                     type="file"
+                    accept=".pdf"
                     class="form-control form-control-sm"
                     (change)="onFileSelected($event, 'Birth Certificate')"
                   />
@@ -794,9 +796,9 @@
                   }
                   <input
                     type="file"
+                    accept=".jpg,.jpeg"
                     class="form-control form-control-sm"
                     (change)="onFileSelected($event, 'Photo')"
-                    accept="image/*"
                   />
                 </div>
               </div>

@@ -531,12 +531,25 @@
               <label class="modal-form-label"
                 ><i class="bi bi-telephone me-1"></i> Phone Number</label
               >
-              <input
-                type="text"
-                class="form-control"
-                [(ngModel)]="editForm().phonenumber"
-                placeholder="Enter phone number"
-              />
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted fw-bold">+91</span>
+                <input
+                  type="tel"
+                  class="form-control"
+                  [(ngModel)]="editForm().phonenumber"
+                  name="editPhone"
+                  #editPhone="ngModel"
+                  required
+                  pattern="^[0-9]{10}$"
+                  maxlength="10"
+                  [class.is-valid]="editPhone.valid && editPhone.touched"
+                  [class.is-invalid]="editPhone.invalid && editPhone.touched"
+                  placeholder="9999999999"
+                />
+                @if (editPhone.invalid && editPhone.touched) {
+                  <div class="invalid-feedback">Must be exactly 10 digits.</div>
+                }
+              </div>
             </div>
             <div class="col-md-6">
               <label class="modal-form-label"
@@ -573,7 +586,7 @@
           <button
             class="btn btn-success px-4 rounded-3"
             (click)="saveTeacher()"
-            [disabled]="isSaving() || !editForm().firstName || !editForm().lastName"
+            [disabled]="isSaving() || !editForm().firstName || !editForm().lastName || editPhone.invalid"
           >
             @if (isSaving()) {
               <span

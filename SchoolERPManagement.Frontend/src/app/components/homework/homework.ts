@@ -441,7 +441,14 @@ export class Homework implements OnInit {
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.selectedFile = input.files[0];
+      const file = input.files[0];
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext !== 'pdf') {
+        alert('Only PDF files are allowed.');
+        input.value = '';
+        return;
+      }
+      this.selectedFile = file;
     }
   }
 
@@ -705,7 +712,14 @@ export class Homework implements OnInit {
   onStudentFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.studentSubmitFile = input.files[0];
+      const file = input.files[0];
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext !== 'pdf') {
+        alert('Only PDF files are allowed.');
+        input.value = '';
+        return;
+      }
+      this.studentSubmitFile = file;
     }
   }
 

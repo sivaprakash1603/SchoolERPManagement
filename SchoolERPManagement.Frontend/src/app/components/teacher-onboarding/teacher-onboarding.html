@@ -126,17 +126,25 @@
               style="font-size: 0.7rem; letter-spacing: 0.05em"
               >Phone Number</label
             >
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="teacherForm().phonenumber"
-              name="phone"
-              #phone="ngModel"
-              required
-              [class.is-valid]="phone.valid && phone.touched"
-              [class.is-invalid]="phone.invalid && phone.touched"
-              placeholder="Enter contact number"
-            />
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted fw-bold">+91</span>
+              <input
+                type="tel"
+                class="form-control"
+                [(ngModel)]="teacherForm().phonenumber"
+                name="phone"
+                #phone="ngModel"
+                required
+                pattern="^[0-9]{10}$"
+                maxlength="10"
+                [class.is-valid]="phone.valid && phone.touched"
+                [class.is-invalid]="phone.invalid && phone.touched"
+                placeholder="9999999999"
+              />
+              @if (phone.invalid && phone.touched) {
+                <div class="invalid-feedback">Must be exactly 10 digits.</div>
+              }
+            </div>
           </div>
           <div class="col-md-6">
             <label
@@ -198,6 +206,7 @@
               }
               <input
                 type="file"
+                accept=".pdf"
                 class="form-control form-control-sm"
                 (change)="onFileSelected($event, 'Identity Proof')"
               />
@@ -224,6 +233,7 @@
               }
               <input
                 type="file"
+                accept=".pdf"
                 class="form-control form-control-sm"
                 (change)="onFileSelected($event, 'Degree / Educational Certificate')"
               />
@@ -248,9 +258,9 @@
               }
               <input
                 type="file"
+                accept=".jpg,.jpeg"
                 class="form-control form-control-sm"
                 (change)="onFileSelected($event, 'Photo')"
-                accept="image/*"
               />
             </div>
           </div>

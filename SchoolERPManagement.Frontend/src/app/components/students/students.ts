@@ -481,6 +481,19 @@ export class Students implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
+      const isPhoto = type.toLowerCase().includes('photo');
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      
+      if (isPhoto && ext !== 'jpg' && ext !== 'jpeg') {
+        alert('Only JPG/JPEG files are allowed for photos.');
+        input.value = '';
+        return;
+      } else if (!isPhoto && ext !== 'pdf') {
+        alert('Only PDF files are allowed for documents.');
+        input.value = '';
+        return;
+      }
+
       const current = this.selectedFiles();
       const existingIndex = current.findIndex(d => d.type === type);
       

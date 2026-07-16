@@ -391,7 +391,7 @@
             </div>
             <div class="mb-3">
               <label class="modal-form-label">Upload Your Work (Optional)</label>
-              <input type="file" class="form-control" (change)="onStudentFileSelected($event)" />
+              <input type="file" accept=".pdf" class="form-control" (change)="onStudentFileSelected($event)" />
               <small class="text-muted-custom">Upload your completed homework file.</small>
             </div>
           </div>
@@ -715,7 +715,7 @@
               </div>
               <div class="col-md-6">
                 <label class="modal-form-label">Attachment (Optional)</label>
-                <input type="file" class="form-control" (change)="onFileSelected($event)" />
+                <input type="file" accept=".pdf" class="form-control" (change)="onFileSelected($event)" />
               </div>
             </div>
           </div>

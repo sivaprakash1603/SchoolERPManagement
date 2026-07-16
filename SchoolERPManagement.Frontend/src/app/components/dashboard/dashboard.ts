@@ -157,13 +157,13 @@ export class Dashboard implements OnInit {
 
   get userName() {
     if (this.userRole() === 'Parent' && this.parentData()) {
-      return this.parentData().name;
+      return this.parentData().firstName || sessionStorage.getItem('name') || sessionStorage.getItem('username') || 'User';
     }
     if (this.userRole() === 'Student' && this.studentData()) {
-      return this.studentData().name;
+      return this.studentData().firstName || sessionStorage.getItem('name') || sessionStorage.getItem('username') || 'User';
     }
     if (this.userRole() === 'Teacher' && this.teacherData()) {
-      return this.teacherData().name;
+      return this.teacherData().firstName || sessionStorage.getItem('name') || sessionStorage.getItem('username') || 'User';
     }
     return sessionStorage.getItem('name') || sessionStorage.getItem('username') || 'User';
   }

@@ -478,8 +478,15 @@ export class Documents implements OnInit {
   }
 
   onFileSelected(event: any) {
-    const file = event.target.files[0] as File;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] as File;
     if (file) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext !== 'pdf') {
+        alert('Only PDF files are allowed.');
+        input.value = '';
+        return;
+      }
       this.uploadForm.update(form => ({ ...form, selectedFile: file }));
     }
   }
