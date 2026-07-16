@@ -46,6 +46,12 @@ PG_SERVER=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.postgresServerN
 SWA_HOSTNAME=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.staticWebAppDefaultHostName.value')
 KEY_VAULT_URI=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.keyVaultUri.value')
 
+echo "Pushing FrontendUrl to Key Vault..."
+KV_NAME_TEMP=$(az keyvault list --query "[?starts_with(name, 'kverp')].name" -o tsv | head -n 1)
+az keyvault secret set --vault-name $KV_NAME_TEMP --name "FrontendUrl" --value "https://$SWA_HOSTNAME" > /dev/null
+
+echo "✅ Azure Infrastructure Deployment Complete!"
+
 UNIQUE_ID=$(echo $AKS_NAME | awk -F'-' '{print $3}')
 SWA_NAME="swaschoolerp${UNIQUE_ID}"
 FUNC_APP_NAME="func-schoolerp-${UNIQUE_ID}"
@@ -113,6 +119,11 @@ kubectl create secret docker-registry acr-auth \
 echo "Creating ai-backend-secrets in Kubernetes..."
 DB_CONN=$(az keyvault secret show --vault-name $KV_NAME --name "ConnectionStrings--Default" --query value -o tsv)
 JWT_SECRET_VALUE=$(az keyvault secret show --vault-name $KV_NAME --name "Jwt--Key" --query value -o tsv)
+
+# Construct valid Python SQLAlchemy URL (URL encode @ in password)
+URL_ENC_PASS=$(echo -n "$DB_PASS" | jq -sRr @uri)
+PYTHON_DB_CONN="postgresql+psycopg2://pgadmin:${URL_ENC_PASS}@${PG_SERVER}.postgres.database.azure.com:5432/SchoolERPSystem?sslmode=require"
+
 # Fetch Anthropic API Key from local .env file
 ANTHROPIC_KEY=$(grep '^ANTHROPIC_API_KEY=' school-erp-ai-backend/.env | cut -d '=' -f2- | tr -d '"' | xargs)
 ANTHROPIC_URL=$(grep '^ANTHROPIC_BASE_URL=' school-erp-ai-backend/.env | cut -d '=' -f2- | tr -d '"' | xargs)
@@ -120,7 +131,7 @@ if [ -z "$ANTHROPIC_URL" ]; then
   ANTHROPIC_URL="https://proxy.llm-gateway.ready.presidio.com"
 fi
 kubectl create secret generic ai-backend-secrets \
-  --from-literal=DB_CONNECTION_STRING="$DB_CONN" \
+  --from-literal=DB_CONNECTION_STRING="$PYTHON_DB_CONN" \
   --from-literal=JWT_SECRET="$JWT_SECRET_VALUE" \
   --from-literal=ANTHROPIC_API_KEY="$ANTHROPIC_KEY" \
   --from-literal=ANTHROPIC_BASE_URL="$ANTHROPIC_URL" \

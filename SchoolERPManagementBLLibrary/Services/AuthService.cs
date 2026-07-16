@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SchoolERPManagementBLLibrary.DTOs.Auth;
 using SchoolERPManagementBLLibrary.Exceptions;
 using SchoolERPManagementBLLibrary.Helpers;
@@ -16,14 +17,16 @@ public sealed class AuthService : IAuthService
     private readonly JwtTokenGenerator _tokenGenerator;
     private readonly IEmailService _emailService;
     private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
 
-    public AuthService(IRepository<int, User> userRepository, IRepository<int, Role> roleRepository, JwtTokenGenerator tokenGenerator, IEmailService emailService, IMapper mapper)
+    public AuthService(IRepository<int, User> userRepository, IRepository<int, Role> roleRepository, JwtTokenGenerator tokenGenerator, IEmailService emailService, IMapper mapper, IConfiguration configuration)
     {
         _userRepository = userRepository;
         _roleRepository = roleRepository;
         _tokenGenerator = tokenGenerator;
         _emailService = emailService;
         _mapper = mapper;
+        _configuration = configuration;
     }
 
     public async Task<AuthResponseDTO> LoginAsync(LoginRequestDTO dto, CancellationToken cancellationToken)
@@ -62,7 +65,8 @@ public sealed class AuthService : IAuthService
 
         await _userRepository.UpdateAsync(user, save: true, ct: cancellationToken);
 
-        string resetLink = $"http://localhost:4200/reset-password?token={user.Resettoken}&email={System.Uri.EscapeDataString(dto.Email)}";
+        string frontendUrl = _configuration["FrontendUrl"]?.TrimEnd('/') ?? "http://localhost:4200";
+        string resetLink = $"{frontendUrl}/reset-password?token={user.Resettoken}&email={System.Uri.EscapeDataString(dto.Email)}";
         string emailBody = $@"
         <h2>Password Reset Request</h2>
         <p>Dear {user.Username},</p>
