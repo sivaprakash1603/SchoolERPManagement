@@ -40,7 +40,7 @@ Return ONLY the raw SQL query. Do NOT include markdown blocks, do NOT include ex
 CRITICAL RULES:
 1. ONLY use valid PostgreSQL syntax (e.g., use `CURRENT_DATE - INTERVAL '1 month'`).
 2. ONLY use tables and columns that exist in the Schema below. Do not hallucinate table names.
-3. If the user asks for something completely unrelated to the database, return "SELECT 'Invalid Query';"
+3. If the user asks for something completely unrelated to the database, return EXACTLY "INVALID_QUERY"
 
 Schema:
 {schema}"""
@@ -63,6 +63,9 @@ Schema:
                 sql_query = sql_query[3:].strip()
             if sql_query.endswith("```"):
                 sql_query = sql_query[:-3].strip()
+                
+        if "invalid_query" in sql_query.lower() or "invalid query" in sql_query.lower():
+            raise ValueError("I can only answer questions related to the School ERP database or operations.")
         
         try:
             # Execute the query and load into a pandas DataFrame

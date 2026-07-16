@@ -70,10 +70,24 @@ export class AdminAiQuery {
           this.toastService.error("Report generated but could not be previewed.");
         }
       },
-      error: (err) => {
+      error: async (err) => {
         this.isSearching = false;
         console.error(err);
-        this.toastService.error("Failed to generate report. Ensure you have Admin privileges or valid API setup.");
+        let errorMsg = "Failed to generate report. Ensure you have Admin privileges or valid API setup.";
+        
+        if (err.error instanceof Blob) {
+            try {
+                const text = await err.error.text();
+                const json = JSON.parse(text);
+                if (json.detail) errorMsg = json.detail;
+                else if (json.message) errorMsg = json.message;
+            } catch (e) {}
+        } else if (err.error) {
+            if (err.error.detail) errorMsg = err.error.detail;
+            else if (err.error.message) errorMsg = err.error.message;
+        }
+        
+        this.toastService.error(errorMsg);
       }
     });
   }
