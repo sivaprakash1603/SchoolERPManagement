@@ -113,9 +113,12 @@ kubectl create secret docker-registry acr-auth \
 echo "Creating ai-backend-secrets in Kubernetes..."
 DB_CONN=$(az keyvault secret show --vault-name $KV_NAME --name "ConnectionStrings--Default" --query value -o tsv)
 JWT_SECRET_VALUE=$(az keyvault secret show --vault-name $KV_NAME --name "Jwt--Key" --query value -o tsv)
-# Provide Anthropic API Key (Using a placeholder for this script, but in real life it should be fetched from KV or prompted)
-ANTHROPIC_KEY="sk-4lxEZmYJ41Tb0v4waTgwtA"
-ANTHROPIC_URL="https://proxy.llm-gateway.ready.presidio.com"
+# Fetch Anthropic API Key from local .env file
+ANTHROPIC_KEY=$(grep '^ANTHROPIC_API_KEY=' school-erp-ai-backend/.env | cut -d '=' -f2- | tr -d '"' | xargs)
+ANTHROPIC_URL=$(grep '^ANTHROPIC_BASE_URL=' school-erp-ai-backend/.env | cut -d '=' -f2- | tr -d '"' | xargs)
+if [ -z "$ANTHROPIC_URL" ]; then
+  ANTHROPIC_URL="https://proxy.llm-gateway.ready.presidio.com"
+fi
 kubectl create secret generic ai-backend-secrets \
   --from-literal=DB_CONNECTION_STRING="$DB_CONN" \
   --from-literal=JWT_SECRET="$JWT_SECRET_VALUE" \
