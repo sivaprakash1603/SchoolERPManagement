@@ -2,9 +2,8 @@ import os
 import uuid
 import pandas as pd
 from langchain_community.utilities import SQLDatabase
-import requests
-import json
-from langchain_core.messages import AIMessage
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import SystemMessage, HumanMessage
 import sqlalchemy
 
 class SQLAgentService:
@@ -16,81 +15,50 @@ class SQLAgentService:
         self.db = SQLDatabase.from_uri(db_connection)
         self.engine = sqlalchemy.create_engine(db_connection)
         
-        ollama_base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.model_name = os.environ.get("OLLAMA_MODEL", "meta-llama/llama-3-8b-instruct:free")
-        self.api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        # Fetch Anthropic configuration
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        base_url = os.environ.get("ANTHROPIC_BASE_URL", "https://proxy.llm-gateway.ready.presidio.com")
         
-        # We use a custom LLM invoke wrapper for OpenRouter to avoid external dependencies
-        class OpenRouterLLM:
-            def __init__(self, api_key, model):
-                self.api_key = api_key
-                self.model = model
-                
-            def invoke(self, prompt: str):
-                if not self.api_key or self.api_key == "sk-or-v1-put-your-key-here":
-                    raise Exception("Please put your OpenRouter API key in the .env file")
-                
-                response = requests.post(
-                    url="https://openrouter.ai/api/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {self.api_key}"},
-                    json={
-                        "model": self.model,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0
-                    }
-                )
-                if response.status_code == 200:
-                    content = response.json()["choices"][0]["message"]["content"]
-                    # For compatibility if needed, return an AIMessage
-                    return AIMessage(content=content)
-                else:
-                    raise Exception(f"OpenRouter Error: {response.text}")
-
-        self.llm = OpenRouterLLM(self.api_key, self.model_name)
-        
-        # We use create_sql_agent to translate natural language to SQL and get the answer.
-        # But we also need the actual table data to export.
-        # So we can instruct the LLM to output ONLY the SQL query, 
-        # or we can write a custom chain that just generates the SQL.
-        
-        # A simpler robust approach for exporting data:
-        # 1. Ask LLM to translate query to SQL
-        # 2. Run the SQL with pandas and export
-        # We can just fetch the schema manually or from self.db and use a standard prompt.
+        if not api_key:
+            print("WARNING: ANTHROPIC_API_KEY is missing from environment variables.")
+            
+        # We use claude-sonnet-4-6 via the proxy
+        self.llm = ChatAnthropic(
+            model_name="claude-sonnet-4-6", 
+            anthropic_api_key=api_key,
+            anthropic_api_url=base_url,
+            temperature=0
+        )
 
     def query_and_export(self, question: str) -> str:
         # Generate the SQL query based on the user's question
-        # We tell the model to return ONLY the valid SQL.
         schema = self.db.get_table_info()
-        prompt = f"""You are a PostgreSQL expert. Given an input question, create a syntactically correct PostgreSQL query to run.
-Return ONLY the raw SQL query, no markdown formatting, no explanations, no wrapping in ```sql ... ```.
+        
+        system_prompt = f"""You are a strict PostgreSQL database expert. Given an input question, create a syntactically correct PostgreSQL query to run.
+Return ONLY the raw SQL query. Do NOT include markdown blocks, do NOT include explanations, do NOT wrap the query in ```sql ... ```.
 
 CRITICAL RULES:
-1. ONLY use valid PostgreSQL syntax (e.g., use `CURRENT_DATE - INTERVAL '1 month'` instead of MySQL's `DATE_SUB()`).
+1. ONLY use valid PostgreSQL syntax (e.g., use `CURRENT_DATE - INTERVAL '1 month'`).
 2. ONLY use tables and columns that exist in the Schema below. Do not hallucinate table names.
-
-EXAMPLES:
-Question: What is the total fee collected last month?
-SQL Query: SELECT SUM(amountpaid) FROM feepayments WHERE paymentdate >= CURRENT_DATE - INTERVAL '1 month';
-
-Question: How many students are there?
-SQL Query: SELECT COUNT(id) FROM students;
+3. If the user asks for something completely unrelated to the database, return "SELECT 'Invalid Query';"
 
 Schema:
-{schema}
-
-Question: {question}"""
+{schema}"""
         
-        response = self.llm.invoke(prompt)
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=f"Question: {question}\nSQL Query:")
+        ]
+        
+        response = self.llm.invoke(messages)
+        
+        # Clean the response just in case the model ignored instructions
+        sql_query = response.content.strip()
         import re
-        
-        # Try to extract SQL if the model wrapped it in markdown blocks
-        match = re.search(r"```sql\s*(.*?)\s*```", response.content, re.DOTALL | re.IGNORECASE)
+        match = re.search(r"```sql\s*(.*?)\s*```", sql_query, re.DOTALL | re.IGNORECASE)
         if match:
             sql_query = match.group(1).strip()
         else:
-            # Fallback: model might have just returned the query
-            sql_query = response.content.strip()
             if sql_query.startswith("```"):
                 sql_query = sql_query[3:].strip()
             if sql_query.endswith("```"):

@@ -109,7 +109,21 @@ kubectl create secret docker-registry acr-auth \
   --docker-password="$ACR_PASSWORD" \
   --docker-email="admin@schoolerp.com" --dry-run=client -o yaml | kubectl apply -f -
 
-# 6. Configure GitHub Secrets
+# Create AI Backend Secrets
+echo "Creating ai-backend-secrets in Kubernetes..."
+DB_CONN=$(az keyvault secret show --vault-name $KV_NAME --name "ConnectionStrings--Default" --query value -o tsv)
+JWT_SECRET_VALUE=$(az keyvault secret show --vault-name $KV_NAME --name "Jwt--Key" --query value -o tsv)
+# Provide Anthropic API Key (Using a placeholder for this script, but in real life it should be fetched from KV or prompted)
+ANTHROPIC_KEY="sk-4lxEZmYJ41Tb0v4waTgwtA"
+ANTHROPIC_URL="https://proxy.llm-gateway.ready.presidio.com"
+kubectl create secret generic ai-backend-secrets \
+  --from-literal=DB_CONNECTION_STRING="$DB_CONN" \
+  --from-literal=JWT_SECRET="$JWT_SECRET_VALUE" \
+  --from-literal=ANTHROPIC_API_KEY="$ANTHROPIC_KEY" \
+  --from-literal=ANTHROPIC_BASE_URL="$ANTHROPIC_URL" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# 8. Configure GitHub Secrets
 echo "Configuring GitHub Secrets..."
 gh secret set ACR_LOGIN_SERVER --body "$ACR_LOGIN_SERVER"
 gh secret set ACR_USERNAME --body "$ACR_USERNAME"
@@ -120,7 +134,7 @@ gh secret set KUBE_CONFIG < kubeconfig
 SWA_TOKEN=$(az staticwebapp secrets list --name $SWA_NAME --resource-group $RG_NAME --query "properties.apiKey" -o tsv)
 gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "$SWA_TOKEN"
 
-# 8. Install NGINX Ingress and Cert-Manager
+# 9. Install NGINX Ingress and Cert-Manager
 echo "Installing NGINX Ingress Controller..."
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
 echo "Installing Cert-Manager..."
@@ -128,10 +142,12 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 echo "Waiting for Cert-Manager webhooks to be ready..."
 sleep 30
 
-# 9. Trigger Backend CI/CD
-echo "Triggering backend CI/CD workflow..."
+# 10. Trigger Backend CI/CDs
+echo "Triggering .NET backend CI/CD workflow..."
 gh workflow run backend-ci-cd.yml
-echo "Waiting 60 seconds for GitHub Actions to deploy the backend..."
+echo "Triggering AI backend CI/CD workflow..."
+gh workflow run ai-backend-ci-cd.yml
+echo "Waiting 60 seconds for GitHub Actions to deploy the backends..."
 sleep 60
 
 # 10. Wait for Ingress LoadBalancer IP
@@ -174,7 +190,7 @@ export const environment = {
   apiUrl: 'https://$API_DOMAIN/api',
   baseUrl: 'https://$API_DOMAIN',
   hubUrl: 'https://$API_DOMAIN/hubs',
-  aiApiUrl: 'http://localhost:8000'
+  aiApiUrl: 'https://$API_DOMAIN'
 };
 EOF
 

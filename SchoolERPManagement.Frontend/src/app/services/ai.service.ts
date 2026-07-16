@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 
 export interface ChatRequest {
   query: string;
+  role?: string;
 }
 
 export interface ChatResponse {
@@ -22,8 +23,8 @@ export class AiService {
   private http = inject(HttpClient);
   private aiApiUrl = environment.aiApiUrl;
 
-  chatFaq(query: string): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(`${this.aiApiUrl}/chat/faq`, { query });
+  chatFaq(query: string, role?: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(`${this.aiApiUrl}/chat/faq`, { query, role });
   }
 
   uploadFaq(file: File): Observable<{ message: string }> {

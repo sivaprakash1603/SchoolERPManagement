@@ -14,3 +14,7 @@ openpyxl
 python-multipart
 python-dotenv
 PyJWT
+
+langchain-anthropic
+langchain-huggingface
+sentence-transformers

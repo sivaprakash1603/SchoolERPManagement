@@ -40,7 +40,7 @@ describe('Fees', () => {
         totalFeeAmount: 1000,
         totalPaid: 500,
         pendingAmount: 500,
-        feeComponents: [{ id: 1, name: 'Tuition', amount: 1000 }],
+        feeComponents: [{ id: 1, feeName: 'Tuition', amount: 1000 }],
         payments: [{ id: 100, studentId: 10, feeStructureId: 1, amountPaid: 500, paymentDate: '2026-07-06T00:00:00Z', paymentMethod: 'cash', transactionId: 'TX1' }]
       })),
       addFeeStructure: vi.fn().mockReturnValue(of({})),
@@ -53,23 +53,23 @@ describe('Fees', () => {
     };
 
     mockClassService = {
-      getAllClasses: vi.fn().mockReturnValue(of([{ id: 2, classname: 'Grade 10', section: 'A' }]))
+      getAllClasses: vi.fn().mockReturnValue(of([{ id: 2, classfeeName: 'Grade 10', section: 'A' }]))
     };
 
     mockStudentService = {
-      getStudentByUserId: vi.fn().mockReturnValue(of({ id: 10, name: 'Alice', classId: 2 }))
+      getStudentByUserId: vi.fn().mockReturnValue(of({ id: 10, feeName: 'Alice', classId: 2 }))
     };
 
     mockParentService = {
       getParentByUserId: vi.fn().mockReturnValue(of({ id: 20 })),
       getParentChildren: vi.fn().mockReturnValue(of([
-        { studentId: 10, name: 'Alice', regNo: 'S001', className: 'Grade 10' }
+        { studentId: 10, feeName: 'Alice', regNo: 'S001', className: 'Grade 10' }
       ])),
       selectedChildId: null
     };
 
     mockTeacherService = {
-      getTeacherByUsername: vi.fn().mockReturnValue(of({ id: 30, className: 'Grade 10', section: 'A' }))
+      getTeacherByUserfeeName: vi.fn().mockReturnValue(of({ id: 30, className: 'Grade 10', section: 'A' }))
     };
 
     mockTimetableService = {
@@ -254,7 +254,7 @@ describe('Fees', () => {
       component.userRole.set('Teacher');
       component.currentTeacher.set({ className: 'Grade 10', section: 'A' });
       component.teacherClassIds.set([99]); // ID doesn't match, but name matches
-      mockClassService.getAllClasses.mockReturnValue(of([{ id: 2, classname: 'Grade 10', section: 'A' }, { id: 3, classname: 'Grade 11' }]));
+      mockClassService.getAllClasses.mockReturnValue(of([{ id: 2, classfeeName: 'Grade 10', section: 'A' }, { id: 3, classfeeName: 'Grade 11' }]));
       component.fetchClasses(1);
       expect(component.classes().length).toBe(1);
       expect(component.classes()[0].id).toBe(2);
@@ -393,7 +393,7 @@ describe('Fees', () => {
     });
 
     it('should toggle Payment Modal', () => {
-      const comp: FeeComponentDTO = { id: 1, name: 'Tuition', amount: 1000 };
+      const comp: FeeComponentDTO = { id: 1, feeName: 'Tuition', amount: 1000 };
       component.feeComponents.set([comp]);
       component.payments.set([]);
       
@@ -408,7 +408,7 @@ describe('Fees', () => {
 
     it('should save payment successfully', () => {
       component.selectedStudentId.set(10);
-      component.feeComponents.set([{ id: 1, name: 'Tuition', amount: 1000 }]);
+      component.feeComponents.set([{ id: 1, feeName: 'Tuition', amount: 1000 }]);
       component.payments.set([]);
       
       component.showPaymentModal.set(true);
@@ -426,7 +426,7 @@ describe('Fees', () => {
     it('should save payment successfully without classId selected', () => {
       component.selectedClassId.set(null);
       component.selectedStudentId.set(10);
-      component.feeComponents.set([{ id: 1, name: 'Tuition', amount: 1000 }]);
+      component.feeComponents.set([{ id: 1, feeName: 'Tuition', amount: 1000 }]);
       component.payments.set([]);
       component.paymentForm.set({ feeStructureId: 1, amountPaid: 500, paymentDate: '2026-07-06', paymentMethod: 'cash', transactionId: '' });
       
@@ -453,7 +453,7 @@ describe('Fees', () => {
 
     it('should validate payment amount against outstanding balance', () => {
       component.selectedStudentId.set(10);
-      component.feeComponents.set([{ id: 1, name: 'Tuition', amount: 1000 }]);
+      component.feeComponents.set([{ id: 1, feeName: 'Tuition', amount: 1000 }]);
       component.payments.set([{ id: 100, studentId: 10, feeStructureId: 1, amountPaid: 800, paymentDate: '', paymentMethod: '', transactionId: '' }]);
       
       // Balance is 200
@@ -464,7 +464,7 @@ describe('Fees', () => {
 
     it('should validate payment date is not in future', () => {
       component.selectedStudentId.set(10);
-      component.feeComponents.set([{ id: 1, name: 'Tuition', amount: 1000 }]);
+      component.feeComponents.set([{ id: 1, feeName: 'Tuition', amount: 1000 }]);
       component.payments.set([]);
       
       const futureDate = new Date();
@@ -477,7 +477,7 @@ describe('Fees', () => {
 
     it('should handle save payment error', () => {
       component.selectedStudentId.set(10);
-      component.feeComponents.set([{ id: 1, name: 'Tuition', amount: 1000 }]);
+      component.feeComponents.set([{ id: 1, feeName: 'Tuition', amount: 1000 }]);
       component.payments.set([]);
       component.paymentForm.set({ feeStructureId: 1, amountPaid: 500, paymentDate: '2026-07-06', paymentMethod: 'cash', transactionId: '' });
       
@@ -491,7 +491,7 @@ describe('Fees', () => {
       delete (window as any).location;
       window.location = { ...originalLocation, href: '' } as any;
 
-      const comp: FeeComponentDTO = { id: 1, name: 'Tuition', amount: 1000 };
+      const comp: FeeComponentDTO = { id: 1, feeName: 'Tuition', amount: 1000 };
       component.feeComponents.set([comp]);
       component.payments.set([]);
       component.selectedStudentId.set(10);
@@ -515,7 +515,7 @@ describe('Fees', () => {
     });
 
     it('should show info if Stripe modal opened for fully paid component', () => {
-      const comp: FeeComponentDTO = { id: 1, name: 'Tuition', amount: 1000 };
+      const comp: FeeComponentDTO = { id: 1, feeName: 'Tuition', amount: 1000 };
       component.feeComponents.set([comp]);
       component.payments.set([{ id: 100, studentId: 10, feeStructureId: 1, amountPaid: 1000, paymentDate: '', paymentMethod: '', transactionId: '' }]);
       
@@ -525,7 +525,7 @@ describe('Fees', () => {
     });
 
     it('should validate Stripe payment amount', () => {
-      const comp: FeeComponentDTO = { id: 1, name: 'Tuition', amount: 1000 };
+      const comp: FeeComponentDTO = { id: 1, feeName: 'Tuition', amount: 1000 };
       component.feeComponents.set([comp]);
       component.payments.set([]);
       component.selectedStudentId.set(10);
@@ -538,7 +538,7 @@ describe('Fees', () => {
     });
 
     it('should handle Stripe session error', () => {
-      const comp: FeeComponentDTO = { id: 1, name: 'Tuition', amount: 1000 };
+      const comp: FeeComponentDTO = { id: 1, feeName: 'Tuition', amount: 1000 };
       component.feeComponents.set([comp]);
       component.payments.set([]);
       component.selectedStudentId.set(10);
@@ -551,7 +551,7 @@ describe('Fees', () => {
     });
 
     it('should handle missing URL from Stripe session', () => {
-      const comp: FeeComponentDTO = { id: 1, name: 'Tuition', amount: 1000 };
+      const comp: FeeComponentDTO = { id: 1, feeName: 'Tuition', amount: 1000 };
       component.feeComponents.set([comp]);
       component.payments.set([]);
       component.selectedStudentId.set(10);
@@ -564,7 +564,7 @@ describe('Fees', () => {
     });
     
     it('should calculate outstanding balance correctly', () => {
-      const comp: FeeComponentDTO = { id: 1, name: 'Tuition', amount: 1000 };
+      const comp: FeeComponentDTO = { id: 1, feeName: 'Tuition', amount: 1000 };
       component.feeComponents.set([comp]);
       component.payments.set([
         { id: 100, studentId: 10, feeStructureId: 1, amountPaid: 300, paymentDate: '', paymentMethod: '', transactionId: '' },
@@ -575,7 +575,7 @@ describe('Fees', () => {
     });
     
     it('should get component name correctly', () => {
-      component.feeComponents.set([{ id: 1, name: 'Tuition', amount: 1000 }]);
+      component.feeComponents.set([{ id: 1, feeName: 'Tuition', amount: 1000 }]);
       expect(component.getComponentName(1)).toBe('Tuition');
       expect(component.getComponentName(99)).toBe('General Fee');
     });
@@ -725,7 +725,7 @@ describe('Fees', () => {
 
     it('should render Stripe modal and handle state', () => {
       component.showStripeModal.set(true);
-      component.stripePaymentComponent.set({ id: 1, name: 'Tuition Fee', amount: 1000 });
+      component.stripePaymentComponent.set({ id: 1, feeName: 'Tuition Fee', amount: 1000 });
       component.stripePaymentMaxAmount.set(500);
       fixture.detectChanges();
       const compiled = fixture.nativeElement as HTMLElement;

@@ -3,6 +3,8 @@ import os
 import jwt
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.responses import FileResponse
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -68,16 +70,27 @@ sql_agent_service = SQLAgentService()
 
 class ChatRequest(BaseModel):
     query: str
+    role: str | None = None
 
 class SqlSearchRequest(BaseModel):
     query: str
+
+@app.post("/chat/faq/stream")
+async def chat_faq_stream(request: ChatRequest, user: dict = Depends(get_current_user)):
+    try:
+        def generate():
+            for chunk in rag_service.ask_stream(request.query, request.role):
+                yield chunk
+        return StreamingResponse(generate(), media_type="text/plain")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/chat/faq")
 async def chat_faq(request: ChatRequest, user: dict = Depends(get_current_user)):
     """Answers a user question based strictly on the uploaded FAQ documents."""
     try:
         # Run blocking LLM call in a separate thread
-        answer = await asyncio.to_thread(rag_service.ask, request.query)
+        answer = await asyncio.to_thread(rag_service.ask, request.query, request.role)
         return {"answer": answer}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -119,4 +132,4 @@ async def admin_sql_search(request: SqlSearchRequest, user: dict = Depends(requi
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)

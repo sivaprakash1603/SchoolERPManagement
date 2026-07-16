@@ -608,6 +608,6 @@ export class Fees implements OnInit {
 
   getComponentName(id: number): string {
     const comp = this.feeComponents().find(c => c.id === id);
-    return comp ? (comp.name || 'Fee Component') : 'General Fee';
+    return comp ? (comp.feeName || 'Fee Component') : 'General Fee';
   }
 }

@@ -1,0 +1,45 @@
+name: AI Backend CI/CD to AKS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'school-erp-ai-backend/**'
+      - 'k8s/ai-backend-*'
+      - '.github/workflows/ai-backend-ci-cd.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Docker Login to ACR
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - name: Build and Push Docker Image
+      run: |
+        IMAGE_NAME="${{ secrets.ACR_LOGIN_SERVER }}/ai-backend-api:${{ github.sha }}"
+        cd school-erp-ai-backend
+        docker build -t $IMAGE_NAME -f Dockerfile .
+        docker push $IMAGE_NAME
+
+    - name: Set Kubernetes Context
+      uses: azure/k8s-set-context@v3
+      with:
+        kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+    - name: Update Kubernetes Deployment Image
+      run: |
+        sed -i "s|DOCKER_IMAGE_PLACEHOLDER|${{ secrets.ACR_LOGIN_SERVER }}/ai-backend-api:${{ github.sha }}|g" k8s/ai-backend-deployment.yaml
+
+    - name: Deploy to AKS
+      run: |
+        kubectl apply -f k8s/ai-backend-deployment.yaml
+        kubectl apply -f k8s/ai-backend-service.yaml

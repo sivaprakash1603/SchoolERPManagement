@@ -1,24 +1,33 @@
 .chatbot-container {
-    height: calc(100vh - 100px); /* Fill most of the layout area */
+    /* Negate parent layout padding:
+       Mobile (p-2 on main, py-2 on container): ~1rem vertical, 0.5rem horizontal
+       Desktop (p-md-4 on main, py-2 px-md-3): ~2rem vertical, ~2.5rem horizontal
+    */
+    margin: -1rem -0.5rem;
+    height: calc(100vh - 72px + 2rem);
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: stretch;
     background: var(--bg-canvas);
     transition: background-color 0.3s ease;
 }
 
+@media (min-width: 768px) {
+    .chatbot-container {
+        margin: -2rem -2.5rem;
+        height: calc(100vh - 72px + 4rem);
+    }
+}
+
 .chatbot-card {
     width: 100%;
-    max-width: 900px;
     height: 100%;
-    max-height: 800px;
     background: var(--bg-main);
-    border-radius: 24px;
-    box-shadow: var(--shadow-lg);
+    border-radius: 0;
+    box-shadow: none;
     overflow: hidden;
-    border: 1px solid var(--border-color);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    border: none;
+    border-top: 1px solid var(--border-color);
 }
 
 .chatbot-header {
@@ -201,4 +210,24 @@
 }
 [data-bs-theme="dark"] .chat-footer-custom {
     background-color: var(--bg-sidebar);
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1, 
+.markdown-content h2, 
+.markdown-content h3, 
+.markdown-content h4 {
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.markdown-content ul, 
+.markdown-content ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
 }

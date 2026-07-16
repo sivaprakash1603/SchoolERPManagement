@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 
 export interface FeeComponentDTO {
   id: number;
-  name: string;
+  feeName: string;
   amount: number;
 }
 

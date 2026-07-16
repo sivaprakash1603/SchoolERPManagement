@@ -33,6 +33,20 @@ spec:
   - host: API_DOMAIN_PLACEHOLDER
     http:
       paths:
+      - path: /chat
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-backend-service
+            port:
+              number: 80
+      - path: /admin
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-backend-service
+            port:
+              number: 80
       - path: /
         pathType: Prefix
         backend:

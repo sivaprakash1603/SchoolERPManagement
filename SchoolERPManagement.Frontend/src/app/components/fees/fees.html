@@ -324,7 +324,7 @@
                       <tbody>
                         @for (comp of feeComponents(); track comp.id) {
                           <tr>
-                            <td class="ps-3 py-3 fw-bold">{{ comp.name }}</td>
+                            <td class="ps-3 py-3 fw-bold">{{ comp.feeName }}</td>
                             <td class="px-3 py-3 text-end">
                               {{ comp.amount | currency: 'INR' : 'symbol' : '1.0-0' }}
                             </td>
@@ -500,7 +500,7 @@
               <tbody>
                 @for (comp of feeComponents(); track comp.id) {
                   <tr>
-                    <td class="ps-3 py-3 fw-bold">{{ comp.name }}</td>
+                    <td class="ps-3 py-3 fw-bold">{{ comp.feeName }}</td>
                     <td class="px-3 py-3 text-end fw-bold">
                       {{ comp.amount | currency: 'INR' : 'symbol' : '1.0-0' }}
                     </td>
@@ -755,7 +755,7 @@
                 <option [ngValue]="null" disabled>Select Fee Component...</option>
                 @for (comp of feeComponents(); track comp.id) {
                   <option [value]="comp.id">
-                    {{ comp.name }} (Bal:
+                    {{ comp.feeName }} (Bal:
                     {{ getOutstandingBalance(comp) | currency: 'INR' : 'symbol' : '1.0-0' }})
                   </option>
                 }
@@ -869,8 +869,8 @@
         </div>
         <div class="modal-body pt-3 pb-4 px-4">
           <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
-            <span class="text-muted">Fee Component</span>
-            <span class="fw-bold">{{ stripePaymentComponent()?.name }}</span>
+            <span class="text-muted-custom">Fee Component:</span>
+            <span class="fw-bold">{{ stripePaymentComponent()?.feeName }}</span>
           </div>
           <div class="d-flex justify-content-between mb-4 border-bottom pb-2">
             <span class="text-muted">Total Pending</span>

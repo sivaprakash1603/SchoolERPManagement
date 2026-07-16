@@ -1,5 +1,5 @@
-<div class="chatbot-container p-2 p-md-4">
-  <div class="chatbot-card d-flex flex-column mx-auto shadow-lg">
+<div class="chatbot-container">
+  <div class="chatbot-card d-flex flex-column">
     <!-- Header -->
     <div class="chatbot-header p-4 d-flex align-items-center gap-3">
       <div class="avatar-circle pulse-animation">
@@ -16,7 +16,7 @@
       @for (msg of messages; track $index) {
         <div class="chat-message-wrapper" [ngClass]="{'user-wrapper': msg.sender === 'user', 'bot-wrapper': msg.sender === 'bot'}" @messageAnimation>
           <div class="chat-bubble shadow-sm" [ngClass]="{'user-bubble': msg.sender === 'user', 'bot-bubble': msg.sender === 'bot'}">
-            <p class="mb-0 text-break" style="white-space: pre-wrap;">{{ msg.text }}</p>
+            <div class="mb-0 text-break markdown-content" [innerHTML]="msg.text | markdown"></div>
           </div>
           <small class="timestamp mt-1">{{ msg.timestamp | date:'shortTime' }}</small>
         </div>

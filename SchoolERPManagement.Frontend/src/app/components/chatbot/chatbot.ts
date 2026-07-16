@@ -1,9 +1,23 @@
-import { Component, inject, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiService } from '../../services/ai.service';
 import { ToastService } from '../../services/toast.service';
+import { environment } from '../../../environments/environment';
 import { trigger, state, style, animate, transition } from '@angular/animations';
+import { Pipe, PipeTransform } from '@angular/core';
+import { marked } from 'marked';
+
+@Pipe({
+  name: 'markdown',
+  standalone: true
+})
+export class MarkdownPipe implements PipeTransform {
+  transform(value: string): string {
+    if (!value) return '';
+    return marked.parse(value) as string;
+  }
+}
 
 interface ChatMessage {
   text: string;
@@ -14,7 +28,7 @@ interface ChatMessage {
 @Component({
   selector: 'app-chatbot',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MarkdownPipe],
   templateUrl: './chatbot.html',
   styleUrl: './chatbot.css',
   animations: [
@@ -31,6 +45,7 @@ export class Chatbot implements OnInit, AfterViewChecked {
 
   aiService = inject(AiService);
   toastService = inject(ToastService);
+  cdr = inject(ChangeDetectorRef);
   
   messages: ChatMessage[] = [];
   currentInput: string = '';
@@ -43,11 +58,34 @@ export class Chatbot implements OnInit, AfterViewChecked {
   ];
 
   ngOnInit() {
-    this.messages.push({
+    const savedHistory = localStorage.getItem('chatbot_history');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        this.messages = parsed.map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp)
+        }));
+      } catch (e) {
+        console.error('Failed to parse chat history', e);
+        this.initDefaultMessage();
+      }
+    } else {
+      this.initDefaultMessage();
+    }
+  }
+
+  initDefaultMessage() {
+    this.messages = [{
       text: "Hello! I'm your EduControl AI Assistant. How can I help you today?",
       sender: 'bot',
       timestamp: new Date()
-    });
+    }];
+    this.saveHistory();
+  }
+
+  saveHistory() {
+    localStorage.setItem('chatbot_history', JSON.stringify(this.messages));
   }
 
   ngAfterViewChecked() {
@@ -74,28 +112,59 @@ export class Chatbot implements OnInit, AfterViewChecked {
       sender: 'user',
       timestamp: new Date()
     });
+    this.saveHistory();
     this.currentInput = '';
     this.isTyping = true;
 
-    this.aiService.chatFaq(userQuery).subscribe({
-      next: (res) => {
-        this.isTyping = false;
-        this.messages.push({
-          text: res.answer,
-          sender: 'bot',
-          timestamp: new Date()
-        });
-      },
-      error: (err) => {
+    const role = sessionStorage.getItem('role') || 'Guest';
+    const token = sessionStorage.getItem('token');
+    
+    // Add a placeholder bot message
+    const botMsg: ChatMessage = {
+      text: '',
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    this.messages.push(botMsg);
+    this.saveHistory();
+
+    fetch(`${environment.aiApiUrl}/chat/faq/stream`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ query: userQuery, role: role })
+    }).then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        this.isTyping = false; // Stop typing indicator as soon as stream starts
+        this.cdr.detectChanges();
+        
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (reader) {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    this.saveHistory();
+                    break;
+                }
+                botMsg.text += decoder.decode(value, { stream: true });
+                this.cdr.detectChanges();
+                this.scrollToBottom();
+            }
+        }
+    }).catch((err) => {
         this.isTyping = false;
         console.error(err);
         this.toastService.error("Failed to get response from AI Assistant.");
-        this.messages.push({
-          text: "I'm sorry, I'm having trouble connecting to my brain right now. Please try again later.",
-          sender: 'bot',
-          timestamp: new Date()
-        });
-      }
+        if (!botMsg.text) {
+            botMsg.text = "I'm sorry, I'm having trouble connecting to my brain right now. Please try again later.";
+        }
+        this.saveHistory();
+        this.cdr.detectChanges();
     });
   }
 }
