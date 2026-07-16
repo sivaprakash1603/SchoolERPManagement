@@ -19,8 +19,8 @@ app = FastAPI(title="School ERP AI Backend", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "https://localhost:4200", "http://127.0.0.1:4200"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"]
