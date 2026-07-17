@@ -40,12 +40,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                 if (error.error) {
                     if (typeof error.error === 'string') {
                         errorMessage = error.error;
-                    } else if (error.error.Message) {
-                        errorMessage = error.error.Message;
-                    } else if (error.error.message) {
-                        errorMessage = error.error.message;
-                    } else if (error.error.errors) {
-                        const validationErrors = error.error.errors;
+                    } else {
+                        const validationErrors = error.error.errors || error.error.Errors;
+                        if (validationErrors) {
                         const messages = [];
                         for (const key in validationErrors) {
                             if (validationErrors.hasOwnProperty(key)) {
@@ -55,6 +52,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                         if (messages.length > 0) {
                             errorMessage = messages.join(' ');
                         }
+                    } else if (error.error.Message) {
+                        errorMessage = error.error.Message;
+                    } else if (error.error.message) {
+                        errorMessage = error.error.message;
+                    }
                     }
                 } else if (error.message) {
                     errorMessage = error.message;

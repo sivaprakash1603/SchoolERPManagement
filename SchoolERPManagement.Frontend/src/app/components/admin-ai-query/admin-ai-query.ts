@@ -28,6 +28,7 @@ export class AdminAiQuery {
 
   tableHeaders: string[] = [];
   tableData: any[] = [];
+  totalRows: number = 0;
   rawBlob: Blob | null = null;
 
   setQuery(query: string) {
@@ -58,11 +59,14 @@ export class AdminAiQuery {
           
           if (jsonData && jsonData.length > 0) {
             this.tableHeaders = jsonData[0] || [];
-            this.tableData = jsonData.slice(1);
+            const dataRows = jsonData.slice(1);
+            this.totalRows = dataRows.length;
+            this.tableData = dataRows.slice(0, 100);
             this.toastService.success("Report generated successfully!");
           } else {
             this.tableHeaders = [];
             this.tableData = [];
+            this.totalRows = 0;
             this.toastService.success("Report generated (No data found).");
           }
         } catch (e) {
