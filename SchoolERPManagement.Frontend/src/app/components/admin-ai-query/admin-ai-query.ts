@@ -50,11 +50,11 @@ export class AdminAiQuery {
         try {
           // Parse the Excel blob to JSON for preview
           const arrayBuffer = await blob.arrayBuffer();
-          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' }) as any[][];
           
           if (jsonData && jsonData.length > 0) {
             this.tableHeaders = jsonData[0] || [];
