@@ -462,7 +462,7 @@
                   (ngModelChange)="addForm.set({ ...addForm(), phonenumber: $event })"
                   placeholder="10-digit number"
                   maxlength="10"
-                  pattern="^[0-9]{10}$"
+                  pattern="^[6-9][0-9]{9}$"
                 />
               </div>
             </div>
@@ -567,7 +567,7 @@
                   name="editPhone"
                   #editPhone="ngModel"
                   required
-                  pattern="^[0-9]{10}$"
+                  pattern="^[6-9][0-9]{9}$"
                   maxlength="10"
                   placeholder="9999999999"
                   [class.is-valid]="editPhone.valid && editPhone.touched"
