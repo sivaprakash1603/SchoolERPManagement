@@ -100,7 +100,7 @@
           <label class="form-label text-muted-custom fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Select Child</label>
           <select class="form-select" [ngModel]="selectedChildId()" (ngModelChange)="onChildChange($event)">
             @for (child of parentChildren(); track child.studentId) {
-              <option [value]="child.studentId" [selected]="child.studentId === selectedChildId()">{{ child.name }} ({{ child.regNo }} - {{ child.className }})</option>
+              <option [value]="child.studentId" [selected]="child.studentId === selectedChildId()">{{ child.firstName }} {{ child.lastName }} ({{ child.regNo }} - {{ child.className }})</option>
             }
           </select>
         </div>

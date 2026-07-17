@@ -36,7 +36,7 @@
         >
           @for (child of parentChildren(); track child) {
             <option [value]="child.studentId" [selected]="child.studentId === selectedChildId()">
-              {{ child.name }} ({{ child.className }})
+              {{ child.firstName }} {{ child.lastName }} ({{ child.className }})
             </option>
           }
         </select>

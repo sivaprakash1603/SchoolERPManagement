@@ -55,7 +55,7 @@
         <select class="form-select d-inline-block w-auto" [ngModel]="selectedStudentId()" (ngModelChange)="onChildChange($event)">
           <option [value]="null">— Select —</option>
           @for (c of children(); track c.studentId) {
-            <option [value]="c.studentId">{{ c.studentName || c.name }}</option>
+            <option [value]="c.studentId">{{ c.firstName }} {{ c.lastName }}</option>
           }
         </select>
       </div>

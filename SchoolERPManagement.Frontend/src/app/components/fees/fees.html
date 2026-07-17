@@ -111,7 +111,7 @@
             <option [ngValue]="null" disabled>Select Child...</option>
             @for (c of children(); track c.studentId) {
               <option [value]="c.studentId">
-                {{ c.name }} ({{ c.regNo }} - {{ c.className }})
+                {{ c.firstName }} {{ c.lastName }} ({{ c.regNo }} - {{ c.className }})
               </option>
             }
           </select>

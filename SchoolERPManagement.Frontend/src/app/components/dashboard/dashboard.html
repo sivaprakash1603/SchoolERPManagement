@@ -56,7 +56,7 @@
             (ngModelChange)="onChildChange($event)"
           >
             @for (child of parentChildren(); track child.studentId) {
-              <option [value]="child.studentId">{{ child.name }} ({{ child.className }})</option>
+              <option [value]="child.studentId">{{ child.firstName }} {{ child.lastName }} ({{ child.className }})</option>
             }
           </select>
         </div>
