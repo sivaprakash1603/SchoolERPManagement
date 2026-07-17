@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/school-erp-ai-backend/venv/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/school-erp-ai-backend",
+    "${workspaceFolder}/school-erp-ai-backend/venv/lib/python3.14/site-packages"
+  ]
+}

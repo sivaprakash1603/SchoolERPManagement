@@ -201,13 +201,7 @@ public sealed class StudentService : IStudentService
 
         if (dto.Parents != null && dto.Parents.Any())
         {
-            foreach (var p in dto.Parents)
-            {
-                if (await _parentRepository.GetByIdAsync(p.ParentId) is null)
-                {
-                    throw new EntityNotFoundException("Parent", p.ParentId.ToString());
-                }
-            }
+            await ValidateParentsAsync(dto.Parents, cancellationToken);
         }
 
         int totalStudentsCount = await _studentRepository.Query(false).CountAsync(cancellationToken);
@@ -328,13 +322,7 @@ public sealed class StudentService : IStudentService
 
         if (dto.Parents != null && dto.Parents.Any())
         {
-            foreach (var p in dto.Parents)
-            {
-                if (await _parentRepository.GetByIdAsync(p.ParentId) is null)
-                {
-                    throw new EntityNotFoundException("Parent", p.ParentId.ToString());
-                }
-            }
+            await ValidateParentsAsync(dto.Parents, cancellationToken);
         }
 
         if (dto.Parents != null)
@@ -473,6 +461,46 @@ public sealed class StudentService : IStudentService
         {
             bool save = (i == enrollmentsToAdd.Count - 1);
             await _studentEnrollmentRepository.AddAsync(enrollmentsToAdd[i], save: save, ct: cancellationToken);
+        }
+    }
+
+    private async Task ValidateParentsAsync(IEnumerable<ParentSelectionDTO> parents, CancellationToken cancellationToken)
+    {
+        if (parents == null || !parents.Any()) return;
+
+        var fathersCount = parents.Count(p => p.Relation.Equals("Father", StringComparison.OrdinalIgnoreCase));
+        var mothersCount = parents.Count(p => p.Relation.Equals("Mother", StringComparison.OrdinalIgnoreCase));
+
+        if (fathersCount > 1) throw new BusinessRuleException("A student cannot have more than one Father.");
+        if (mothersCount > 1) throw new BusinessRuleException("A student cannot have more than one Mother.");
+
+        foreach (var p in parents)
+        {
+            var parentEntity = await _parentRepository.Query(false)
+                .Include(x => x.Studentparents)
+                .FirstOrDefaultAsync(x => x.Id == p.ParentId, cancellationToken);
+
+            if (parentEntity is null) throw new EntityNotFoundException("Parent", p.ParentId.ToString());
+
+            var existingRelations = parentEntity.Studentparents
+                .Where(sp => sp.Relation != null)
+                .Select(sp => sp.Relation)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            
+            bool isAlreadyFather = existingRelations.Contains("Father");
+            bool isAlreadyMother = existingRelations.Contains("Mother");
+
+            string currentRelation = p.Relation;
+
+            if (currentRelation.Equals("Mother", StringComparison.OrdinalIgnoreCase) && isAlreadyFather)
+            {
+                throw new BusinessRuleException($"Parent {parentEntity.FirstName} {parentEntity.LastName} is already registered as a Father for another student. They cannot be registered as a Mother.");
+            }
+            if (currentRelation.Equals("Father", StringComparison.OrdinalIgnoreCase) && isAlreadyMother)
+            {
+                throw new BusinessRuleException($"Parent {parentEntity.FirstName} {parentEntity.LastName} is already registered as a Mother for another student. They cannot be registered as a Father.");
+            }
         }
     }
 

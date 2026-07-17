@@ -51,6 +51,9 @@ export class Teachers implements OnInit {
   });
   isAssigning = signal(false);
   
+  showAutoAssignModal = signal(false);
+  isAutoAssigning = signal(false);
+  
   isSaving = signal(false);
   isDeleting = signal(false);
 
@@ -213,22 +216,32 @@ export class Teachers implements OnInit {
     });
   }
 
-  autoAssignTeachers() {
-    if (confirm('This will automatically assign eligible teachers to unassigned class subjects based on their specialty. Do you want to proceed?')) {
-      this.teacherService.autoAssignTeachers().subscribe({
-        next: (result) => {
-          this.toastService.success(`Auto-assignment complete. ${result.totalAssignmentsMade} assignments were made.`);
-          if (result.messages && result.messages.length > 0) {
-            console.log('Auto-Assign Log:', result.messages);
-          }
-          this.fetchTeachers(); // refresh assignment counts
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.error('Failed to auto-assign teachers.');
+  openAutoAssignModal() {
+    this.showAutoAssignModal.set(true);
+  }
+
+  closeAutoAssignModal() {
+    this.showAutoAssignModal.set(false);
+  }
+
+  confirmAutoAssign() {
+    this.isAutoAssigning.set(true);
+    this.teacherService.autoAssignTeachers().subscribe({
+      next: (result) => {
+        this.toastService.success(`Auto-assignment complete. ${result.totalAssignmentsMade} assignments were made.`);
+        if (result.messages && result.messages.length > 0) {
+          console.log('Auto-Assign Log:', result.messages);
         }
-      });
-    }
+        this.isAutoAssigning.set(false);
+        this.closeAutoAssignModal();
+        this.fetchTeachers(); // refresh assignment counts
+      },
+      error: (err) => {
+        console.error(err);
+        this.toastService.error('Failed to auto-assign teachers.');
+        this.isAutoAssigning.set(false);
+      }
+    });
   }
 
   previousPage() {

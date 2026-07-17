@@ -21,6 +21,7 @@
     <button
       class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-3 fw-bold"
       style="background-color: var(--primary-accent); border-color: var(--primary-accent)"
+      (click)="openAddModal()"
     >
       <i class="bi bi-person-plus-fill"></i>
       Add Parent
@@ -371,7 +372,7 @@
             Cancel
           </button>
           <button
-            class="btn btn-warning px-4 rounded-3 text-white fw-bold d-flex align-items-center gap-2"
+            class="btn btn-warning px-4 rounded-3 text-white fw-bold d-flex align-items-center justify-content-center gap-2"
             (click)="sendNotification()"
             [disabled]="isSendingNotification() || !notificationTitle() || !notificationMessage()"
           >
@@ -424,6 +425,70 @@
       </div>
     </div>
   }
+
+  <!-- Add Parent Modal -->
+  @if (showAddModal()) {
+    <div class="modal-overlay" (click)="closeAddModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header-custom">
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <i class="bi bi-person-plus fs-4" style="color: var(--primary-accent)"></i>
+            <h5 class="fw-bold mb-0" style="color: var(--text-primary)">Add New Parent</h5>
+          </div>
+          <button class="btn-close" (click)="closeAddModal()"></button>
+        </div>
+        <div class="modal-body-custom p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="modal-form-label">First Name</label>
+              <input type="text" class="form-control" [ngModel]="addForm().firstName" (ngModelChange)="addForm.set({ ...addForm(), firstName: $event })" placeholder="First Name" />
+            </div>
+            <div class="col-md-6">
+              <label class="modal-form-label">Last Name</label>
+              <input type="text" class="form-control" [ngModel]="addForm().lastName" (ngModelChange)="addForm.set({ ...addForm(), lastName: $event })" placeholder="Last Name" />
+            </div>
+            <div class="col-md-6">
+              <label class="modal-form-label">Email Address</label>
+              <input type="email" class="form-control" [ngModel]="addForm().email" (ngModelChange)="addForm.set({ ...addForm(), email: $event })" placeholder="Email" />
+            </div>
+            <div class="col-md-6">
+              <label class="modal-form-label">Phone Number</label>
+              <div class="input-group">
+                <span class="input-group-text fw-bold">+91</span>
+                <input
+                  type="text"
+                  class="form-control"
+                  [ngModel]="addForm().phonenumber"
+                  (ngModelChange)="addForm.set({ ...addForm(), phonenumber: $event })"
+                  placeholder="10-digit number"
+                  maxlength="10"
+                  pattern="^[0-9]{10}$"
+                />
+              </div>
+            </div>
+            <div class="col-md-12">
+              <label class="modal-form-label">Relation</label>
+              <select class="form-select" [ngModel]="addForm().relation" (ngModelChange)="addForm.set({ ...addForm(), relation: $event })">
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Guardian">Guardian</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button class="btn btn-light px-4 rounded-3" (click)="closeAddModal()" [disabled]="isAdding()">Cancel</button>
+          <button class="btn btn-primary px-4 rounded-3 d-flex align-items-center justify-content-center gap-2 fw-bold" (click)="saveNewParent()" [disabled]="isAdding() || !addForm().firstName || !addForm().lastName || !addForm().email || !addForm().phonenumber">
+            @if (isAdding()) {
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            }
+            {{ isAdding() ? 'Saving...' : 'Save Parent' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Edit Parent Modal -->
   @if (showEditModal()) {
     <div class="modal-overlay" (click)="closeEditModal()">
@@ -493,7 +558,7 @@
                 ><i class="bi bi-telephone me-1"></i> Phone Number</label
               >
               <div class="input-group">
-                <span class="input-group-text bg-light text-muted fw-bold">+91</span>
+                <span class="input-group-text fw-bold">+91</span>
                 <input
                   type="tel"
                   class="form-control"

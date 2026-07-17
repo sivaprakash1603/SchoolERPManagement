@@ -672,3 +672,9 @@ body {
   animation: loadingPulse 1.8s ease-in-out infinite;
   text-align: center;
 }
+
+.input-group-text {
+  background-color: var(--surface-color) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}

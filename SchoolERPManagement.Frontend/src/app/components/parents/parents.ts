@@ -54,11 +54,14 @@ export class Parents implements OnInit {
   parentStats = signal<ParentStatsDTO | null>(null);
 
   showEditModal = signal(false);
+  showAddModal = signal(false);
   showDeleteModal = signal(false);
   editingParent = signal<ParentUI | null>(null);
   deletingParent = signal<ParentUI | null>(null);
   editForm = signal({ firstName: '', lastName: '', email: '', phonenumber: '' });
+  addForm = signal({ firstName: '', lastName: '', email: '', phonenumber: '', relation: 'Father' });
   isUpdating = signal(false);
+  isAdding = signal(false);
   isDeleting = signal(false);
 
   showNotificationModal = signal(false);
@@ -256,6 +259,41 @@ export class Parents implements OnInit {
     const targetUserIds = selectedParents.map((p) => p.userId);
     const targetNames = `${selectedParents.length} Selected Parents`;
     this.openNotificationModal(targetNames, targetUserIds);
+  }
+
+  openAddModal() {
+    this.addForm.set({ firstName: '', lastName: '', email: '', phonenumber: '', relation: 'Father' });
+    this.showAddModal.set(true);
+  }
+
+  closeAddModal() {
+    this.showAddModal.set(false);
+    this.addForm.set({ firstName: '', lastName: '', email: '', phonenumber: '', relation: 'Father' });
+  }
+
+  saveNewParent() {
+    const form = this.addForm();
+    if (!form.firstName || !form.lastName || !form.phonenumber || !form.email) {
+      this.toastService.error('Please fill in all required fields');
+      return;
+    }
+
+    this.isAdding.set(true);
+    this.parentService.addParent(form).subscribe({
+      next: () => {
+        this.toastService.success('Parent added successfully');
+        this.isAdding.set(false);
+        this.closeAddModal();
+        this.fetchParents();
+        this.fetchParentStats();
+      },
+      error: (err) => {
+        console.error('Failed to add parent', err);
+        const msg = err.error?.detail || err.error?.message || 'Failed to add parent';
+        this.toastService.error(msg);
+        this.isAdding.set(false);
+      }
+    });
   }
 
   openEditModal(parent: ParentUI) {
