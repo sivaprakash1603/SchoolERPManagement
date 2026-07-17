@@ -207,11 +207,6 @@ public sealed class ExamService : IExamService
 
     public async Task<ExamScheduleResponseDTO> CreateExamScheduleAsync(CreateExamScheduleDTO dto, CancellationToken cancellationToken)
     {
-        if (dto.ExamDate < DateOnly.FromDateTime(DateTime.UtcNow))
-        {
-            throw new BusinessRuleException("Exam schedule date cannot be in the past.");
-        }
-
         if (await _examRepository.GetByIdAsync(dto.ExamId) is null)
         {
             throw new EntityNotFoundException("Exam", dto.ExamId.ToString());
@@ -257,11 +252,6 @@ public sealed class ExamService : IExamService
 
     public async Task<ExamScheduleResponseDTO> UpdateExamScheduleAsync(int scheduleId, UpdateExamScheduleDTO dto, CancellationToken cancellationToken)
     {
-        if (dto.ExamDate < DateOnly.FromDateTime(DateTime.UtcNow))
-        {
-            throw new BusinessRuleException("Exam schedule date cannot be in the past.");
-        }
-
         var schedule = await _examScheduleRepository.Query(true)
             .FirstOrDefaultAsync(x => x.Id == scheduleId, cancellationToken);
 

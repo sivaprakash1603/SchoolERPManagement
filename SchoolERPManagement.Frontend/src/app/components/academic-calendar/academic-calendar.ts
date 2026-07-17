@@ -87,7 +87,9 @@ export class AcademicCalendar implements OnInit {
 
     const year = this.academicYears().find(y => y.id === yearId);
     if (year) {
-      this.minDate.set(year.startDate.split('T')[0]);
+      const today = new Date().toISOString().split('T')[0];
+      const yearStart = year.startDate.split('T')[0];
+      this.minDate.set(yearStart > today ? yearStart : today);
       this.maxDate.set(year.endDate.split('T')[0]);
     }
 

@@ -494,6 +494,7 @@
                 class="form-control"
                 [ngModel]="scheduleForm().examDate"
                 (ngModelChange)="scheduleForm.set({ ...scheduleForm(), examDate: $event })"
+                [min]="minDate()"
                 name="schExamDate"
                 #schExamDate="ngModel"
                 required

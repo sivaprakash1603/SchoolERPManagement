@@ -121,6 +121,8 @@ export class Exams implements OnInit {
 
   editingScheduleId = signal<number | null>(null);
 
+  minDate = signal<string>(new Date().toISOString().split('T')[0]);
+
   ngOnInit() {
     const role = sessionStorage.getItem('role');
     this.userRole.set(role);

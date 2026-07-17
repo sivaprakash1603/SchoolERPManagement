@@ -41,6 +41,9 @@ public class AcademicCalendarService : IAcademicCalendarService
         if (academicYear == null)
             throw new EntityNotFoundException("AcademicYear", dto.AcademicYearId.ToString());
 
+        if (dto.Date < DateOnly.FromDateTime(DateTime.UtcNow))
+            throw new BusinessRuleException("Events cannot be scheduled in the past.");
+
         if (dto.Date < academicYear.Startdate || dto.Date > academicYear.Enddate)
             throw new BusinessRuleException("The event date must fall within the selected academic year start and end dates.");
 
