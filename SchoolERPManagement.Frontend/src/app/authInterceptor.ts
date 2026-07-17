@@ -42,21 +42,30 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                         errorMessage = error.error;
                     } else {
                         const validationErrors = error.error.errors || error.error.Errors;
-                        if (validationErrors) {
-                        const messages = [];
-                        for (const key in validationErrors) {
-                            if (validationErrors.hasOwnProperty(key)) {
-                                messages.push(...validationErrors[key]);
+                        if (validationErrors && typeof validationErrors === 'object' && Object.keys(validationErrors).length > 0) {
+                            const messages = [];
+                            for (const key in validationErrors) {
+                                if (validationErrors.hasOwnProperty(key)) {
+                                    const val = validationErrors[key];
+                                    if (Array.isArray(val)) {
+                                        messages.push(...val);
+                                    } else if (typeof val === 'string') {
+                                        messages.push(val);
+                                    }
+                                }
                             }
+                            if (messages.length > 0) {
+                                errorMessage = messages.join(' ');
+                            } else {
+                                errorMessage = error.error.title || error.error.Message || error.error.message || 'Validation failed.';
+                            }
+                        } else if (error.error.Message) {
+                            errorMessage = error.error.Message;
+                        } else if (error.error.message) {
+                            errorMessage = error.error.message;
+                        } else if (error.error.title) {
+                            errorMessage = error.error.title;
                         }
-                        if (messages.length > 0) {
-                            errorMessage = messages.join(' ');
-                        }
-                    } else if (error.error.Message) {
-                        errorMessage = error.error.Message;
-                    } else if (error.error.message) {
-                        errorMessage = error.error.message;
-                    }
                     }
                 } else if (error.message) {
                     errorMessage = error.message;
