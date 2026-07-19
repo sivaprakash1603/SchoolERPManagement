@@ -38,6 +38,8 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: StripeCancelUrl
+            - name: ConnectionStrings__Redis
+              value: "redis-service:6379,abortConnect=false"
       # The secret name that contains ACR login credentials
       imagePullSecrets:
         - name: acr-auth

@@ -243,8 +243,15 @@ builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<SchoolERPManagementBLLibrary.Profiles.AppMappingProfile>();
 });
 
-builder.Services.AddSignalR();
-
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrEmpty(redisConnectionString))
+{
+    builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString);
+}
+else
+{
+    builder.Services.AddSignalR();
+}
 
 builder.Services.AddScoped<IDocumentVerificationStrategy, StudentDocumentVerificationStrategy>();
 builder.Services.AddScoped<IDocumentVerificationStrategy, TeacherDocumentVerificationStrategy>();
