@@ -482,10 +482,20 @@ export class Documents implements OnInit {
     const file = input.files?.[0] as File;
     if (file) {
       const ext = file.name.split('.').pop()?.toLowerCase();
-      if (ext !== 'pdf') {
-        alert('Only PDF files are allowed.');
-        input.value = '';
-        return;
+      const isProfilePhoto = this.uploadForm().documentName === 'Profile Photo';
+
+      if (isProfilePhoto) {
+        if (ext !== 'jpg' && ext !== 'jpeg') {
+          alert('Only JPG/JPEG files are allowed for Profile Photo.');
+          input.value = '';
+          return;
+        }
+      } else {
+        if (ext !== 'pdf') {
+          alert('Only PDF files are allowed for this document type.');
+          input.value = '';
+          return;
+        }
       }
       this.uploadForm.update(form => ({ ...form, selectedFile: file }));
     }

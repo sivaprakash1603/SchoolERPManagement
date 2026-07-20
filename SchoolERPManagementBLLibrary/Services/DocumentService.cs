@@ -56,6 +56,8 @@ public sealed class DocumentService : IDocumentService
 
     public async Task<StudentDocumentResponseDTO> UploadStudentDocumentAsync(IFormFile file, int studentId, string? documentName, string? userRole, CancellationToken cancellationToken)
     {
+        ValidateDocumentFormat(file, documentName);
+
         if (await _studentRepository.GetByIdAsync(studentId) is null)
         {
             throw new EntityNotFoundException("Student", studentId.ToString());
@@ -79,6 +81,8 @@ public sealed class DocumentService : IDocumentService
 
     public async Task<TeacherDocumentResponseDTO> UploadTeacherDocumentAsync(IFormFile file, int teacherId, string? documentName, CancellationToken cancellationToken)
     {
+        ValidateDocumentFormat(file, documentName);
+
         if (await _teacherRepository.GetByIdAsync(teacherId) is null)
         {
             throw new EntityNotFoundException("Teacher", teacherId.ToString());
@@ -265,5 +269,26 @@ public sealed class DocumentService : IDocumentService
         }
 
         return result;
+    }
+
+    private void ValidateDocumentFormat(IFormFile file, string? documentName)
+    {
+        var ext = Path.GetExtension(file.FileName).TrimStart('.').ToLower();
+        var isProfilePhoto = documentName == "Profile Photo";
+
+        if (isProfilePhoto)
+        {
+            if (ext != "jpg" && ext != "jpeg")
+            {
+                throw new BusinessRuleException("Only JPG/JPEG files are allowed for Profile Photo.");
+            }
+        }
+        else
+        {
+            if (ext != "pdf")
+            {
+                throw new BusinessRuleException("Only PDF files are allowed for this document type.");
+            }
+        }
     }
 }
