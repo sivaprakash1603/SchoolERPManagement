@@ -7,8 +7,8 @@ public class CreateTeacherValidator : AbstractValidator<CreateTeacherDTO>
 {
     public CreateTeacherValidator()
     {
-        RuleFor(x => x.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.LastName).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.FirstName).NotEmpty().MaximumLength(50).Matches(@"^[a-zA-Z\s\-]+$").WithMessage("First name can only contain letters, spaces, and hyphens.");
+        RuleFor(x => x.LastName).NotEmpty().MaximumLength(50).Matches(@"^[a-zA-Z\s\-]+$").WithMessage("Last name can only contain letters, spaces, and hyphens.");
         RuleFor(x => x.Email).NotEmpty().EmailAddress().Matches(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").WithMessage("A valid email is required.");
         RuleFor(x => x.Phonenumber).MaximumLength(20).Matches(@"^[6-9]\d{9}$").WithMessage("Phone number must be exactly 10 digits and start with 6, 7, 8, or 9.").When(x => !string.IsNullOrEmpty(x.Phonenumber));
     }
@@ -18,8 +18,8 @@ public class UpdateTeacherValidator : AbstractValidator<UpdateTeacherDTO>
 {
     public UpdateTeacherValidator()
     {
-        RuleFor(x => x.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.LastName).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.FirstName).NotEmpty().MaximumLength(50).Matches(@"^[a-zA-Z\s\-]+$").WithMessage("First name can only contain letters, spaces, and hyphens.");
+        RuleFor(x => x.LastName).NotEmpty().MaximumLength(50).Matches(@"^[a-zA-Z\s\-]+$").WithMessage("Last name can only contain letters, spaces, and hyphens.");
         RuleFor(x => x.Phonenumber).MaximumLength(20).Matches(@"^[6-9]\d{9}$").WithMessage("Phone number must be exactly 10 digits and start with 6, 7, 8, or 9.").When(x => !string.IsNullOrEmpty(x.Phonenumber));
     }
 }
