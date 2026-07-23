@@ -37,6 +37,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             }
 
             if (error instanceof HttpErrorResponse) {
+                // If the error is a Blob (e.g. from a responseType: 'blob' request),
+                // pass it through so the component can asynchronously read its text.
+                if (error.error instanceof Blob) {
+                    return throwError(() => error);
+                }
+
                 if (error.error) {
                     if (typeof error.error === 'string') {
                         errorMessage = error.error;

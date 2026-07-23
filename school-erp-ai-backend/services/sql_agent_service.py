@@ -66,6 +66,9 @@ Schema:
                 
         if "invalid_query" in sql_query.lower() or "invalid query" in sql_query.lower():
             raise ValueError("I can only answer questions related to the School ERP database or operations.")
+            
+        if not sql_query.lower().startswith("select"):
+            raise ValueError("Only SELECT queries are permitted for safety. AI generated a modifying query.")
         
         try:
             # Execute the query and load into a pandas DataFrame
@@ -82,4 +85,5 @@ Schema:
             return export_filename
         except Exception as e:
             print(f"Error executing SQL: {sql_query}")
-            raise e
+            # Raise a clear error that the main.py exception handler can format
+            raise ValueError(f"Execution failed on sql. Database error: {str(e)}")
