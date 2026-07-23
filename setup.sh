@@ -121,8 +121,9 @@ DB_CONN=$(az keyvault secret show --vault-name $KV_NAME --name "ConnectionString
 JWT_SECRET_VALUE=$(az keyvault secret show --vault-name $KV_NAME --name "Jwt--Key" --query value -o tsv)
 
 # Construct valid Python SQLAlchemy URL (URL encode @ in password)
-URL_ENC_PASS=$(echo -n "$DB_PASS" | jq -sRr @uri)
-PYTHON_DB_CONN="postgresql+psycopg2://pgadmin:${URL_ENC_PASS}@${PG_SERVER}.postgres.database.azure.com:5432/SchoolERPSystem?sslmode=require"
+READONLY_PASS="SchoolERP_AI_ReadOnly_2026$!"
+URL_ENC_PASS=$(echo -n "$READONLY_PASS" | jq -sRr @uri)
+PYTHON_DB_CONN="postgresql+psycopg2://readonly_ai_user:${URL_ENC_PASS}@${PG_SERVER}.postgres.database.azure.com:5432/SchoolERPSystem?sslmode=require"
 
 # Fetch Anthropic API Key from local .env file
 ANTHROPIC_KEY=$(grep '^ANTHROPIC_API_KEY=' school-erp-ai-backend/.env | cut -d '=' -f2- | tr -d '"' | xargs)
