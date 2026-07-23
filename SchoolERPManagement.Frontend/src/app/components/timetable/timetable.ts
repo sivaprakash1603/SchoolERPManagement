@@ -340,7 +340,7 @@ export class Timetable implements OnInit {
   }
 
   fetchTeachers() {
-    this.teacherService.getAllTeachers({ pageSize: 1000 }).subscribe({
+    this.teacherService.getAllTeachers({ pageSize: 1000, status: 'Active' }).subscribe({
       next: (res) => this.teachers.set(res.items),
       error: (err) => console.error('Failed to load teachers', err),
     });

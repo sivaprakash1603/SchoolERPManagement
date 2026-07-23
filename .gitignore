@@ -1,1 +1,6 @@
 .gitnexus/
+kubeconfig
+*.pem
+*.key
+bin/
+obj/

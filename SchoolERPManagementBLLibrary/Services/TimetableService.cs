@@ -45,9 +45,18 @@ public sealed class TimetableService : ITimetableService
             throw new EntityNotFoundException("Subject", dto.SubjectId.ToString());
         }
 
-        if (await _teacherRepository.GetByIdAsync(dto.TeacherId) is null)
+        var teacher = await _teacherRepository.Query(true)
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == dto.TeacherId, cancellationToken);
+
+        if (teacher is null)
         {
             throw new EntityNotFoundException("Teacher", dto.TeacherId.ToString());
+        }
+
+        if (teacher.User == null || teacher.User.Isactive != true)
+        {
+            throw new BusinessRuleException("Cannot assign a timetable slot to an inactive teacher.");
         }
 
         var hasClassClash = await _timetableRepository.Query(true)
@@ -371,10 +380,13 @@ public sealed class TimetableService : ITimetableService
         var classes = await _classRepository.Query(false)
             .Where(c => request.ClassIds.Contains(c.Id))
             .Include(c => c.Classsubjects).ThenInclude(cs => cs.Subject)
-            .Include(c => c.Teachersubjects).ThenInclude(ts => ts.Teacher)
+            .Include(c => c.Teachersubjects).ThenInclude(ts => ts.Teacher).ThenInclude(t => t.User)
             .ToListAsync(cancellationToken);
 
-        var allTeachers = await _teacherRepository.Query(false).ToListAsync(cancellationToken);
+        var allTeachers = await _teacherRepository.Query(false)
+            .Include(t => t.User)
+            .Where(t => t.User != null && t.User.Isactive == true)
+            .ToListAsync(cancellationToken);
         
         var generatedTimetables = new List<Timetable>();
         string[] daysOfWeek = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
@@ -412,7 +424,7 @@ public sealed class TimetableService : ITimetableService
                 var classSubjects = classEntity.Classsubjects?.Select(cs => cs.Subject).ToList() ?? new List<Subject>();
                 if (!classSubjects.Any()) continue;
 
-                var teachersForClass = classEntity.Teachersubjects?.ToList() ?? new List<Teachersubject>();
+                var teachersForClass = classEntity.Teachersubjects?.Where(ts => ts.Teacher != null && ts.Teacher.User != null && ts.Teacher.User.Isactive == true).ToList() ?? new List<Teachersubject>();
 
                 foreach (var timing in request.Timings.OrderBy(t => t.PeriodNumber))
                 {
@@ -518,6 +530,16 @@ public sealed class TimetableService : ITimetableService
     {
         if (generatedTimetable == null || !generatedTimetable.Any()) return;
 
+        var teacherIds = generatedTimetable.Select(t => t.TeacherId).Distinct().ToList();
+        var inactiveTeacherExists = await _teacherRepository.Query(true)
+            .Include(t => t.User)
+            .AnyAsync(t => teacherIds.Contains(t.Id) && (t.User == null || t.User.Isactive != true), cancellationToken);
+
+        if (inactiveTeacherExists)
+        {
+            throw new BusinessRuleException("Cannot save timetable because one or more assigned teachers are inactive.");
+        }
+
         var classIds = generatedTimetable.Select(t => t.ClassId).Distinct().ToList();
 
         var existingTimetables = await _timetableRepository.Query(false)
@@ -560,9 +582,18 @@ public sealed class TimetableService : ITimetableService
             throw new EntityNotFoundException("Subject", dto.SubjectId.ToString());
         }
 
-        if (await _teacherRepository.GetByIdAsync(dto.TeacherId) is null)
+        var teacher = await _teacherRepository.Query(true)
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == dto.TeacherId, cancellationToken);
+
+        if (teacher is null)
         {
             throw new EntityNotFoundException("Teacher", dto.TeacherId.ToString());
+        }
+
+        if (teacher.User == null || teacher.User.Isactive != true)
+        {
+            throw new BusinessRuleException("Cannot assign a timetable slot to an inactive teacher.");
         }
 
         // Clash Detection (excluding current slot)

@@ -1,21 +1,21 @@
 .chatbot-container {
-    /* Negate parent layout padding:
-       Mobile (p-2 on main, py-2 on container): ~1rem vertical, 0.5rem horizontal
-       Desktop (p-md-4 on main, py-2 px-md-3): ~2rem vertical, ~2.5rem horizontal
-    */
+    /* Fit perfectly inside the main layout viewport without causing main scroll */
     margin: -1rem -0.5rem;
-    height: calc(100vh - 72px + 2rem);
+    height: calc(100vh - 110px);
+    height: calc(100dvh - 110px);
     display: flex;
     align-items: stretch;
     justify-content: stretch;
     background: var(--bg-canvas);
     transition: background-color 0.3s ease;
+    overflow: hidden;
 }
 
 @media (min-width: 768px) {
     .chatbot-container {
         margin: -2rem -2.5rem;
-        height: calc(100vh - 72px + 4rem);
+        height: calc(100vh - 115px);
+        height: calc(100dvh - 115px);
     }
 }
 
@@ -68,6 +68,7 @@
                       radial-gradient(circle at bottom left, var(--primary-accent-glow) 0%, transparent 40%);
     scroll-behavior: smooth;
     background-color: var(--bg-main);
+    min-height: 0;
 }
 
 .chatbot-body::-webkit-scrollbar {
@@ -156,6 +157,7 @@
 }
 
 .chatbot-footer {
+    flex-shrink: 0;
     border-bottom-left-radius: 24px;
     border-bottom-right-radius: 24px;
 }
