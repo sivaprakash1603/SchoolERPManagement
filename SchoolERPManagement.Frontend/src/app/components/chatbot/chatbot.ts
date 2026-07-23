@@ -88,6 +88,11 @@ export class Chatbot implements OnInit, AfterViewChecked {
     localStorage.setItem('chatbot_history', JSON.stringify(this.messages));
   }
 
+  clearChat() {
+    localStorage.removeItem('chatbot_history');
+    this.initDefaultMessage();
+  }
+
   ngAfterViewChecked() {
     this.scrollToBottom();
   }
