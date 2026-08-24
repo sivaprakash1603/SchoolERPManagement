@@ -223,7 +223,7 @@ az functionapp config appsettings set \
 
 echo "Deploying Azure Functions..."
 cd SchoolERPManagement.Functions
-func azure functionapp publish $FUNC_APP_NAME
+func azure functionapp publish $FUNC_APP_NAME --dotnet-isolated
 cd ..
 
 echo "========================================"
